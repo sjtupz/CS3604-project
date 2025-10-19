@@ -1,0 +1,159 @@
+# 前端UI接口库
+# 12306系统UI组件接口定义
+
+- type: Frontend
+  id: UI-HomePage
+  description: 12306系统首页组件，包含导航栏、功能入口和车票查询表单。
+  properties:
+    - name: isLoggedIn
+      type: boolean
+      description: "用户登录状态。"
+    - name: username
+      type: string
+      description: "已登录用户的用户名。"
+    - name: onNavigate
+      type: function
+      description: "页面导航回调函数。"
+  state:
+    - currentPage
+    - userLoginStatus
+    - ticketQuery
+  dependencies:
+    - API-GET-UserProfile
+    - API-POST-QueryTickets
+  acceptanceCriteria:
+    - 组件应渲染顶部导航栏，包含"我的12306"、"登录"、"注册"入口。
+    - 组件应渲染常用功能快捷入口，包含"首页"、"车票"按钮。
+    - 组件应渲染车票查询表单，包含出发地、到达地、出发日期、学生票/高铁勾选框及"查询"按钮。
+    - 当用户未登录时，点击"我的12306"应跳转至登录页。
+    - 当用户已登录时，点击"我的12306"不发生跳转。
+    - 导航栏应根据登录状态显示不同内容。
+  changeLog:
+    - date: "2025-01-25"
+      description: "初始创建。"
+
+- type: Frontend
+  id: UI-LoginForm
+  description: 用户登录表单组件，处理用户登录输入、验证和提交。
+  properties:
+    - name: onLoginSuccess
+      type: function
+      description: "登录成功后的回调函数。"
+    - name: onNavigateToRegister
+      type: function
+      description: "跳转到注册页的回调函数。"
+  state:
+    - username
+    - password
+    - error
+    - isLoading
+  dependencies:
+    - API-POST-Login
+  acceptanceCriteria:
+    - 组件应渲染用户名/邮箱/手机号输入框。
+    - 组件应渲染密码输入框。
+    - 组件应渲染"立即登录"按钮。
+    - 组件应渲染"注册12306账号"链接。
+    - 组件应渲染"忘记密码？"链接（暂不实现功能）。
+    - 点击"立即登录"按钮时，应调用API-POST-Login接口。
+    - 当isLoading状态为true时，登录按钮应被禁用。
+    - 应根据API返回的错误信息显示相应提示。
+  changeLog:
+    - date: "2025-01-25"
+      description: "初始创建。"
+
+- type: Frontend
+  id: UI-RegisterForm
+  description: 用户注册表单组件，处理完整的用户注册信息输入、验证和提交。
+  properties:
+    - name: onRegisterSuccess
+      type: function
+      description: "注册成功后的回调函数。"
+  state:
+    - username
+    - password
+    - confirmPassword
+    - idType
+    - realName
+    - idNumber
+    - discountType
+    - phoneNumber
+    - email
+    - agreeTerms
+    - errors
+    - isLoading
+  dependencies:
+    - API-POST-Register
+  acceptanceCriteria:
+    - 组件应渲染所有必填输入项：用户名、登录密码、确认密码、证件类型、姓名、证件号码、优惠类型、手机号码。
+    - 组件应渲染选填项：邮箱。
+    - 组件应渲染"我已阅读并确认条款"勾选框。
+    - 组件应渲染"下一步"按钮。
+    - 点击"下一步"按钮时，应先进行前端验证，然后调用API-POST-Register接口。
+    - 当isLoading状态为true时，下一步按钮应被禁用。
+    - 应根据API返回的错误信息在对应字段下方显示错误提示。
+    - 应验证密码和确认密码的一致性。
+    - 应验证各字段的格式要求。
+  changeLog:
+    - date: "2025-01-25"
+      description: "初始创建。"
+
+- type: Frontend
+  id: UI-NavigationBar
+  description: 顶部导航栏组件，根据用户登录状态显示不同的导航选项。
+  properties:
+    - name: isLoggedIn
+      type: boolean
+      description: "用户登录状态。"
+    - name: username
+      type: string
+      description: "已登录用户的用户名。"
+    - name: onLogin
+      type: function
+      description: "跳转到登录页的回调函数。"
+    - name: onRegister
+      type: function
+      description: "跳转到注册页的回调函数。"
+    - name: onLogout
+      type: function
+      description: "用户退出登录的回调函数。"
+  state:
+    - none
+  dependencies:
+    - none
+  acceptanceCriteria:
+    - 当用户未登录时，应显示"我的12306"、"登录"、"注册"链接。
+    - 当用户已登录时，应显示"您好，{username} / 退出"。
+    - 点击相应链接时应调用对应的回调函数。
+  changeLog:
+    - date: "2025-01-25"
+      description: "初始创建。"
+
+- type: Frontend
+  id: UI-TicketQueryForm
+  description: 车票查询表单组件，处理车票查询条件的输入和提交。
+  properties:
+    - name: onQuerySubmit
+      type: function
+      description: "查询提交的回调函数。"
+  state:
+    - departure
+    - destination
+    - departureDate
+    - isStudent
+    - isHighSpeed
+    - isLoading
+  dependencies:
+    - API-POST-QueryTickets
+  acceptanceCriteria:
+    - 组件应渲染出发地输入框。
+    - 组件应渲染到达地输入框。
+    - 组件应渲染出发日期选择器。
+    - 组件应渲染学生票勾选框。
+    - 组件应渲染高铁勾选框。
+    - 组件应渲染"查询"按钮。
+    - 点击"查询"按钮时，应调用API-POST-QueryTickets接口。
+    - 当isLoading状态为true时，查询按钮应被禁用。
+  changeLog:
+    - date: "2025-01-25"
+      description: "初始创建。"

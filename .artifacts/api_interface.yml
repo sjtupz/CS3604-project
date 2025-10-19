@@ -1,0 +1,163 @@
+# 后端API接口库
+# 12306系统API接口定义
+
+- type: Backend
+  id: API-POST-Login
+  route: POST /api/login
+  description: 处理用户登录请求，验证用户凭据并返回认证令牌。
+  input:
+    type: JSON
+    body:
+      username: string  # 用户名/邮箱/手机号
+      password: string
+  output:
+    success:
+      statusCode: 200
+      body: 
+        message: "登录成功"
+        userId: "uuid"
+        token: "jwt"
+        username: "string"
+    error:
+      - statusCode: 400
+        body: 
+          error: "请输入用户名和密码"
+      - statusCode: 400
+        body: 
+          error: "格式错误！"
+      - statusCode: 404
+        body: 
+          error: "该账号未注册，请先注册"
+      - statusCode: 401
+        body: 
+          error: "密码错误，请重新输入"
+  dependencies:
+    - DB-FindUserByUsername
+    - DB-ValidateUserCredentials
+    - DB-UpdateUserLoginStatus
+  acceptanceCriteria:
+    - 当接收到合法且已注册的用户凭据时，应返回200 OK和JWT令牌。
+    - 当用户名或密码为空时，应返回400 Bad Request。
+    - 当用户名格式错误时，应返回400 Bad Request。
+    - 当用户未注册时，应返回404 Not Found。
+    - 当密码错误时，应返回401 Unauthorized。
+  changeLog:
+    - date: "2025-01-25"
+      description: "初始创建。"
+
+- type: Backend
+  id: API-POST-Register
+  route: POST /api/register
+  description: 处理用户注册请求，包含完整的用户信息验证和账户创建。
+  input:
+    type: JSON
+    body:
+      username: string
+      password: string
+      confirmPassword: string
+      idType: string        # 证件类型
+      realName: string      # 姓名
+      idNumber: string      # 证件号码
+      discountType: string  # 优惠类型
+      phoneNumber: string
+      email: string         # 选填
+      agreeTerms: boolean
+  output:
+    success:
+      statusCode: 201
+      body: 
+        message: "注册成功"
+        userId: "uuid"
+    error:
+      - statusCode: 400
+        body: 
+          error: "请输入手机号"
+      - statusCode: 400
+        body: 
+          error: "❌请输入XXX"  # 针对具体未填写字段
+      - statusCode: 400
+        body: 
+          error: "格式错误！"
+      - statusCode: 400
+        body: 
+          error: "请输入有效的电子邮箱地址！"
+      - statusCode: 400
+        body: 
+          error: "请正确输入18位的证件号码！"
+      - statusCode: 409
+        body: 
+          error: "该证件号码已被注册"
+  dependencies:
+    - DB-CheckUserExists
+    - DB-CreateUser
+  acceptanceCriteria:
+    - 当接收到合法且未注册的完整用户信息时，应返回201 Created。
+    - 当手机号为空时，应返回400 Bad Request并提示"请输入手机号"。
+    - 当必填项未填写时，应返回400 Bad Request并指出具体字段。
+    - 当用户名、密码格式错误时，应返回400 Bad Request。
+    - 当邮箱格式错误时，应返回400 Bad Request。
+    - 当证件号码格式错误时，应返回400 Bad Request。
+    - 当证件号码已存在时，应返回409 Conflict。
+  changeLog:
+    - date: "2025-01-25"
+      description: "初始创建。"
+
+- type: Backend
+  id: API-GET-UserProfile
+  route: GET /api/profile
+  description: 获取已登录用户的个人信息（预留接口）。
+  input:
+    type: Headers
+    headers:
+      Authorization: "Bearer {jwt_token}"
+  output:
+    success:
+      statusCode: 200
+      body:
+        userId: "uuid"
+        username: "string"
+        realName: "string"
+        phoneNumber: "string"
+        email: "string"
+    error:
+      - statusCode: 401
+        body: 
+          error: "未授权访问"
+  dependencies:
+    - DB-FindUserByUsername
+  acceptanceCriteria:
+    - 需要有效的JWT令牌才能访问。
+    - 返回用户的基本信息（不包含敏感信息）。
+  changeLog:
+    - date: "2025-01-25"
+      description: "初始创建，预留接口。"
+
+- type: Backend
+  id: API-POST-QueryTickets
+  route: POST /api/queryTickets
+  description: 查询车票信息（预留接口）。
+  input:
+    type: JSON
+    body:
+      departure: string     # 出发地
+      destination: string   # 到达地
+      departureDate: string # 出发日期
+      isStudent: boolean    # 学生票
+      isHighSpeed: boolean  # 高铁
+  output:
+    success:
+      statusCode: 200
+      body:
+        tickets: []  # 车票列表
+    error:
+      - statusCode: 400
+        body: 
+          error: "查询参数错误"
+  dependencies:
+    - none  # 预留接口，暂无依赖
+  acceptanceCriteria:
+    - 根据查询条件返回匹配的车票信息。
+    - 支持学生票和高铁筛选。
+  changeLog:
+    - date: "2025-01-25"
+      description: "初始创建，预留接口。"

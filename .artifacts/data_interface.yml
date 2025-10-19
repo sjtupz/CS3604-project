@@ -1,0 +1,67 @@
+# 数据库操作接口库
+# 12306系统数据接口定义
+
+- type: Database
+  id: DB-FindUserByUsername
+  description: 根据用户名查找用户记录。
+  dependencies:
+    - none
+  acceptanceCriteria:
+    - 能够根据用户名、邮箱或手机号查找用户记录。
+    - 如果用户不存在，返回空结果。
+    - 查询结果包含用户的完整信息（除密码外）。
+  changeLog:
+    - date: "2025-01-25"
+      description: "初始创建。"
+
+- type: Database
+  id: DB-ValidateUserCredentials
+  description: 验证用户登录凭据（用户名和密码）。
+  dependencies:
+    - DB-FindUserByUsername
+  acceptanceCriteria:
+    - 验证用户名/邮箱/手机号与密码的匹配性。
+    - 密码验证使用安全的哈希比较。
+    - 返回验证结果和用户基本信息。
+  changeLog:
+    - date: "2025-01-25"
+      description: "初始创建。"
+
+- type: Database
+  id: DB-CreateUser
+  description: 在数据库中创建一个新的用户记录。
+  dependencies:
+    - none
+  acceptanceCriteria:
+    - 成功执行后，users表中会增加一条新记录。
+    - 如果用户名、手机号或证件号码已存在，操作应失败并抛出唯一性约束错误。
+    - 密码应进行安全哈希处理后存储。
+  changeLog:
+    - date: "2025-01-25"
+      description: "初始创建。"
+
+- type: Database
+  id: DB-CheckUserExists
+  description: 检查用户是否已存在（根据用户名、手机号或证件号码）。
+  dependencies:
+    - none
+  acceptanceCriteria:
+    - 能够检查用户名、手机号、证件号码的唯一性。
+    - 返回具体的冲突字段信息。
+    - 支持批量检查多个字段。
+  changeLog:
+    - date: "2025-01-25"
+      description: "初始创建。"
+
+- type: Database
+  id: DB-UpdateUserLoginStatus
+  description: 更新用户的登录状态和最后登录时间。
+  dependencies:
+    - DB-FindUserByUsername
+  acceptanceCriteria:
+    - 记录用户的登录时间戳。
+    - 更新用户的在线状态。
+    - 生成或更新用户会话信息。
+  changeLog:
+    - date: "2025-01-25"
+      description: "初始创建。"
