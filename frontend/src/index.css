@@ -1,0 +1,95 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Microsoft YaHei', 'PingFang SC', 'Helvetica Neue', Arial, sans-serif;
+  line-height: 1.6;
+  color: #333;
+  background-color: #f5f5f5;
+}
+
+#root {
+  width: 100%;
+  min-height: 100vh;
+}
+
+.App {
+  width: 100%;
+  min-height: 100vh;
+}
+
+/* 确保页面为横屏布局 */
+@media screen and (max-width: 768px) {
+  body {
+    transform: rotate(90deg);
+    transform-origin: left top;
+    width: 100vh;
+    height: 100vw;
+    overflow-x: hidden;
+    position: absolute;
+    top: 100%;
+    left: 0;
+  }
+}
+
+/* 移除所有响应式布局，保持固定布局 */
+body {
+  min-width: 1200px;
+  overflow-x: auto;
+}
+
+.main-content {
+  width: 1200px !important;
+  min-width: 1200px !important;
+  max-width: 1200px !important;
+}
+
+.ticket-form {
+  width: 420px !important;
+  min-width: 420px !important;
+  max-width: 420px !important;
+  position: absolute !important;
+}
+
+/* 按钮样式重置 */
+button {
+  font-family: inherit;
+  cursor: pointer;
+  outline: none;
+}
+
+button:hover {
+  opacity: 0.9;
+}
+
+/* 输入框样式 */
+input, select {
+  font-family: inherit;
+  outline: none;
+}
+
+input:focus, select:focus {
+  border-color: #4a90e2;
+  box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2);
+}
+
+/* 滚动条样式 */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
