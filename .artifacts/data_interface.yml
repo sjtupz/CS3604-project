@@ -1,0 +1,164 @@
+- type: Database
+  id: DB-GetUserInfo
+  description: 根据用户ID获取用户完整信息，包括基本信息、联系方式、优惠类型等。
+  dependencies:
+    - none
+  acceptanceCriteria:
+    - 成功执行后，返回用户的完整信息，包括用户名、真实姓名、国家/地区、证件类型、证件号码、核验状态、手机号、邮箱、手机号核验状态、优惠类型。
+    - 如果用户不存在，应返回空结果或抛出错误。
+  changeLog:
+    - date: "2025-11-16"
+      description: "初始创建。"
+
+- type: Database
+  id: DB-UpdateUserContact
+  description: 更新用户的联系方式（手机号、邮箱）。
+  dependencies:
+    - DB-GetUserInfo
+  acceptanceCriteria:
+    - 成功执行后，用户的手机号或邮箱被更新。
+    - 如果用户不存在，操作应失败并抛出错误。
+  changeLog:
+    - date: "2025-11-16"
+      description: "初始创建。"
+
+- type: Database
+  id: DB-UpdateUserDiscountType
+  description: 更新用户的优惠类型（成人、儿童、学生、残疾军人）。
+  dependencies:
+    - DB-GetUserInfo
+  acceptanceCriteria:
+    - 成功执行后，用户的优惠类型被更新。
+    - 如果选择学生类型，应记录学生资质信息。
+    - 如果用户不存在，操作应失败并抛出错误。
+  changeLog:
+    - date: "2025-11-16"
+      description: "初始创建。"
+
+- type: Database
+  id: DB-GetOrdersByStatus
+  description: 根据用户ID和订单状态获取订单列表。订单状态包括：未完成、未出行、历史、已退票。
+  dependencies:
+    - none
+  acceptanceCriteria:
+    - 成功执行后，返回指定状态的所有订单列表。
+    - 未出行订单和历史订单只返回最近30天的订单。
+    - 如果用户不存在，应返回空列表。
+  changeLog:
+    - date: "2025-11-16"
+      description: "初始创建。"
+
+- type: Database
+  id: DB-GetOrdersByDateRange
+  description: 根据用户ID、订单状态、日期范围和查询条件（订单号/车次/姓名）获取订单列表。
+  dependencies:
+    - DB-GetOrdersByStatus
+  acceptanceCriteria:
+    - 成功执行后，返回符合查询条件的订单列表。
+    - 支持按订票日期或乘车日期查询。
+    - 支持按订单号、车次、姓名筛选。
+    - 如果查询条件为空，返回该日期范围内的所有订单。
+  changeLog:
+    - date: "2025-11-16"
+      description: "初始创建。"
+
+- type: Database
+  id: DB-UpdateOrderStatus
+  description: 更新订单状态。支持的状态转换：未完成->未出行、未出行->已退票、未出行/已退票->历史。
+  dependencies:
+    - DB-GetOrdersByStatus
+  acceptanceCriteria:
+    - 成功执行后，订单状态被更新。
+    - 如果状态转换不合法，操作应失败并抛出错误。
+    - 如果订单不存在，操作应失败并抛出错误。
+  changeLog:
+    - date: "2025-11-16"
+      description: "初始创建。"
+
+- type: Database
+  id: DB-CreateRefundRecord
+  description: 创建退票记录，记录退票日期和退票手续费。
+  dependencies:
+    - DB-UpdateOrderStatus
+  acceptanceCriteria:
+    - 成功执行后，订单状态更新为"已退票"，并记录退票日期和手续费。
+    - 如果订单不存在，操作应失败并抛出错误。
+  changeLog:
+    - date: "2025-11-16"
+      description: "初始创建。"
+
+- type: Database
+  id: DB-GetPassengers
+  description: 根据用户ID获取该用户的所有乘车人信息。
+  dependencies:
+    - none
+  acceptanceCriteria:
+    - 成功执行后，返回该用户的所有乘车人列表。
+    - 如果用户不存在，应返回空列表。
+  changeLog:
+    - date: "2025-11-16"
+      description: "初始创建。"
+
+- type: Database
+  id: DB-GetPassengersByName
+  description: 根据用户ID和乘客姓名查询乘车人信息。
+  dependencies:
+    - DB-GetPassengers
+  acceptanceCriteria:
+    - 成功执行后，返回匹配姓名的乘车人列表。
+    - 支持模糊匹配。
+    - 如果未找到匹配的乘车人，应返回空列表。
+  changeLog:
+    - date: "2025-11-16"
+      description: "初始创建。"
+
+- type: Database
+  id: DB-CreatePassenger
+  description: 为用户创建一个新的乘车人记录。
+  dependencies:
+    - DB-GetPassengers
+  acceptanceCriteria:
+    - 成功执行后，乘车人表中会增加一条新记录。
+    - 如果证件号码已存在（同一用户下），操作应失败并抛出唯一性约束错误。
+    - 必须验证证件号码格式和姓名格式。
+  changeLog:
+    - date: "2025-11-16"
+      description: "初始创建。"
+
+- type: Database
+  id: DB-UpdatePassenger
+  description: 更新乘车人信息。
+  dependencies:
+    - DB-GetPassengers
+  acceptanceCriteria:
+    - 成功执行后，乘车人的信息被更新。
+    - 必须验证证件号码格式和姓名格式。
+    - 如果乘车人不存在，操作应失败并抛出错误。
+  changeLog:
+    - date: "2025-11-16"
+      description: "初始创建。"
+
+- type: Database
+  id: DB-DeletePassenger
+  description: 删除一个乘车人记录。
+  dependencies:
+    - DB-GetPassengers
+  acceptanceCriteria:
+    - 成功执行后，乘车人记录被删除。
+    - 如果乘车人不存在，操作应失败并抛出错误。
+  changeLog:
+    - date: "2025-11-16"
+      description: "初始创建。"
+
+- type: Database
+  id: DB-DeletePassengers
+  description: 批量删除多个乘车人记录。
+  dependencies:
+    - DB-DeletePassenger
+  acceptanceCriteria:
+    - 成功执行后，所有指定的乘车人记录被删除。
+    - 如果部分乘车人不存在，应删除存在的记录并返回部分成功的结果。
+  changeLog:
+    - date: "2025-11-16"
+      description: "初始创建。"
+

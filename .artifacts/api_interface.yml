@@ -1,0 +1,338 @@
+- type: Backend
+  id: API-GET-UserInfo
+  route: GET /api/user/info
+  description: 获取当前登录用户的完整信息。
+  input:
+    type: JSON
+    headers:
+      Authorization: string
+  output:
+    success:
+      statusCode: 200
+      body:
+        userId: string
+        username: string
+        realName: string
+        country: string
+        idType: string
+        idNumber: string
+        verificationStatus: string
+        phoneNumber: string
+        email: string
+        phoneVerified: boolean
+        discountType: string
+        studentQualification: object
+    error:
+      - statusCode: 401
+        body: { error: "Unauthorized. User not logged in." }
+      - statusCode: 404
+        body: { error: "User not found." }
+  dependencies:
+    - DB-GetUserInfo
+  acceptanceCriteria:
+    - 当用户已登录时，应返回 200 OK 和用户完整信息。
+    - 当用户未登录时，应返回 401 Unauthorized。
+    - 当用户不存在时，应返回 404 Not Found。
+  changeLog:
+    - date: "2025-11-16"
+      description: "初始创建。"
+
+- type: Backend
+  id: API-PUT-UserContact
+  route: PUT /api/user/contact
+  description: 更新用户的联系方式（手机号、邮箱）。
+  input:
+    type: JSON
+    headers:
+      Authorization: string
+    body:
+      phoneNumber: string
+      email: string
+  output:
+    success:
+      statusCode: 200
+      body: { message: "Contact information updated successfully." }
+    error:
+      - statusCode: 400
+        body: { error: "Invalid input format." }
+      - statusCode: 401
+        body: { error: "Unauthorized. User not logged in." }
+  dependencies:
+    - DB-UpdateUserContact
+  acceptanceCriteria:
+    - 当接收到合法的联系方式数据时，应返回 200 OK。
+    - 当输入格式无效时，应返回 400 Bad Request。
+    - 当用户未登录时，应返回 401 Unauthorized。
+  changeLog:
+    - date: "2025-11-16"
+      description: "初始创建。"
+
+- type: Backend
+  id: API-PUT-UserDiscountType
+  route: PUT /api/user/discount-type
+  description: 更新用户的优惠类型。
+  input:
+    type: JSON
+    headers:
+      Authorization: string
+    body:
+      discountType: string
+      studentQualification: object
+  output:
+    success:
+      statusCode: 200
+      body: { message: "Discount type updated successfully." }
+    error:
+      - statusCode: 400
+        body: { error: "Invalid discount type." }
+      - statusCode: 401
+        body: { error: "Unauthorized. User not logged in." }
+  dependencies:
+    - DB-UpdateUserDiscountType
+  acceptanceCriteria:
+    - 当接收到合法的优惠类型数据时，应返回 200 OK。
+    - 当优惠类型无效时，应返回 400 Bad Request。
+    - 当选择学生类型时，必须提供学生资质信息。
+  changeLog:
+    - date: "2025-11-16"
+      description: "初始创建。"
+
+- type: Backend
+  id: API-GET-Orders
+  route: GET /api/orders
+  description: 获取用户的订单列表，支持按状态、日期范围、订单号/车次/姓名筛选。
+  input:
+    type: Query
+    query:
+      status: string
+      queryType: string
+      startDate: string
+      endDate: string
+      orderNumber: string
+      trainNumber: string
+      passengerName: string
+    headers:
+      Authorization: string
+  output:
+    success:
+      statusCode: 200
+      body:
+        orders: array
+    error:
+      - statusCode: 400
+        body: { error: "Invalid query parameters." }
+      - statusCode: 401
+        body: { error: "Unauthorized. User not logged in." }
+  dependencies:
+    - DB-GetOrdersByStatus
+    - DB-GetOrdersByDateRange
+  acceptanceCriteria:
+    - 当接收到合法的查询参数时，应返回 200 OK 和订单列表。
+    - 未出行订单和历史订单只返回最近30天的订单。
+    - 当查询参数无效时，应返回 400 Bad Request。
+  changeLog:
+    - date: "2025-11-16"
+      description: "初始创建。"
+
+- type: Backend
+  id: API-POST-Refund
+  route: POST /api/orders/:orderId/refund
+  description: 处理订单退票请求。
+  input:
+    type: JSON
+    params:
+      orderId: string
+    headers:
+      Authorization: string
+  output:
+    success:
+      statusCode: 200
+      body:
+        orderId: string
+        refundFee: number
+        refundDate: string
+        message: string
+    error:
+      - statusCode: 400
+        body: { error: "Order cannot be refunded." }
+      - statusCode: 401
+        body: { error: "Unauthorized. User not logged in." }
+      - statusCode: 404
+        body: { error: "Order not found." }
+  dependencies:
+    - DB-CreateRefundRecord
+    - DB-UpdateOrderStatus
+  acceptanceCriteria:
+    - 当订单可以退票时，应返回 200 OK 和退票信息（包括退票手续费）。
+    - 当订单状态不允许退票时，应返回 400 Bad Request。
+    - 当订单不存在时，应返回 404 Not Found。
+  changeLog:
+    - date: "2025-11-16"
+      description: "初始创建。"
+
+- type: Backend
+  id: API-GET-Passengers
+  route: GET /api/passengers
+  description: 获取用户的乘车人列表，支持按姓名查询。
+  input:
+    type: Query
+    query:
+      name: string
+    headers:
+      Authorization: string
+  output:
+    success:
+      statusCode: 200
+      body:
+        passengers: array
+    error:
+      - statusCode: 401
+        body: { error: "Unauthorized. User not logged in." }
+  dependencies:
+    - DB-GetPassengers
+    - DB-GetPassengersByName
+  acceptanceCriteria:
+    - 当用户已登录时，应返回 200 OK 和乘车人列表。
+    - 当提供姓名查询参数时，应返回匹配的乘车人列表。
+    - 当用户未登录时，应返回 401 Unauthorized。
+  changeLog:
+    - date: "2025-11-16"
+      description: "初始创建。"
+
+- type: Backend
+  id: API-POST-Passenger
+  route: POST /api/passengers
+  description: 创建新的乘车人记录。
+  input:
+    type: JSON
+    headers:
+      Authorization: string
+    body:
+      name: string
+      idType: string
+      idNumber: string
+      phone: string
+      discountType: string
+      expiryDate: string
+      birthDate: string
+  output:
+    success:
+      statusCode: 201
+      body:
+        passengerId: string
+        message: string
+    error:
+      - statusCode: 400
+        body: { error: "Invalid input format or validation failed." }
+      - statusCode: 401
+        body: { error: "Unauthorized. User not logged in." }
+      - statusCode: 409
+        body: { error: "Passenger already exists." }
+  dependencies:
+    - DB-CreatePassenger
+  acceptanceCriteria:
+    - 当接收到合法且未存在的乘车人数据时，应返回 201 Created。
+    - 当证件号码格式不匹配时，应返回 400 Bad Request。
+    - 当姓名或证件号码为空时，应返回 400 Bad Request。
+    - 当证件号码已存在时，应返回 409 Conflict。
+  changeLog:
+    - date: "2025-11-16"
+      description: "初始创建。"
+
+- type: Backend
+  id: API-PUT-Passenger
+  route: PUT /api/passengers/:passengerId
+  description: 更新乘车人信息。
+  input:
+    type: JSON
+    params:
+      passengerId: string
+    headers:
+      Authorization: string
+    body:
+      name: string
+      idType: string
+      idNumber: string
+      phone: string
+      discountType: string
+      expiryDate: string
+      birthDate: string
+  output:
+    success:
+      statusCode: 200
+      body: { message: "Passenger updated successfully." }
+    error:
+      - statusCode: 400
+        body: { error: "Invalid input format or validation failed." }
+      - statusCode: 401
+        body: { error: "Unauthorized. User not logged in." }
+      - statusCode: 404
+        body: { error: "Passenger not found." }
+  dependencies:
+    - DB-UpdatePassenger
+  acceptanceCriteria:
+    - 当接收到合法的乘车人数据时，应返回 200 OK。
+    - 当证件号码格式不匹配时，应返回 400 Bad Request。
+    - 当乘车人不存在时，应返回 404 Not Found。
+  changeLog:
+    - date: "2025-11-16"
+      description: "初始创建。"
+
+- type: Backend
+  id: API-DELETE-Passenger
+  route: DELETE /api/passengers/:passengerId
+  description: 删除单个乘车人记录。
+  input:
+    type: JSON
+    params:
+      passengerId: string
+    headers:
+      Authorization: string
+  output:
+    success:
+      statusCode: 200
+      body: { message: "Passenger deleted successfully." }
+    error:
+      - statusCode: 401
+        body: { error: "Unauthorized. User not logged in." }
+      - statusCode: 404
+        body: { error: "Passenger not found." }
+  dependencies:
+    - DB-DeletePassenger
+  acceptanceCriteria:
+    - 当乘车人存在时，应返回 200 OK。
+    - 当乘车人不存在时，应返回 404 Not Found。
+  changeLog:
+    - date: "2025-11-16"
+      description: "初始创建。"
+
+- type: Backend
+  id: API-DELETE-Passengers
+  route: DELETE /api/passengers
+  description: 批量删除多个乘车人记录。
+  input:
+    type: JSON
+    headers:
+      Authorization: string
+    body:
+      passengerIds: array
+  output:
+    success:
+      statusCode: 200
+      body:
+        deletedCount: number
+        message: string
+    error:
+      - statusCode: 400
+        body: { error: "Invalid input format." }
+      - statusCode: 401
+        body: { error: "Unauthorized. User not logged in." }
+  dependencies:
+    - DB-DeletePassengers
+  acceptanceCriteria:
+    - 当接收到合法的乘车人ID列表时，应返回 200 OK 和删除数量。
+    - 当输入格式无效时，应返回 400 Bad Request。
+  changeLog:
+    - date: "2025-11-16"
+      description: "初始创建。"
+

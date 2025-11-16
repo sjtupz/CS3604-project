@@ -1,0 +1,336 @@
+- type: Frontend
+  id: UI-PersonalCenterLayout
+  description: 个人中心页面布局组件，包含左侧导航栏和主内容区域。
+  properties:
+    - name: currentUser
+      type: object
+      description: "当前登录用户信息。"
+    - name: onNavigate
+      type: function
+      description: "页面导航回调函数。"
+  state:
+    - currentSection
+    - sidebarItems
+  dependencies:
+    - API-GET-UserInfo
+  acceptanceCriteria:
+    - 组件应渲染左侧导航栏，包含"个人中心"、"订票中心"、"本人车票"、"会员中心"、"个人信息"、"常用信息管理"等板块。
+    - 组件应渲染顶部导航栏和底部导航栏。
+    - 点击左侧导航栏项目时，应切换主内容区域显示。
+  changeLog:
+    - date: "2025-11-16"
+      description: "初始创建。"
+
+- type: Frontend
+  id: UI-PersonalCenterHome
+  description: 个人中心主页组件，显示用户欢迎信息和快捷入口。
+  properties:
+    - name: userInfo
+      type: object
+      description: "用户信息对象。"
+    - name: onNavigateToService
+      type: function
+      description: "跳转到服务页面的回调函数。"
+  state:
+    - userRealName
+    - welcomeMessage
+  dependencies:
+    - API-GET-UserInfo
+  acceptanceCriteria:
+    - 组件应显示用户真实名称和欢迎语。
+    - 组件应提供会员服务和车票服务两个区域的接口。
+    - 组件应显示微信和支付宝二维码用于设置信息接收方式。
+    - 组件应显示黄色边框的温馨提示栏。
+  changeLog:
+    - date: "2025-11-16"
+      description: "初始创建。"
+
+- type: Frontend
+  id: UI-OrderTabs
+  description: 订单标签页组件，包含"未完成订单"、"未出行订单"、"历史订单"三个标签。
+  properties:
+    - name: activeTab
+      type: string
+      description: "当前激活的标签。"
+    - name: onTabChange
+      type: function
+      description: "标签切换回调函数。"
+  state:
+    - activeTab
+  dependencies:
+    - none
+  acceptanceCriteria:
+    - 组件应渲染三个并列的标签："未完成订单"、"未出行订单"、"历史订单"。
+    - 点击标签时，应切换显示对应的订单内容。
+    - 当前激活的标签应有视觉高亮。
+  changeLog:
+    - date: "2025-11-16"
+      description: "初始创建。"
+
+- type: Frontend
+  id: UI-UncompletedOrders
+  description: 未完成订单列表组件，显示已锁定席位但未支付的订单。
+  properties:
+    - name: orders
+      type: array
+      description: "未完成订单列表。"
+    - name: onNavigateToPayment
+      type: function
+      description: "跳转到支付页面的回调函数。"
+    - name: onNavigateToBooking
+      type: function
+      description: "跳转到车票预定页面的回调函数。"
+  state:
+    - orders
+    - isEmpty
+  dependencies:
+    - API-GET-Orders
+  acceptanceCriteria:
+    - 组件应显示当前已锁定席位但未支付的订单列表。
+    - 如果订单列表为空，应在中间显示前往车票预定板块的接口。
+    - 每个订单右侧应有"跳转支付"按钮。
+    - 点击"跳转支付"按钮时，应调用 onNavigateToPayment 回调。
+  changeLog:
+    - date: "2025-11-16"
+      description: "初始创建。"
+
+- type: Frontend
+  id: UI-UpcomingOrders
+  description: 未出行订单列表组件，支持查询和筛选功能。
+  properties:
+    - name: orders
+      type: array
+      description: "未出行订单列表。"
+    - name: onRefund
+      type: function
+      description: "退票回调函数。"
+    - name: onModify
+      type: function
+      description: "改签回调函数。"
+  state:
+    - orders
+    - queryType
+    - startDate
+    - endDate
+    - orderNumber
+    - trainNumber
+    - passengerName
+    - isLoading
+  dependencies:
+    - API-GET-Orders
+  acceptanceCriteria:
+    - 组件应显示查询功能，支持"按订票日期"和"按乘车日期"两种查询方式。
+    - 查询功能应支持设置起始和终止日期以及订单号/车次/姓名。
+    - 组件应显示订单列表，包含车次信息、旅客信息、席位信息、票价和车票状态。
+    - 每个订单右侧应有"退票"和"改签"按钮。
+    - 点击查询按钮时，应根据查询条件更新订单列表。
+    - 组件应显示提示信息："只保留三十天信息"。
+  changeLog:
+    - date: "2025-11-16"
+      description: "初始创建。"
+
+- type: Frontend
+  id: UI-HistoryOrders
+  description: 历史订单列表组件，支持按乘车日期查询。
+  properties:
+    - name: orders
+      type: array
+      description: "历史订单列表。"
+    - name: onPrint
+      type: function
+      description: "打印信息单回调函数。"
+  state:
+    - orders
+    - startDate
+    - endDate
+    - orderNumber
+    - trainNumber
+    - passengerName
+    - isLoading
+  dependencies:
+    - API-GET-Orders
+  acceptanceCriteria:
+    - 组件应显示查询功能，只能按照乘车日期进行查询。
+    - 查询功能应支持设置起始和终止日期以及订单号/车次/姓名。
+    - 组件应显示订单列表，格式与未出行订单相同。
+    - 每个订单右侧应有"打印信息单"按钮。
+    - 组件应显示提示信息："只保留三十天信息"。
+  changeLog:
+    - date: "2025-11-16"
+      description: "初始创建。"
+
+- type: Frontend
+  id: UI-RefundModal
+  description: 退票申请弹窗组件，显示退款手续费用和确认选项。
+  properties:
+    - name: order
+      type: object
+      description: "要退票的订单信息。"
+    - name: isOpen
+      type: boolean
+      description: "弹窗是否打开。"
+    - name: onConfirm
+      type: function
+      description: "确认退票回调函数。"
+    - name: onCancel
+      type: function
+      description: "取消退票回调函数。"
+  state:
+    - refundFee
+    - isSubmitting
+  dependencies:
+    - API-POST-Refund
+  acceptanceCriteria:
+    - 弹窗应独立于网站界面，在非全屏状态下拉动底部横移条时会始终保持居中。
+    - 弹窗打开时，原网站应覆盖灰色，弹窗高亮显示。
+    - 弹窗打开时，无法点击原网站页面内容。
+    - 组件应显示退款手续费用、确认和取消按钮以及最下方的注意事项。
+    - 点击确认按钮时，应调用 onConfirm 回调。
+    - 点击取消按钮时，应调用 onCancel 回调。
+  changeLog:
+    - date: "2025-11-16"
+      description: "初始创建。"
+
+- type: Frontend
+  id: UI-RefundSuccess
+  description: 退票成功界面组件，显示退票信息和操作选项。
+  properties:
+    - name: refundInfo
+      type: object
+      description: "退票信息，包括车次信息和退票手续费。"
+    - name: onContinueBooking
+      type: function
+      description: "继续购票回调函数。"
+    - name: onViewOrderDetail
+      type: function
+      description: "查看订单详情回调函数。"
+  state:
+    - trainInfo
+    - refundFee
+  dependencies:
+    - API-POST-Refund
+  acceptanceCriteria:
+    - 组件应显示车次信息和退票手续费等内容。
+    - 组件应提供"继续购票"和"查看订单详情"两个按钮。
+    - 点击"继续购票"按钮时，应调用 onContinueBooking 回调。
+    - 点击"查看订单详情"按钮时，应调用 onViewOrderDetail 回调。
+  changeLog:
+    - date: "2025-11-16"
+      description: "初始创建。"
+
+- type: Frontend
+  id: UI-UserInfoView
+  description: 查看个人信息组件，显示用户的基本信息、联系方式和优惠类型。
+  properties:
+    - name: userInfo
+      type: object
+      description: "用户信息对象。"
+    - name: onEditContact
+      type: function
+      description: "编辑联系方式回调函数。"
+    - name: onEditDiscountType
+      type: function
+      description: "编辑优惠类型回调函数。"
+    - name: onNavigateToVerification
+      type: function
+      description: "跳转到手机核验页面的回调函数。"
+  state:
+    - isEditingContact
+    - isEditingDiscountType
+    - discountType
+    - showStudentQualification
+  dependencies:
+    - API-GET-UserInfo
+    - API-PUT-UserContact
+    - API-PUT-UserDiscountType
+  acceptanceCriteria:
+    - 组件应显示基本信息板块：用户名、姓名、国家/地区、证件类型、证件号码、核验状态（不可修改）。
+    - 组件应显示联系方式板块：手机号和邮箱，如果已通过核验显示"已通过核验"，右侧有编辑按钮。
+    - 点击联系方式编辑按钮后，"已通过核验"字样处应变为"去手机核验修改"，提供跳转链接。
+    - 组件应显示优惠类型板块，右侧有编辑按钮。
+    - 点击优惠类型编辑按钮后，类型可下拉选择：成人、儿童、学生、残疾军人。
+    - 选择学生类型并保存后，下方应出现"学生资质查询"板块，具有刷新和查询两个按钮。
+  changeLog:
+    - date: "2025-11-16"
+      description: "初始创建。"
+
+- type: Frontend
+  id: UI-PassengerList
+  description: 乘车人列表组件，支持查询、批量删除和单独操作。
+  properties:
+    - name: passengers
+      type: array
+      description: "乘车人列表。"
+    - name: onAdd
+      type: function
+      description: "添加乘车人回调函数。"
+    - name: onEdit
+      type: function
+      description: "编辑乘车人回调函数。"
+    - name: onDelete
+      type: function
+      description: "删除乘车人回调函数。"
+    - name: onBatchDelete
+      type: function
+      description: "批量删除乘车人回调函数。"
+  state:
+    - passengers
+    - searchName
+    - selectedPassengers
+    - isLoading
+  dependencies:
+    - API-GET-Passengers
+    - API-DELETE-Passenger
+    - API-DELETE-Passengers
+  acceptanceCriteria:
+    - 组件应显示查询条，可以根据乘客姓名查询乘车人信息。
+    - 组件应显示信息展示部分：序号、姓名、证件类型、证件号码、手机/电话、核验状态、操作。
+    - 组件应支持选中若干乘车人后进行批量删除。
+    - 每个乘车人右侧操作部分可以单独删除或修改。
+    - 组件应提供"添加"按钮，点击后跳转到添加乘车人界面。
+    - 在查询条中输入姓名并查询时，列表应根据姓名进行筛选更新。
+  changeLog:
+    - date: "2025-11-16"
+      description: "初始创建。"
+
+- type: Frontend
+  id: UI-PassengerForm
+  description: 添加/修改乘车人表单组件，包含基本信息、联系方式和附加信息。
+  properties:
+    - name: passenger
+      type: object
+      description: "要编辑的乘车人信息（修改模式），为空时表示添加模式。"
+    - name: onSubmit
+      type: function
+      description: "提交表单回调函数。"
+    - name: onCancel
+      type: function
+      description: "取消回调函数。"
+  state:
+    - name
+    - idType
+    - idNumber
+    - phone
+    - discountType
+    - expiryDate
+    - birthDate
+    - errors
+    - isSubmitting
+  dependencies:
+    - API-POST-Passenger
+    - API-PUT-Passenger
+  acceptanceCriteria:
+    - 组件应显示基本信息部分：证件类型、姓名、证件号码。
+    - 组件应显示联系方式部分：有效电话号。
+    - 组件应显示附加信息部分：优惠类型。
+    - 证件类型为居民身份证、港澳居民来往大陆通行证、中国护照时，姓名只能包含中文或英文。
+    - 外国护照时姓名只能为英文或空格。
+    - 证件号格式不匹配时应显示"请输入正确的证件号码！"。
+    - 姓名或证件号码为空时应在下方显示"请输入xxx"。
+    - 外国人永久居留身份证等类型需要有效截止日期、出生日期，提供日历选择。
+    - 乱输入有效截止日期和出生日期提交时，应显示错误信息。
+    - 提交表单时，应调用 onSubmit 回调并传递表单数据。
+  changeLog:
+    - date: "2025-11-16"
+      description: "初始创建。"
+
