@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 
-const DatePicker = ({ onDateSelect }) => {
-  const [selectedDate, setSelectedDate] = useState('');
+const DatePicker = ({ onDateSelect, defaultDate }) => {
+  const [selectedDate, setSelectedDate] = useState(defaultDate || '');
 
   const handleDateChange = (event) => {
     const newDate = event.target.value;

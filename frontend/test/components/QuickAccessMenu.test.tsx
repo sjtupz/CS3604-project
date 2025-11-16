@@ -9,7 +9,7 @@ test('Given the QuickAccessMenu is rendered, Then it should display all the menu
   expect(screen.getByText('车票')).toBeDefined();
   expect(screen.getByText('团购服务')).toBeDefined();
   expect(screen.getByText('会员服务')).toBeDefined();
-  expect(screen.getByText('站车生活')).toBeDefined();
+  expect(screen.getByText('站车服务')).toBeDefined();
   expect(screen.getByText('商旅服务')).toBeDefined();
   expect(screen.getByText('出行指南')).toBeDefined();
   expect(screen.getByText('信息查询')).toBeDefined();

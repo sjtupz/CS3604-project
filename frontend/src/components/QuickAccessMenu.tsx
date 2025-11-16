@@ -1,16 +1,25 @@
 import React from 'react';
+import './QuickAccessMenu.css';
 
 const QuickAccessMenu = () => {
+  const menuItems = [
+    { name: '首页', href: '#' },
+    { name: '车票', href: '#' },
+    { name: '团购服务', href: '#' },
+    { name: '会员服务', href: '#' },
+    { name: '站车服务', href: '#' },
+    { name: '商旅服务', href: '#' },
+    { name: '出行指南', href: '#' },
+    { name: '信息查询', href: '#' },
+  ];
+
   return (
-    <div style={{ display: 'flex', justifyContent: 'center', padding: '10px', backgroundColor: '#f5f5f5' }}>
-      <a href="#" style={{ margin: '0 15px', textDecoration: 'none', color: 'black' }}>首页</a>
-      <a href="#" style={{ margin: '0 15px', textDecoration: 'none', color: 'black' }}>车票</a>
-      <a href="#" style={{ margin: '0 15px', textDecoration: 'none', color: 'black' }}>团购服务</a>
-      <a href="#" style={{ margin: '0 15px', textDecoration: 'none', color: 'black' }}>会员服务</a>
-      <a href="#" style={{ margin: '0 15px', textDecoration: 'none', color: 'black' }}>站车生活</a>
-      <a href="#" style={{ margin: '0 15px', textDecoration: 'none', color: 'black' }}>商旅服务</a>
-      <a href="#" style={{ margin: '0 15px', textDecoration: 'none', color: 'black' }}>出行指南</a>
-      <a href="#" style={{ margin: '0 15px', textDecoration: 'none', color: 'black' }}>信息查询</a>
+    <div className="quick-access-menu">
+      {menuItems.map((item, index) => (
+        <a key={index} href={item.href} className="menu-item">
+          {item.name}
+        </a>
+      ))}
     </div>
   );
 };

@@ -59,7 +59,7 @@ test('Given from and to stations are filled, when swap button is clicked, then t
   expect(fromInput.value).toBe('Beijing');
   expect(toInput.value).toBe('Shanghai');
 
-  const swapButton = screen.getByRole('button', { name: '交换' });
+  const swapButton = screen.getByTitle('交换出发地和目的地');
   await user.click(swapButton);
 
   expect(fromInput.value).toBe('Shanghai');

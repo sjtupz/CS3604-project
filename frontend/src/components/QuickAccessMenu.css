@@ -1,0 +1,19 @@
+.quick-access-menu {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #007bff;
+    padding: 12px 0;
+}
+
+.menu-item {
+    color: white;
+    text-decoration: none;
+    font-size: 16px;
+    padding: 0 25px;
+    transition: background-color 0.3s;
+}
+
+.menu-item:hover {
+    background-color: #0056b3;
+}

@@ -1,14 +1,16 @@
 import React from 'react';
+import ticketFormBg from '../assets/ticket-form-bg.png';
 import { TopNavigationBar } from '../components/TopNavigationBar';
 import { QuickAccessMenu } from '../components/QuickAccessMenu';
 import { TicketQueryForm } from '../components/TicketQueryForm';
+import './HomePage.css';
 
 const HomePage = () => {
   return (
-    <div style={{ backgroundColor: 'white' }}>
+    <div className="home-page">
       <TopNavigationBar />
       <QuickAccessMenu />
-      <div style={{ backgroundImage: `url(/requirements/01_首页/车票查询表单背景.png)`, backgroundSize: 'cover', padding: '20px' }}>
+      <div className="main-content" style={{ backgroundImage: `url(${ticketFormBg})` }}>
         <TicketQueryForm />
       </div>
     </div>

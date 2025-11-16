@@ -10,7 +10,7 @@ interface StationDropdownProps {
 
 const styles = {
   container: { position: 'relative' as const },
-  input: { padding: '10px' },
+  input: { padding: '10px', width: '100%', boxSizing: 'border-box' },
   dropdown: { border: '1px solid #ccc', backgroundColor: 'white', position: 'absolute' as const, zIndex: 1, width: '100%' },
   dropdownItem: { padding: '10px', cursor: 'pointer' },
   noMatch: { padding: '10px', color: '#999' }
