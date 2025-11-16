@@ -1,0 +1,96 @@
+- type: Frontend
+  id: UI-TopNavigationBar
+  description: 网站的顶部导航栏，包含Logo、搜索框和用户操作入口。
+  properties: []
+  state:
+    - isLoggedIn
+  dependencies:
+    - UI-LoginForm
+    - UI-RegisterForm
+    - UI-PersonalCenterPage
+  acceptanceCriteria:
+    - 点击Logo应跳转到首页。
+    - 未登录时，点击“我的12306”或“登录”应跳转到登录页。
+    - 点击“注册”应跳转到注册页。
+  changeLog:
+    - date: "2025-11-17"
+      description: "初始创建。"
+
+- type: Frontend
+  id: UI-QuickAccessMenu
+  description: 常用功能快捷入口菜单。
+  properties: []
+  state: []
+  dependencies:
+    - UI-TrainListPage
+  acceptanceCriteria:
+    - 点击“首页”应跳转到首页。
+    - 点击“车票”应跳转到车次列表页。
+  changeLog:
+    - date: "2025-11-17"
+      description: "初始创建。"
+
+- type: Frontend
+  id: UI-TicketQueryForm
+  description: 用于查询车票的表单。
+  properties: []
+  state:
+    - fromStation
+    - toStation
+    - departureDate
+    - isHighSpeed
+    - fromError
+    - toError
+    - dateError
+    - isLoading
+  dependencies:
+    - API-GET-Stations
+    - API-GET-Trains
+    - UI-StationDropdown
+    - UI-DatePicker
+  acceptanceCriteria:
+    - 用户未输入出发地、到达地或日期时，点击查询按钮应显示错误提示。
+    - 用户输入合法信息并点击查询，应跳转到车次列表页。
+    - 点击出发地或到达地输入框时，应显示站点下拉列表。
+    - 点击日期输入框时，应显示日期选择器。
+    - 点击交换按钮应交换出发地和到达地。
+  changeLog:
+    - date: "2025-11-17"
+      description: "初始创建。"
+
+- type: Frontend
+  id: UI-StationDropdown
+  description: 用于显示和选择站点的下拉列表。
+  properties:
+    - name: onSelectStation
+      type: function
+      description: "选择站点后的回调函数。"
+  state:
+    - stations
+    - currentPage
+    - searchTerm
+  dependencies:
+    - API-GET-Stations
+  acceptanceCriteria:
+    - 应能根据用户输入进行模糊查询和分页显示。
+    - 选择一个站点后，应调用onSelectStation回调。
+  changeLog:
+    - date: "2025-11-17"
+      description: "初始创建。"
+
+- type: Frontend
+  id: UI-DatePicker
+  description: 日期选择器组件。
+  properties:
+    - name: onDateSelect
+      type: function
+      description: "选择日期后的回调函数。"
+  state:
+    - selectedDate
+  dependencies: []
+  acceptanceCriteria:
+    - 用户只能选择从当前日期开始的未来日期。
+    - 选择日期并确认后，应调用onDateSelect回调。
+  changeLog:
+    - date: "2025-11-17"
+      description: "初始创建。"

@@ -1,0 +1,60 @@
+- type: Backend
+  id: API-GET-Stations
+  route: GET /api/stations
+  description: 获取所有火车站的列表，用于前端输入框的推荐功能。
+  input:
+    type: QueryParams
+    params:
+      search: string (optional)
+  output:
+    success:
+      statusCode: 200
+      body:
+        - name: "北京南"
+          pinyin: "beijingnan"
+        - name: "上海虹桥"
+          pinyin: "shanghaihongqiao"
+    error:
+      - statusCode: 500
+        body: { error: "Internal Server Error" }
+  dependencies:
+    - DB-FindAllStations
+  acceptanceCriteria:
+    - 当不带search参数调用时，返回所有站点列表。
+    - 当带search参数调用时，返回与输入匹配的站点列表。
+  changeLog:
+    - date: "2025-11-17"
+      description: "初始创建。"
+
+- type: Backend
+  id: API-GET-Trains
+  route: GET /api/trains
+  description: 根据查询条件搜索车次。
+  input:
+    type: QueryParams
+    params:
+      from: string
+      to: string
+      date: string
+      isHighSpeed: boolean
+  output:
+    success:
+      statusCode: 200
+      body: 
+        - trainNumber: "G1"
+          departureTime: "08:00"
+          arrivalTime: "12:30"
+          duration: "4h30m"
+    error:
+      - statusCode: 400
+        body: { error: "Invalid input parameters." }
+      - statusCode: 500
+        body: { error: "Query failed, please try again later." }
+  dependencies:
+    - DB-FindTrains
+  acceptanceCriteria:
+    - 当提供所有必需参数时，返回匹配的车次列表。
+    - 当缺少必需参数时，返回 400 Bad Request。
+  changeLog:
+    - date: "2025-11-17"
+      description: "初始创建。"

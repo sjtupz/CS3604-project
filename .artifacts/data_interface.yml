@@ -1,0 +1,22 @@
+- type: Database
+  id: DB-FindAllStations
+  description: 从数据库中查询所有火车站信息。
+  dependencies:
+    - none
+  acceptanceCriteria:
+    - 成功执行后，应返回包含所有站点名称和拼音的列表。
+  changeLog:
+    - date: "2025-11-17"
+      description: "初始创建，用于支持首页出发地和到达地的站点推荐。"
+
+- type: Database
+  id: DB-FindTrains
+  description: 根据出发地、到达地、出发日期和列车类型在数据库中查询车次信息。
+  dependencies:
+    - none
+  acceptanceCriteria:
+    - 成功执行后，返回所有匹配条件的车次列表。
+    - 如果没有匹配的车次，返回空列表。
+  changeLog:
+    - date: "2025-11-17"
+      description: "初始创建，用于支持车票查询功能。"
