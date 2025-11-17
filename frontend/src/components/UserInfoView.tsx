@@ -45,28 +45,28 @@ const UserInfoView: React.FC<UserInfoViewProps> = ({
 
   return (
     <div style={{ padding: '20px' }}>
-      <h2>查看个人信息</h2>
-
       {/* 基本信息板块 */}
       <div style={{ marginBottom: '30px', border: '1px solid #eee', padding: '15px', borderRadius: '4px' }}>
-        <h3>基本信息</h3>
-        <p><strong>用户名:</strong> {userInfo?.username || '-'}</p>
-        <p><strong>姓名:</strong> {userInfo?.realName || '-'}</p>
-        <p><strong>国家/地区:</strong> {userInfo?.country || '-'}</p>
-        <p><strong>证件类型:</strong> {userInfo?.idType || '-'}</p>
-        <p><strong>证件号码:</strong> {userInfo?.idNumber || '-'}</p>
-        <p><strong>核验状态:</strong> {userInfo?.verificationStatus || '-'}</p>
+        <h3 style={{ textAlign: 'left' }}>基本信息</h3>
+        <div style={{ textAlign: 'center' }}>
+          <p>用户名: {userInfo?.username || '-'}</p>
+          <p>姓名: {userInfo?.realName || '-'}</p>
+          <p>国家/地区: {userInfo?.country || '-'}</p>
+          <p>证件类型: {userInfo?.idType || '-'}</p>
+          <p>证件号码: {userInfo?.idNumber || '-'}</p>
+          <p>核验状态: {userInfo?.verificationStatus || '-'}</p>
+        </div>
       </div>
 
       {/* 联系方式板块 */}
-      <div style={{ marginBottom: '30px', border: '1px solid #eee', padding: '15px', borderRadius: '4px' }}>
+      <div style={{ marginBottom: '30px', border: '1px solid #eee', padding: '15px', borderRadius: '4px', textAlign: 'center' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <h3>联系方式</h3>
           <button onClick={() => setIsEditingContact(!isEditingContact)} style={{ padding: '5px 10px' }}>
             {isEditingContact ? '完成' : '编辑'}
           </button>
         </div>
-        <p><strong>手机号:</strong> {userInfo?.phoneNumber || '-'}</p>
+        <p>手机号: {userInfo?.phoneNumber || '-'}</p>
         {userInfo?.phoneVerified && <span style={{ color: 'green', fontSize: '14px' }}>已通过核验</span>}
         {isEditingContact && userInfo?.phoneVerified && (
           <div style={{ marginTop: '10px' }}>
@@ -75,11 +75,11 @@ const UserInfoView: React.FC<UserInfoViewProps> = ({
             </button>
           </div>
         )}
-        <p><strong>邮箱:</strong> {userInfo?.email || '-'}</p>
+        <p>邮箱: {userInfo?.email || '-'}</p>
       </div>
 
       {/* 优惠类型板块 */}
-      <div style={{ marginBottom: '30px', border: '1px solid #eee', padding: '15px', borderRadius: '4px' }}>
+      <div style={{ marginBottom: '30px', border: '1px solid #eee', padding: '15px', borderRadius: '4px', textAlign: 'center' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <h3>优惠类型</h3>
           <button onClick={() => setIsEditingDiscountType(!isEditingDiscountType)} style={{ padding: '5px 10px' }}>
@@ -103,7 +103,7 @@ const UserInfoView: React.FC<UserInfoViewProps> = ({
             </button>
           </div>
         ) : (
-          <p><strong>当前优惠类型:</strong> {userInfo?.discountType || '-'}</p>
+          <p>当前优惠类型: {userInfo?.discountType || '-'}</p>
         )}
 
         {/* 学生资质查询板块 */}

@@ -33,7 +33,7 @@ const OrderTabs: React.FC<OrderTabsProps> = ({
           onClick={() => handleTabClick(tab)}
           style={{
             padding: '10px 20px',
-            border: 'none',
+            border: '1px solid #e8e8e8',
             background: 'transparent',
             cursor: 'pointer',
             borderBottom: currentTab === tab ? '2px solid blue' : '2px solid transparent',

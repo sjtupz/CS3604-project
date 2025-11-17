@@ -5,7 +5,7 @@ const { get, run } = require('./database');
 const getUserInfo = async (userId) => {
   try {
     const sql = `
-      SELECT 
+      SELECT
         id as userId,
         username,
         real_name as realName,
@@ -17,8 +17,9 @@ const getUserInfo = async (userId) => {
         email,
         phone_verified as phoneVerified,
         discount_type as discountType,
-        student_qualification as studentQualification
-      FROM users 
+        student_qualification as studentQualification,
+        gender
+      FROM users
       WHERE id = ?
     `;
     

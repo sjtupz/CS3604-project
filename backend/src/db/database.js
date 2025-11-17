@@ -47,6 +47,7 @@ const initializeDatabase = () => {
         phone_verified INTEGER DEFAULT 0,
         discount_type TEXT DEFAULT '成人',
         student_qualification TEXT,
+        gender TEXT DEFAULT 'male',
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
       )
@@ -104,9 +105,73 @@ const initializeDatabase = () => {
         `, (err) => {
           if (err) {
             reject(err);
-          } else {
-            resolve();
+            return;
           }
+          
+          // 检查并添加gender字段（如果不存在）
+          database.all("PRAGMA table_info(users)", (err, columns) => {
+            if (err) {
+              console.error('Error checking table info:', err);
+              resolve();
+              return;
+            }
+            
+            const hasGenderColumn = columns.some(col => col.name === 'gender');
+            if (!hasGenderColumn) {
+              database.run("ALTER TABLE users ADD COLUMN gender TEXT DEFAULT 'male'", (err) => {
+                if (err) {
+                  console.error('Error adding gender column:', err);
+                }
+              });
+            }
+            
+            // 插入测试用户（如果不存在）
+            database.get('SELECT id FROM users WHERE id = ?', ['test-user-id'], (err, row) => {
+              if (err) {
+                reject(err);
+                return;
+              }
+              
+              if (!row) {
+                database.run(`
+                  INSERT INTO users (
+                    id, username, real_name, country, id_type, id_number,
+                    verification_status, phone_number, email, phone_verified,
+                    discount_type, gender
+                  ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                `, [
+                  'test-user-id',
+                  'zhangsan',
+                  '张三',
+                  '中国',
+                  '身份证',
+                  '110101199001011234',
+                  '已通过',
+                  '13800138000',
+                  'zhangsan@example.com',
+                  1,
+                  '成人',
+                  'male'
+                ], (err) => {
+                  if (err) {
+                    console.error('Error inserting test user:', err);
+                    // 不阻止数据库初始化，只记录错误
+                  } else {
+                    console.log('Test user created successfully');
+                  }
+                  resolve();
+                });
+              } else {
+                // 如果用户已存在但gender为空，更新gender
+                database.run("UPDATE users SET gender = 'male' WHERE id = 'test-user-id' AND (gender IS NULL OR gender = '')", (err) => {
+                  if (err) {
+                    console.error('Error updating user gender:', err);
+                  }
+                  resolve();
+                });
+              }
+            });
+          });
         });
       });
     });

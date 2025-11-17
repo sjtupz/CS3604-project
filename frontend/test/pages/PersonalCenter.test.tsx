@@ -1,10 +1,31 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import PersonalCenter from '../../src/pages/PersonalCenter';
+import { vi } from 'vitest';
+import apiClient from '../../src/api/client';
+
+// Mock API client
+vi.mock('../../src/api/client', () => ({
+  default: {
+    get: vi.fn(),
+    interceptors: {
+      request: { use: vi.fn() },
+      response: { use: vi.fn() }
+    }
+  }
+}));
 
 describe('PersonalCenter Page', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
+    // Mock successful API response
+    (apiClient.get as any).mockResolvedValue({
+      data: {
+        realName: '张三',
+        username: 'zhangsan',
+        gender: 'male'
+      }
+    });
   });
 
   test('Given 渲染个人中心页面 When 初始加载 Then 应显示个人中心布局', async () => {
@@ -67,7 +88,10 @@ describe('PersonalCenter Page', () => {
   });
 
   test('Given 用户信息加载失败 When 渲染页面 Then 应显示默认状态', async () => {
-    // Arrange & Act
+    // Arrange
+    (apiClient.get as any).mockRejectedValue(new Error('Network Error'));
+    
+    // Act
     render(<PersonalCenter />);
 
     // Assert

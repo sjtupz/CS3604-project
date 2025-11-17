@@ -26,7 +26,7 @@ const UncompletedOrders: React.FC<UncompletedOrdersProps> = ({
   const isEmpty = orders.length === 0;
 
   return (
-    <div style={{ padding: '20px' }}>
+    <div style={{ padding: '20px', border: '1px solid #e8e8e8', borderRadius: '4px' }}>
       {/* 未完成订单主体部分 - 浅蓝色边框 */}
       <div
         style={{
@@ -45,6 +45,7 @@ const UncompletedOrders: React.FC<UncompletedOrdersProps> = ({
             style={{
               display: 'flex',
               alignItems: 'center',
+              justifyContent: 'center',
               padding: '60px 20px',
               gap: '20px'
             }}
@@ -136,7 +137,7 @@ const UncompletedOrders: React.FC<UncompletedOrdersProps> = ({
       <div
         style={{
           marginTop: '30px',
-          padding: '15px 20px',
+          padding: '8px 16px',
           border: '2px solid #b8860b',
           borderRadius: '4px',
           backgroundColor: '#fff8dc'
@@ -144,24 +145,24 @@ const UncompletedOrders: React.FC<UncompletedOrdersProps> = ({
       >
         <h4 style={{ 
           marginTop: 0, 
-          marginBottom: '12px',
-          fontSize: '16px',
+          marginBottom: '6px',
+          fontSize: '13px',
           fontWeight: 'bold',
           color: '#000'
         }}>
           温馨提示
         </h4>
-        <div style={{ fontSize: '14px', lineHeight: '1.4', color: '#666' }}>
-          <p style={{ margin: '4px 0' }}>
+        <div style={{ fontSize: '13px', lineHeight: '1.3', color: '#666' }}>
+          <p style={{ margin: '3px 0' }}>
             1.席位已锁定，请在指定时间内完成网上支付。
           </p>
-          <p style={{ margin: '4px 0' }}>
+          <p style={{ margin: '3px 0' }}>
             2.逾期未支付，系统将取消本次交易。
           </p>
-          <p style={{ margin: '4px 0' }}>
+          <p style={{ margin: '3px 0' }}>
             3.在完成支付或取消本订单之前，您将无法购买其他车票。
           </p>
-          <p style={{ margin: '4px 0' }}>
+          <p style={{ margin: '3px 0' }}>
             4.未尽事宜详见《国铁集团铁路旅客运输规程》《广深港高速铁路跨境旅客运输组织规则》《中老铁路跨境旅客联运组织规则》等有关规定和车站公告。
           </p>
         </div>

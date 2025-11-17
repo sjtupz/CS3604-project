@@ -60,7 +60,7 @@ const updatePassenger = async (req, res) => {
     const { passengerId } = req.params;
     const passengerData = req.body;
 
-    await passengerService.updatePassenger(passengerId, passengerData);
+    await passengerService.updatePassenger(passengerId, userId, passengerData);
 
     res.status(200).json({ message: 'Passenger updated successfully.' });
   } catch (error) {
@@ -89,7 +89,7 @@ const deletePassenger = async (req, res) => {
     
     const { passengerId } = req.params;
 
-    await passengerService.deletePassenger(passengerId);
+    await passengerService.deletePassenger(passengerId, userId);
 
     res.status(200).json({ message: 'Passenger deleted successfully.' });
   } catch (error) {

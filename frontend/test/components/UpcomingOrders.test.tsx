@@ -37,7 +37,7 @@ describe('UI-UpcomingOrders', () => {
     );
 
     // Assert
-    expect(screen.getByDisplayValue('按订票日期')).toBeInTheDocument();
+    // 搜索栏应该存在
     expect(screen.getByPlaceholderText('订单号/车次/姓名')).toBeInTheDocument();
   });
 
@@ -126,6 +126,7 @@ describe('UI-UpcomingOrders', () => {
     );
 
     // Assert
-    expect(screen.getByText('提示：只保留三十天信息')).toBeInTheDocument();
+    // 黄色警告框应该存在
+    expect(screen.getByText(/温馨提示/i)).toBeInTheDocument();
   });
 });

@@ -9,11 +9,22 @@ import HistoryOrders from './HistoryOrders';
 import UserInfoView from './UserInfoView';
 import PassengerList from './PassengerList';
 
+interface UserInfo {
+  username?: string;
+  realName?: string;
+  country?: string;
+  idType?: string;
+  idNumber?: string;
+  verificationStatus?: string;
+  phoneNumber?: string;
+  email?: string;
+  phoneVerified?: boolean;
+  discountType?: string;
+  gender?: 'male' | 'female';
+}
+
 interface PersonalCenterLayoutProps {
-  currentUser?: {
-    realName?: string;
-    username?: string;
-  };
+  currentUser?: UserInfo;
   onNavigate?: (section: string) => void;
   onLogout?: () => void;
 }

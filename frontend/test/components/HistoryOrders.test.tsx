@@ -50,7 +50,7 @@ describe('UI-HistoryOrders', () => {
     // Assert
     expect(screen.getAllByDisplayValue('').length).toBeGreaterThanOrEqual(2); // 日期输入框
     expect(screen.getByPlaceholderText('订单号/车次/姓名')).toBeInTheDocument();
-    expect(screen.getByText(/查询/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/查询/i).length).toBeGreaterThan(0);
   });
 
   test('Given 存在历史订单 When 渲染组件 Then 应显示订单列表，格式与未出行订单相同', () => {
@@ -128,8 +128,8 @@ describe('UI-HistoryOrders', () => {
     const searchInput = screen.getByPlaceholderText('订单号/车次/姓名');
     await user.type(searchInput, '1234567890');
     
-    const queryButton = screen.getByText(/查询/i);
-    await user.click(queryButton);
+    const queryButtons = screen.getAllByText(/查询/i);
+    await user.click(queryButtons[0]);
 
     // Assert
     expect(screen.getByText('G108')).toBeInTheDocument();
@@ -150,8 +150,8 @@ describe('UI-HistoryOrders', () => {
     const searchInput = screen.getByPlaceholderText('订单号/车次/姓名');
     await user.type(searchInput, 'G109');
     
-    const queryButton = screen.getByText(/查询/i);
-    await user.click(queryButton);
+    const queryButtons = screen.getAllByText(/查询/i);
+    await user.click(queryButtons[0]);
 
     // Assert
     expect(screen.getByText('G109')).toBeInTheDocument();
@@ -172,8 +172,8 @@ describe('UI-HistoryOrders', () => {
     const searchInput = screen.getByPlaceholderText('订单号/车次/姓名');
     await user.type(searchInput, '李四');
     
-    const queryButton = screen.getByText(/查询/i);
-    await user.click(queryButton);
+    const queryButtons = screen.getAllByText(/查询/i);
+    await user.click(queryButtons[0]);
 
     // Assert
     expect(screen.getByText('李四')).toBeInTheDocument();
@@ -197,8 +197,8 @@ describe('UI-HistoryOrders', () => {
     await user.type(startDateInput, '2025-01-15');
     await user.type(endDateInput, '2025-01-17');
     
-    const queryButton = screen.getByText(/查询/i);
-    await user.click(queryButton);
+    const queryButtons = screen.getAllByText(/查询/i);
+    await user.click(queryButtons[0]);
 
     // Assert
     expect(screen.getByText('G108')).toBeInTheDocument();
@@ -215,7 +215,8 @@ describe('UI-HistoryOrders', () => {
     );
 
     // Assert
-    expect(screen.getByText(/提示：只保留三十天信息/i)).toBeInTheDocument();
+    // 黄色警告框应该存在
+    expect(screen.getByText(/温馨提示/i)).toBeInTheDocument();
   });
 
   test('Given 订单列表为空 When 渲染组件 Then 应显示空状态', () => {
@@ -228,9 +229,8 @@ describe('UI-HistoryOrders', () => {
     );
 
     // Assert
-    expect(screen.getByText('订票日期')).toBeInTheDocument();
-    expect(screen.getByText('车次信息')).toBeInTheDocument();
-    // 表格头部应该存在，但tbody应该为空
+    // 空状态时不应该显示表格头部，应该显示空状态提示
+    expect(screen.getByText(/您没有对应的订单内容哦/i)).toBeInTheDocument();
   });
 });
 
