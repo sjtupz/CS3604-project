@@ -1,0 +1,115 @@
+.card {
+  display: grid;
+  grid-template-columns: 120px 1fr 120px;
+  align-items: center;
+  gap: 12px;
+  background: #ffffff;
+  border: 1px solid #e5eaf1;
+  border-radius: 8px;
+  box-shadow: 0 6px 12px rgba(0,0,0,0.06);
+  padding: 12px 16px;
+}
+
+.left {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.trainNo {
+  font-size: 16px;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.stations {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.middle {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.timeItem {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.timeLabel {
+  font-size: 12px;
+  color: #8a94a6;
+}
+
+.timeValue {
+  font-size: 14px;
+  color: #1f2937;
+  font-weight: 600;
+}
+
+.right {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.price {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+  font-family: SFMono-Regular, Menlo, Consolas, monospace;
+  font-variant-numeric: tabular-nums;
+  color: #1f2937;
+}
+
+.currency {
+  font-size: 14px;
+  opacity: 0.9;
+}
+
+.amount {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.bookBtn {
+  min-width: 72px;
+  height: 32px;
+  padding: 0 12px;
+  border-radius: 16px;
+  border: none;
+  background: #ff6700;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 50ms ease;
+  will-change: transform, box-shadow, background-color;
+}
+
+.bookBtn:hover {
+  background: #e65f00;
+  box-shadow: 0 4px 8px rgba(255, 103, 0, 0.3);
+}
+
+.bookBtn:active {
+  transform: scale(0.98);
+}
+
+.bookBtn:focus-visible {
+  outline: 2px solid #3b99fc;
+  outline-offset: 2px;
+}
+
+@media (max-width: 768px) {
+  .card {
+    grid-template-columns: 1fr;
+  }
+  .right {
+    justify-content: space-between;
+  }
+}

@@ -1,0 +1,5 @@
+body,#root{margin:0;padding:0;background-color:#f6f6f6;box-sizing:border-box}
+.top-header-bar{width:100%;background-color:#333;border-bottom:1px solid #444}
+.main-nav-bar{width:100%;background-color:#3b99fc}
+.layout-container{max-width:1190px;margin-left:auto;margin-right:auto;padding-left:15px;padding-right:15px;box-sizing:border-box}
+.main-content-area{padding-top:20px;padding-bottom:20px}

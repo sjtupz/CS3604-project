@@ -1,0 +1,32 @@
+.top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #ffffff;
+  border-bottom: 1px solid var(--border);
+  padding: 8px 16px;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #ff6700;
+  font-weight: 700;
+}
+
+.nav {
+  background: #3b99fc;
+  color: #ffffff;
+}
+
+.navInner {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 8px 16px;
+  display: flex;
+  gap: 16px;
+}
+
+.link { color: #ffffff; text-decoration: none; font-size: 14px; }
+.link:hover { text-decoration: underline; }

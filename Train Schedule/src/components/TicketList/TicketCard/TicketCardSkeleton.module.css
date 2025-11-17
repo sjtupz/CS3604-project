@@ -1,0 +1,44 @@
+.list {
+  display: grid;
+  gap: 12px;
+}
+
+.card {
+  display: grid;
+  grid-template-columns: 120px 1fr 120px;
+  align-items: center;
+  gap: 12px;
+  background: #ffffff;
+  border: 1px solid #e5eaf1;
+  border-radius: 8px;
+  padding: 12px 16px;
+  overflow: hidden;
+}
+
+.shimmer {
+  position: relative;
+  background: #eef2f7;
+}
+
+.shimmer::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.6) 50%, rgba(255,255,255,0) 100%);
+  animation: pulse 500ms ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+.leftLine { height: 16px; width: 80px; border-radius: 4px; }
+.leftSub { height: 12px; width: 100px; border-radius: 4px; margin-top: 6px; }
+.midItem { height: 14px; width: 120px; border-radius: 4px; }
+.price { height: 18px; width: 60px; border-radius: 4px; }
+.btn { height: 32px; width: 72px; border-radius: 16px; }
+
+@media (max-width: 768px) {
+  .card { grid-template-columns: 1fr; }
+}

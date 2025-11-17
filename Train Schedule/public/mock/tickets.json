@@ -1,0 +1,8 @@
+{
+  "meta": { "totalItems": 3, "totalPages": 1, "currentPage": 1, "pageSize": 10 },
+  "data": [
+    { "trainNo": "G108", "fromStation": "北京南", "toStation": "上海虹桥", "departureTime": "09:00", "arrivalTime": "13:29", "duration": "4小时29分钟", "arrivalType": "当日到达", "seats": [{ "type": "二等座", "status": "有", "price": 553 }, { "type": "一等座", "status": 15, "price": 933 }] },
+    { "trainNo": "G27", "fromStation": "北京南", "toStation": "南京南", "departureTime": "06:45", "arrivalTime": "11:02", "duration": "4小时17分钟", "arrivalType": "当日到达", "seats": [{ "type": "二等座", "status": 8, "price": 499 }] },
+    { "trainNo": "D2287", "fromStation": "北京", "toStation": "徐州东", "departureTime": "07:12", "arrivalTime": "13:26", "duration": "6小时14分钟", "arrivalType": "当日到达", "seats": [{ "type": "硬座", "status": 12, "price": 189 }] }
+  ]
+}

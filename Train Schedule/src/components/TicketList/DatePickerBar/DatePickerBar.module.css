@@ -1,0 +1,11 @@
+.bar { width: 100%; display: flex; align-items: center; gap: 10px; background: #fff; border: 1px solid var(--border); border-radius: 6px; padding: 10px 14px; }
+.tab { padding: 7px 12px; border: 1px solid var(--border); border-radius: 18px; background: #f7f9fc; cursor: pointer; font-size: 14px; }
+.tab:hover { background: #eef4ff; }
+.active { background: #1f8edc; color: #fff; border-color: #1f8edc; }
+.spacer { flex: 1; }
+.ctrl { display: inline-flex; align-items: center; gap: 6px; }
+.label { font-size: 14px; color: var(--text-secondary); }
+.ctrl select { height: 32px; border: 1px solid var(--border); border-radius: 8px; padding: 0 8px; background: #fff; }
+.btn { padding: 7px 12px; border: 1px solid var(--border); border-radius: 14px; background: #f7f9fc; cursor: pointer; }
+.input { height: 32px; border: 1px solid var(--border); border-radius: 8px; padding: 0 10px; }
+.error { margin-left: 8px; color: #ef4444; font-size: 14px; }

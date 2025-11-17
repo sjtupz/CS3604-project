@@ -1,0 +1,6 @@
+.wrap { max-width: 480px; margin: 24px auto; background: #fff; border: 1px solid var(--border); border-radius: 8px; padding: 16px; }
+.title { font-size: 18px; font-weight: 700; margin-bottom: 12px; }
+.field { display: grid; gap: 6px; margin-bottom: 12px; }
+.input { height: 36px; border: 1px solid var(--border); border-radius: 6px; padding: 0 10px; }
+.btn { height: 36px; background: #ff6700; color: #fff; border: none; border-radius: 6px; cursor: pointer; }
+.btn:hover { background: #e65f00; }

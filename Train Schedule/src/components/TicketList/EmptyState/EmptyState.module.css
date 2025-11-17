@@ -1,0 +1,19 @@
+.wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+  color: #6b7280;
+}
+
+.icon {
+  width: 32px;
+  height: 32px;
+  color: #9aa3af;
+  margin-bottom: 8px;
+}
+
+.text {
+  font-size: 14px;
+}

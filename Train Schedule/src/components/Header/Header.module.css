@@ -1,0 +1,26 @@
+.wrap { position: sticky; top: 0; z-index: 100; width: 100%; }
+.inner { }
+.top { display: grid; grid-template-columns: auto 1fr auto; align-items: center; height: 68px; background: #ffffff; border-bottom: 1px solid #e5eaf1; }
+.search { display: flex; justify-content: center; width: 100%; }
+.search input { width: 432px; height: 36px; border: 1px solid #e5eaf1; border-radius: 8px; padding: 0 12px; }
+.nav { height: 53px; background: #1f8edc; display: flex; align-items: center; gap: 28px; color: #ffffff; }
+.navItem { font-size: 14px; cursor: pointer; opacity: 0.95; }
+.navItem:hover { opacity: 1; }
+
+/* 左上角品牌（仿照 77.png/10.png 文字布局） */
+.brand { display: flex; align-items: center; gap: 10px; padding-left: 8px; }
+.brandIconBig { width: 28px; height: 28px; }
+.brandText { display: flex; flex-direction: column; line-height: 1; }
+.brandCnText { color: #1f2937; font-weight: 700; }
+.brandEnText { color: #8a94a6; font-size: 12px; }
+
+@media (max-width: 1024px) {
+  .search input { width: 320px; }
+}
+
+@media (max-width: 768px) {
+  .top { height: auto; padding: 8px 0; }
+  .search { padding: 8px 0; }
+  .nav { flex-wrap: wrap; gap: 12px; justify-content: center; }
+}
+.topRight { display: flex; gap: 10px; justify-self: end; color: #8a94a6; font-size: 12px; }

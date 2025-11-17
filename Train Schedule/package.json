@@ -1,0 +1,58 @@
+{
+  "name": "cs3604-project",
+  "version": "1.0.0",
+  "description": "上海交通大学CS3604课程项目",
+  "main": "jest.config.js",
+  "scripts": {
+    "test": "jest",
+    "test:backend": "jest",
+    "test:frontend": "vitest run --environment jsdom src/pages/TicketList/TicketList.test.tsx",
+    "db:setup": "ts-node scripts/setup-database.ts",
+    "start": "ts-node src/server.ts",
+    "web:dev": "vite",
+    "dev": "vite",
+    "web:build": "vite build",
+    "web:preview": "vite preview",
+    "seed:all": "ts-node scripts/seed_full_db.ts"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sjtupz/CS3604-project.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/sjtupz/CS3604-project/issues"
+  },
+  "homepage": "https://github.com/sjtupz/CS3604-project#readme",
+  "devDependencies": {
+    "@types/express": "^5.0.5",
+    "@types/jest": "^30.0.0",
+    "@types/supertest": "^6.0.3",
+    "@types/react": "^18.2.66",
+    "@types/react-dom": "^18.2.18",
+    "express": "^5.1.0",
+    "jest": "^30.2.0",
+    "supertest": "^7.1.4",
+    "@vitejs/plugin-react": "^4.2.0",
+    "vite": "^5.0.12",
+    "ts-jest": "^29.4.5",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3",
+    "vitest": "^2.1.3",
+    "@testing-library/react": "^16.0.0",
+    "@testing-library/user-event": "^14.5.2",
+    "@testing-library/jest-dom": "^6.4.6",
+    "jsdom": "^24.0.0"
+  },
+  "dependencies": {
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/lru-cache": "^7.10.9",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "better-sqlite3": "^12.4.1",
+    "lru-cache": "^11.2.2",
+    "react-router-dom": "^6.28.0"
+  }
+}

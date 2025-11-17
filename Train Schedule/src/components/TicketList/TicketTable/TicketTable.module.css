@@ -1,0 +1,13 @@
+.tableWrap { width: 100%; background: #fff; border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 6px 12px rgba(0,0,0,0.06); overflow: hidden; }
+.table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+.thead tr { background: #1f8edc; color: #fff; }
+.th { padding: 10px 12px; font-size: 12px; border-right: 1px solid rgba(255,255,255,0.3); text-align: left; }
+.tbody .tr { border-top: 1px solid var(--border); }
+.td { padding: 10px 12px; font-size: 13px; color: var(--text-primary); border-right: 1px solid #eef2f7; }
+.seatCell { text-align: center; font-variant-numeric: tabular-nums; }
+.ok { color: #22c55e; }
+.wait { color: #f59e0b; }
+.dash { color: #9aa3af; }
+.btn { height: 34px; padding: 0 14px; border-radius: 4px; border: none; background: #ff7a00; color: #fff; cursor: pointer; font-weight: 700; }
+.btn:hover { background: #e65f00; }
+.tr { min-height: 40px; }

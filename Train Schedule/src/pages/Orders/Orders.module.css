@@ -1,0 +1,5 @@
+.wrap { max-width: 1080px; margin: 24px auto; padding: 0 16px; }
+.list { display: grid; gap: 12px; }
+.item { background: #fff; border: 1px solid var(--border); border-radius: 8px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; }
+.btn { height: 32px; padding: 0 12px; background: #ff6700; color: #fff; border: none; border-radius: 16px; cursor: pointer; }
+.btn:hover { background: #e65f00; }
