@@ -23,7 +23,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onRegisterSuccess })
       {state.errors.form && <div className="form-error">{state.errors.form}</div>}
 
       <div className="form-group">
-        <label htmlFor="username">* 用户名</label>
+        <label htmlFor="username">用户名</label>
         <input
           id="username"
           type="text"
@@ -37,7 +37,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onRegisterSuccess })
       </div>
 
       <div className="form-group">
-        <label htmlFor="password">* 登录密码</label>
+        <label htmlFor="password">登录密码</label>
         <input
           id="password"
           type="password"
@@ -52,7 +52,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onRegisterSuccess })
       </div>
 
       <div className="form-group">
-        <label htmlFor="confirmPassword">* 确认密码</label>
+        <label htmlFor="confirmPassword">确认密码</label>
         <input
           id="confirmPassword"
           type="password"
@@ -66,7 +66,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onRegisterSuccess })
       </div>
 
       <div className="form-group">
-        <label htmlFor="identityType">* 证件类型</label>
+        <label htmlFor="identityType">证件类型</label>
         <select
           id="identityType"
           name="identityType"
@@ -84,7 +84,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onRegisterSuccess })
       </div>
 
       <div className="form-group">
-        <label htmlFor="fullName">* 姓名</label>
+        <label htmlFor="fullName">姓名</label>
         <input
           id="fullName"
           type="text"
@@ -98,7 +98,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onRegisterSuccess })
       </div>
 
       <div className="form-group">
-        <label htmlFor="identityNumber">* 证件号码</label>
+        <label htmlFor="identityNumber">证件号码</label>
         <input
           id="identityNumber"
           type="text"
@@ -112,7 +112,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onRegisterSuccess })
       </div>
 
       <div className="form-group">
-        <label htmlFor="passengerType">* 旅客类型</label>
+        <label htmlFor="passengerType">旅客类型</label>
         <select
           id="passengerType"
           name="passengerType"
@@ -130,7 +130,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onRegisterSuccess })
       </div>
 
       <div className="form-group">
-        <label htmlFor="phoneNumber">* 手机号码</label>
+        <label htmlFor="phoneNumber">手机号码</label>
         <input
           id="phoneNumber"
           type="text"

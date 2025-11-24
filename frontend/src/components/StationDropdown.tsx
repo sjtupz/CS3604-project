@@ -6,17 +6,18 @@ interface StationDropdownProps {
   value: string;
   onSelectStation: (stationName: string) => void;
   placeholder?: string;
+  id?: string;
 }
 
 const styles = {
   container: { position: 'relative' as const },
-  input: { padding: '10px', width: '100%', boxSizing: 'border-box' },
+  input: { padding: '10px', width: '100%', boxSizing: 'border-box' as const },
   dropdown: { border: '1px solid #ccc', backgroundColor: 'white', position: 'absolute' as const, zIndex: 1, width: '100%' },
   dropdownItem: { padding: '10px', cursor: 'pointer' },
   noMatch: { padding: '10px', color: '#999' }
 };
 
-const StationDropdown: React.FC<StationDropdownProps> = ({ value, onSelectStation, placeholder }) => {
+const StationDropdown: React.FC<StationDropdownProps> = ({ value, onSelectStation, placeholder, id }) => {
   const [stations, setStations] = useState<Station[]>([]);
   const [filteredStations, setFilteredStations] = useState<Station[]>([]);
   const [inputValue, setInputValue] = useState(value);
@@ -88,6 +89,7 @@ const StationDropdown: React.FC<StationDropdownProps> = ({ value, onSelectStatio
         onBlur={handleBlur}
         placeholder={placeholder || "出发地"}
         style={styles.input}
+        id={id}
       />
       {isDropdownVisible && (
         <div style={styles.dropdown}>

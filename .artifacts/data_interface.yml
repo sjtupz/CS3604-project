@@ -80,3 +80,37 @@
   changeLog:
     - date: "2025-11-23"
       description: "创建，用于用户注册。"
+
+- type: Database
+  id: DB-CreateLoginCodeRecord
+  description: 记录登录短信验证码及其关联手机号、标识符。
+  dependencies:
+    - none
+  acceptanceCriteria:
+    - 成功执行后，login_codes表新增一条包含phone、identifier、code、createdAt的记录。
+  changeLog:
+    - date: "2025-11-24"
+      description: "新增，用于登录流程中记录短信验证码。"
+
+- type: Database
+  id: DB-FindLoginCodeRecord
+  description: 根据手机号或标识符查询最近一次登录验证码记录。
+  dependencies:
+    - none
+  acceptanceCriteria:
+    - 找到记录时返回验证码记录（包含code与创建时间）。
+    - 未找到记录时返回null。
+  changeLog:
+    - date: "2025-11-24"
+      description: "新增，用于登录流程中校验短信验证码。"
+
+- type: Database
+  id: DB-InvalidateLoginCodeRecord
+  description: 作废已使用或过期的登录验证码记录。
+  dependencies:
+    - none
+  acceptanceCriteria:
+    - 成功执行后，对应验证码记录被标记为失效，后续校验应失败。
+  changeLog:
+    - date: "2025-11-24"
+      description: "新增，用于登录流程中验证码的生命周期管理。"

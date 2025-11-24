@@ -128,3 +128,108 @@
   changeLog:
     - date: "2025-11-23"
       description: "创建，用于支持用户注册功能。"
+
+- type: Frontend
+  id: UI-LoginPage
+  description: 登录页页面容器，包含顶部导航、登录表单区域与底部宣传栏。
+  properties: []
+  state: []
+  dependencies:
+    - UI-TopNavigationBar
+    - UI-QuickAccessMenu
+    - UI-LoginForm
+  acceptanceCriteria:
+    - 整体页面背景为白色，分上、中、下三部分布局，尺寸固定。
+    - 顶部导航栏左侧为logo区域，右侧为“欢迎登录12306”标语。
+    - 登录表单区域背景为推广图片，表单位于背景偏右位置。
+    - 底部宣传栏左侧显示“友情链接”，右侧显示官方平台二维码。
+    - 点击顶部导航栏logo应跳转到首页。
+  changeLog:
+    - date: "2025-11-24"
+      description: "新增，用于承载登录页整体布局与跳转。"
+
+- type: Frontend
+  id: UI-LoginForm
+  description: 登录表单组件，处理输入、校验及短信验证流程的触发。
+  properties:
+    - name: onLoginSuccess
+      type: function
+      description: "登录成功后的回调函数。"
+  state:
+    - identifier
+    - password
+    - error
+    - isLoading
+    - showSmsModal
+  dependencies:
+    - API-POST-Login-SendCode
+    - UI-SMSVerificationModal
+  acceptanceCriteria:
+    - 初始状态下，用户名/邮箱/手机号、密码输入框均为空，并显示灰字提示。
+    - 未输入用户名时点击“立即登录”，显示“❗请输入用户名！”。
+    - 未输入密码时点击“立即登录”，显示“❗请输入密码！”。
+    - 输入密码长度小于6位时，点击“立即登录”，显示“❗密码长度不能小于6位！”。
+    - 当输入合法时，弹出短信验证弹窗。
+    - 点击“注册12306账户”入口，应跳转到注册页面。
+    - 点击“忘记密码？”入口，应跳转到忘记密码页面。
+  changeLog:
+    - date: "2025-11-24"
+      description: "新增，用于实现登录表单交互与校验。"
+
+- type: Frontend
+  id: UI-SMSVerificationModal
+  description: 短信验证弹窗组件，包含证件号后4位与验证码输入、获取验证码与确定流程。
+  properties:
+    - name: onClose
+      type: function
+      description: "关闭弹窗的回调。"
+    - name: onVerified
+      type: function
+      description: "短信验证与密码校验成功后的回调。"
+  state:
+    - idLast4
+    - code
+    - sendButtonState
+    - countdown
+    - error
+  dependencies:
+    - API-POST-Login-SendCode
+    - API-POST-Login-Verify
+  acceptanceCriteria:
+    - 弹窗初始化时，两个输入框为空，分别显示灰字提示。
+    - “获取验证码”按钮有初始化、可点击与倒计时三种状态。
+    - 点击“获取验证码”后，系统判定identifier类型；用户不存在或证件后4位不匹配时，显示“请输入正确的用户信息！”。
+    - 匹配成功时发送6位验证码，显示“获取手机验证码成功！”，并记录到数据库。
+    - 未填写验证码点击“确定”时，显示“请输入验证码”。
+    - 验证码长度不符合规范时，显示“请输入正确验证码”。
+    - 未发送或验证码错误时，显示“验证码校验失败”。
+    - 验证码正确但密码错误时，显示“用户名或密码错误”。
+    - 验证成功与密码正确后，触发onVerified，并跳转到个人中心页。
+    - 倒计时归零后，“重新发送验证码”按钮恢复可点击，并可重新发送验证码。
+  changeLog:
+    - date: "2025-11-24"
+      description: "新增，用于实现登录页短信验证流程。"
+
+- type: Frontend
+  id: UI-ForgotPasswordPage
+  description: 忘记密码页面容器，占位以支持登录页跳转。
+  properties: []
+  state: []
+  dependencies: []
+  acceptanceCriteria:
+    - 从登录页点击“忘记密码？”入口应跳转到本页面。
+  changeLog:
+    - date: "2025-11-24"
+      description: "新增，用于支持登录页的忘记密码跳转。"
+
+- type: Frontend
+  id: UI-PersonalCenterPage
+  description: 个人中心页面容器，占位以支持登录成功后的跳转。
+  properties: []
+  state: []
+  dependencies: []
+  acceptanceCriteria:
+    - 登录成功后应跳转到本页面。
+  changeLog:
+    - date: "2025-11-24"
+      description: "新增，用于支持登录成功后跳转。"
