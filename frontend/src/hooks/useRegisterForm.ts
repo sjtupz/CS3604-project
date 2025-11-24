@@ -48,9 +48,9 @@ export const useRegisterForm = (onRegisterSuccess: () => void) => {
     password: '',
     confirmPassword: '',
     fullName: '',
-    identityType: '居民身份证',
+    identityType: '',
     identityNumber: '',
-    passengerType: '成人',
+    passengerType: '',
     email: '',
     phoneNumber: '',
     agreeToTerms: false,
@@ -94,7 +94,7 @@ export const useRegisterForm = (onRegisterSuccess: () => void) => {
 
     switch (name) {
       case 'username':
-        error = validateUsername(value);
+        error = validateUsername(value) || undefined;
         if (!error) {
           try {
             const { isAvailable } = await checkUsername(value);
@@ -107,16 +107,16 @@ export const useRegisterForm = (onRegisterSuccess: () => void) => {
         }
         break;
       case 'password':
-        error = validatePassword(value);
+        error = validatePassword(value) || undefined;
         break;
       case 'confirmPassword':
-        error = validateConfirmPassword(state.password, value);
+        error = validateConfirmPassword(state.password, value) || undefined;
         break;
       case 'fullName':
-        error = validateFullName(value);
+        error = validateFullName(value) || undefined;
         break;
       case 'identityNumber':
-        error = validateIdentityNumber(value);
+        error = validateIdentityNumber(value) || undefined;
         if (!error) {
           try {
             const { isAvailable } = await checkIdentityNumber(value);
@@ -129,7 +129,7 @@ export const useRegisterForm = (onRegisterSuccess: () => void) => {
         }
         break;
       case 'phoneNumber':
-        error = validatePhoneNumber(value);
+        error = validatePhoneNumber(value) || undefined;
         if (!error) {
           try {
             const { isAvailable } = await checkPhoneNumber(value);
@@ -142,7 +142,7 @@ export const useRegisterForm = (onRegisterSuccess: () => void) => {
         }
         break;
       case 'email':
-        error = validateEmail(value);
+        error = validateEmail(value) || undefined;
         if (!error) {
           try {
             const { isAvailable } = await checkEmail(value);

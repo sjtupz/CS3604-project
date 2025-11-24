@@ -6,17 +6,18 @@ interface StationDropdownProps {
   value: string;
   onSelectStation: (stationName: string) => void;
   placeholder?: string;
+  onInputChange?: (term: string) => void;
 }
 
 const styles = {
   container: { position: 'relative' as const },
-  input: { padding: '10px', width: '100%', boxSizing: 'border-box' },
+  input: { padding: '10px', width: '100%', boxSizing: 'border-box' as const },
   dropdown: { border: '1px solid #ccc', backgroundColor: 'white', position: 'absolute' as const, zIndex: 1, width: '100%' },
   dropdownItem: { padding: '10px', cursor: 'pointer' },
   noMatch: { padding: '10px', color: '#999' }
 };
 
-const StationDropdown: React.FC<StationDropdownProps> = ({ value, onSelectStation, placeholder }) => {
+const StationDropdown: React.FC<StationDropdownProps> = ({ value, onSelectStation, placeholder, onInputChange }) => {
   const [stations, setStations] = useState<Station[]>([]);
   const [filteredStations, setFilteredStations] = useState<Station[]>([]);
   const [inputValue, setInputValue] = useState(value);
@@ -42,6 +43,9 @@ const StationDropdown: React.FC<StationDropdownProps> = ({ value, onSelectStatio
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const term = e.target.value;
     setInputValue(term);
+    if (onInputChange) {
+      onInputChange(term);
+    }
 
     if (debounceTimeoutRef.current) {
       clearTimeout(debounceTimeoutRef.current);
@@ -66,6 +70,9 @@ const StationDropdown: React.FC<StationDropdownProps> = ({ value, onSelectStatio
     const handleStationSelect = (station: Station) => {
     setInputValue(station.name);
     onSelectStation(station.name);
+    if (onInputChange) {
+      onInputChange(station.name);
+    }
     setIsDropdownVisible(false);
   };
 
@@ -74,6 +81,9 @@ const StationDropdown: React.FC<StationDropdownProps> = ({ value, onSelectStatio
     if (!match) {
       setInputValue('');
       onSelectStation('');
+      if (onInputChange) {
+        onInputChange('');
+      }
     }
     setTimeout(() => setIsDropdownVisible(false), 200); // Delay to allow click
   };
@@ -88,6 +98,7 @@ const StationDropdown: React.FC<StationDropdownProps> = ({ value, onSelectStatio
         onBlur={handleBlur}
         placeholder={placeholder || "出发地"}
         style={styles.input}
+        id={id}
       />
       {isDropdownVisible && (
         <div style={styles.dropdown}>

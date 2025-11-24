@@ -1,4 +1,3 @@
-import React from 'react';
 import { Routes, Route, Outlet } from 'react-router-dom';
 import { TopNavigationBar } from './components/TopNavigationBar';
 import HomePage from './pages/HomePage';

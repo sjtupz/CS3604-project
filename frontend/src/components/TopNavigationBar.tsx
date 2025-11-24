@@ -10,7 +10,9 @@ const TopNavigationBar: React.FC<TopNavigationBarProps> = ({ isLoggedIn = false 
   return (
     <div className="nav-bar">
       <div className="logo-container">
-        <img src="/src/assets/logo.png" alt="中国铁路12306" className="logo-img" data-testid="logo" />
+        <Link to="/" aria-label="首页">
+          <img src="/src/assets/logo.png" alt="中国铁路12306" className="logo-img" data-testid="logo" />
+        </Link>
         <div className="logo-text-container">
           <div className="logo-title">中国铁路12306</div>
           <div className="logo-subtitle">12306 CHINA RAILWAY</div>

@@ -45,4 +45,12 @@ describe('Cross-Page Navigation', () => {
       expect(screen.getByTestId('home-page')).toBeInTheDocument();
     });
   });
+
+  describe('From Login Page', () => {
+    it('navigates to Register Page when clicking inline "立即注册" link', () => {
+      renderWithRouter(['/login']);
+      fireEvent.click(screen.getByText('立即注册'));
+      expect(screen.getByTestId('register-page')).toBeInTheDocument();
+    });
+  });
 });

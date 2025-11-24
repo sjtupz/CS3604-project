@@ -1,4 +1,4 @@
-import React from 'react';
+ 
 import ticketFormBg from '../assets/ticket-form-bg.png';
 import { QuickAccessMenu } from '../components/QuickAccessMenu';
 import { TicketQueryForm } from '../components/TicketQueryForm';

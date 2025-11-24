@@ -16,18 +16,10 @@ interface FormErrors {
 }
 
 export const TicketQueryForm: React.FC = () => {
-  const getToday = () => {
-    const today = new Date();
-    const year = today.getFullYear();
-    const month = String(today.getMonth() + 1).padStart(2, '0');
-    const day = String(today.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-  };
-
   const [formValues, setFormValues] = useState<FormValues>({
     fromStation: '',
     toStation: '',
-    selectedDate: getToday(),
+    selectedDate: '',
   });
 
   const [errors, setErrors] = useState<FormErrors>({ 
@@ -84,9 +76,14 @@ export const TicketQueryForm: React.FC = () => {
           <div className="input-group">
             <StationDropdown
               id="fromStation"
-              onSelectStation={(station) =>
-                setFormValues((prev: FormValues) => ({ ...prev, fromStation: station }))
-              }
+              onSelectStation={(station) => {
+                setFormValues((prev: FormValues) => ({ ...prev, fromStation: station }));
+                setErrors((prev: FormErrors) => ({ ...prev, fromStation: '' }));
+              }}
+              onInputChange={(term) => {
+                setFormValues((prev: FormValues) => ({ ...prev, fromStation: term }));
+                setErrors((prev: FormErrors) => ({ ...prev, fromStation: '' }));
+              }}
               value={formValues.fromStation}
             />
             {errors.fromStation && <span className="error-span">{errors.fromStation}</span>}
@@ -97,9 +94,14 @@ export const TicketQueryForm: React.FC = () => {
           <div className="input-group">
             <StationDropdown
               id="toStation"
-              onSelectStation={(station) =>
-                setFormValues((prev: FormValues) => ({ ...prev, toStation: station }))
-              }
+              onSelectStation={(station) => {
+                setFormValues((prev: FormValues) => ({ ...prev, toStation: station }));
+                setErrors((prev: FormErrors) => ({ ...prev, toStation: '' }));
+              }}
+              onInputChange={(term) => {
+                setFormValues((prev: FormValues) => ({ ...prev, toStation: term }));
+                setErrors((prev: FormErrors) => ({ ...prev, toStation: '' }));
+              }}
               value={formValues.toStation}
             />
             {errors.toStation && <span className="error-span">{errors.toStation}</span>}
