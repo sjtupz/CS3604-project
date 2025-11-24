@@ -1,5 +1,5 @@
 import { test, expect, vi } from 'vitest';
-import React from 'react';
+
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { TicketQueryForm } from '../../src/components/TicketQueryForm';
@@ -15,7 +15,7 @@ vi.mock('../../src/components/StationDropdown', () => ({
   ),
 }));
 vi.mock('../../src/components/DatePicker', () => ({
-  DatePicker: ({ onDateSelect }) => <div data-testid="date-picker">DatePicker</div>,
+  DatePicker: ({ onDateSelect: _onDateSelect }) => <div data-testid="date-picker">DatePicker</div>,
 }));
 
 test('Given TicketQueryForm, when rendered, it should display two station inputs and a date picker', () => {

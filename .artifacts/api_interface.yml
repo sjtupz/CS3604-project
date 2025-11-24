@@ -58,3 +58,66 @@
   changeLog:
     - date: "2025-11-17"
       description: "初始创建。"
+
+- type: Backend
+  id: API-GET-CheckUsername
+  route: GET /api/users/check-username
+  description: 检查用户名是否已被占用。
+  input:
+    type: QueryParams
+    params:
+      username: string
+  output:
+    success:
+      statusCode: 200
+      body: { isAvailable: true }
+    error:
+      - statusCode: 200
+        body: { isAvailable: false, message: "该用户名已经占用，请重新选择用户名！" }
+      - statusCode: 400
+        body: { error: "Invalid username format." }
+  dependencies:
+    - DB-FindUserByUsername
+  acceptanceCriteria:
+    - 当用户名可用时，返回 isAvailable: true。
+    - 当用户名已被占用时，返回 isAvailable: false。
+  changeLog:
+    - date: "2025-11-23"
+      description: "创建，用于注册表单的实时用户名校验。"
+
+- type: Backend
+  id: API-POST-Register
+  route: POST /api/auth/register
+  description: 处理用户注册请求。
+  input:
+    type: JSON
+    body:
+      username: string
+      password: string
+      identityType: string
+      fullName: string
+      identityNumber: string
+      passengerType: string
+      email: string (optional)
+      phoneNumber: string
+  output:
+    success:
+      statusCode: 201
+      body: { message: "Registration successful, please proceed to login." }
+    error:
+      - statusCode: 400
+        body: { error: "Invalid input or format." }
+      - statusCode: 409
+        body: { error: "Username, identity, email, or phone number already exists." }
+  dependencies:
+    - DB-FindUserByUsername
+    - DB-FindUserByIdentity
+    - DB-FindUserByEmail
+    - DB-FindUserByPhone
+    - DB-CreateUser
+  acceptanceCriteria:
+    - 当接收到合法且未注册的数据时，应创建新用户并返回 201 Created。
+    - 当用户名、证件、邮箱或手机号已存在时，应返回 409 Conflict 及具体错误信息。
+  changeLog:
+    - date: "2025-11-23"
+      description: "创建，用于处理用户注册流程。"

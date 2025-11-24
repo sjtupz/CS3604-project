@@ -94,3 +94,37 @@
   changeLog:
     - date: "2025-11-17"
       description: "初始创建。"
+
+- type: Frontend
+  id: UI-RegisterForm
+  description: 一个完整的用户注册表单，处理用户输入、验证和提交。
+  properties:
+    - name: onRegisterSuccess
+      type: function
+      description: "注册成功后的回调函数。"
+  state:
+    - username
+    - password
+    - confirmPassword
+    - identityType
+    - fullName
+    - identityNumber
+    - passengerType
+    - email
+    - phoneNumber
+    - agreeToTerms
+    - errors
+    - isLoading
+  dependencies:
+    - API-GET-CheckUsername
+    - API-POST-Register
+  acceptanceCriteria:
+    - 组件应渲染所有必需的输入框、选择框和复选框。
+    - 输入时应进行实时格式验证，并显示相应的提示或错误信息。
+    - 用户名输入框失去焦点时，应调用 API-GET-CheckUsername 检查用户名是否可用。
+    - 点击“下一步”按钮时，应进行最终校验，然后调用 API-POST-Register 接口。
+    - 当 isLoading 状态为 true 时，提交按钮应被禁用。
+    - 注册成功后，应调用 onRegisterSuccess 回调。
+  changeLog:
+    - date: "2025-11-23"
+      description: "创建，用于支持用户注册功能。"

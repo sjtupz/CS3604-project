@@ -20,3 +20,63 @@
   changeLog:
     - date: "2025-11-17"
       description: "初始创建，用于支持车票查询功能。"
+
+- type: Database
+  id: DB-FindUserByUsername
+  description: 根据用户名在数据库中查找用户。
+  dependencies:
+    - none
+  acceptanceCriteria:
+    - 如果找到用户，返回用户信息。
+    - 如果未找到用户，返回null。
+  changeLog:
+    - date: "2025-11-23"
+      description: "创建，用于注册时检查用户名是否被占用。"
+
+- type: Database
+  id: DB-FindUserByIdentity
+  description: 根据证件类型和证件号码在数据库中查找用户。
+  dependencies:
+    - none
+  acceptanceCriteria:
+    - 如果找到用户，返回用户信息。
+    - 如果未找到用户，返回null。
+  changeLog:
+    - date: "2025-11-23"
+      description: "创建，用于注册时检查证件号码是否已被注册。"
+
+- type: Database
+  id: DB-FindUserByEmail
+  description: 根据邮箱在数据库中查找用户。
+  dependencies:
+    - none
+  acceptanceCriteria:
+    - 如果找到用户，返回用户信息。
+    - 如果未找到用户，返回null。
+  changeLog:
+    - date: "2025-11-23"
+      description: "创建，用于注册时检查邮箱是否已被注册。"
+
+- type: Database
+  id: DB-FindUserByPhone
+  description: 根据手机号码在数据库中查找用户。
+  dependencies:
+    - none
+  acceptanceCriteria:
+    - 如果找到用户，返回用户信息。
+    - 如果未找到用户，返回null。
+  changeLog:
+    - date: "2025-11-23"
+      description: "创建，用于注册时检查手机号码是否已被注册。"
+
+- type: Database
+  id: DB-CreateUser
+  description: 在数据库中创建一条新的用户记录。
+  dependencies:
+    - none
+  acceptanceCriteria:
+    - 成功执行后，users表中会增加一条新记录。
+    - 如果用户名、证件、邮箱或手机号已存在，操作应失败并抛出唯一性约束错误。
+  changeLog:
+    - date: "2025-11-23"
+      description: "创建，用于用户注册。"

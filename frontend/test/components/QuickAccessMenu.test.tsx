@@ -1,10 +1,15 @@
 import { test, expect } from 'vitest';
 import React from 'react';
 import { render, screen } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import { QuickAccessMenu } from '../../src/components/QuickAccessMenu';
 
 test('Given the QuickAccessMenu is rendered, Then it should display all the menu links', () => {
-  render(<QuickAccessMenu />);
+  render(
+    <MemoryRouter>
+      <QuickAccessMenu />
+    </MemoryRouter>
+  );
   expect(screen.getByText('首页')).toBeDefined();
   expect(screen.getByText('车票')).toBeDefined();
   expect(screen.getByText('团购服务')).toBeDefined();

@@ -1,9 +1,21 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { StationDropdown } from './StationDropdown';
 import { DatePicker } from './DatePicker';
 import './TicketQueryForm.css';
 
-const TicketQueryForm = () => {
+interface FormValues {
+  fromStation: string;
+  toStation: string;
+  selectedDate: string;
+}
+
+interface FormErrors {
+  fromStation: string;
+  toStation: string;
+  selectedDate: string;
+}
+
+export const TicketQueryForm: React.FC = () => {
   const getToday = () => {
     const today = new Date();
     const year = today.getFullYear();
@@ -12,29 +24,29 @@ const TicketQueryForm = () => {
     return `${year}-${month}-${day}`;
   };
 
-  const [formValues, setFormValues] = useState({
+  const [formValues, setFormValues] = useState<FormValues>({
     fromStation: '',
     toStation: '',
-    selectedDate: getToday()
+    selectedDate: getToday(),
   });
 
-  const [errors, setErrors] = useState({
+  const [errors, setErrors] = useState<FormErrors>({ 
     fromStation: '',
     toStation: '',
     selectedDate: ''
   });
 
   const handleSwap = () => {
-    setFormValues(prev => ({
+    setFormValues((prev: FormValues) => ({
       ...prev,
       fromStation: prev.toStation,
-      toStation: prev.fromStation
+      toStation: prev.fromStation,
     }));
-    setErrors(prev => ({ ...prev, fromStation: '', toStation: '' }));
+    setErrors((prev: FormErrors) => ({ ...prev, fromStation: '', toStation: '' }));
   };
 
   const validate = () => {
-    const newErrors = { fromStation: '', toStation: '', selectedDate: '' };
+    const newErrors: FormErrors = { fromStation: '', toStation: '', selectedDate: '' };
     let isValid = true;
 
     if (!formValues.fromStation) {
@@ -70,9 +82,11 @@ const TicketQueryForm = () => {
         <div className="form-row-vertical">
           <label htmlFor="fromStation">出发地</label>
           <div className="input-group">
-            <StationDropdown 
+            <StationDropdown
               id="fromStation"
-              onSelectStation={(station) => setFormValues(prev => ({ ...prev, fromStation: station }))} 
+              onSelectStation={(station) =>
+                setFormValues((prev: FormValues) => ({ ...prev, fromStation: station }))
+              }
               value={formValues.fromStation}
             />
             {errors.fromStation && <span className="error-span">{errors.fromStation}</span>}
@@ -81,9 +95,11 @@ const TicketQueryForm = () => {
         <div className="form-row-vertical">
           <label htmlFor="toStation">到达地</label>
           <div className="input-group">
-            <StationDropdown 
+            <StationDropdown
               id="toStation"
-              onSelectStation={(station) => setFormValues(prev => ({ ...prev, toStation: station }))} 
+              onSelectStation={(station) =>
+                setFormValues((prev: FormValues) => ({ ...prev, toStation: station }))
+              }
               value={formValues.toStation}
             />
             {errors.toStation && <span className="error-span">{errors.toStation}</span>}
@@ -92,26 +108,32 @@ const TicketQueryForm = () => {
         <div className="form-row-vertical">
           <label htmlFor="selectedDate">出发日期</label>
           <div className="input-group">
-            <DatePicker 
+            <DatePicker
               id="selectedDate"
-              onDateSelect={(date) => setFormValues(prev => ({ ...prev, selectedDate: date }))} 
-              defaultDate={formValues.selectedDate} 
+              onDateSelect={(date) =>
+                setFormValues((prev: FormValues) => ({ ...prev, selectedDate: date }))
+              }
+              value={formValues.selectedDate}
             />
             {errors.selectedDate && <span className="error-span">{errors.selectedDate}</span>}
           </div>
         </div>
-        <button onClick={handleSwap} className="swap-button" title="交换出发地和目的地">↔</button>
+        <button onClick={handleSwap} className="swap-button" title="交换出发地和目的地">
+          ↔
+        </button>
         <div className="form-row">
           <div className="checkbox-group">
-            <label><input type="checkbox" /> 高铁/动车</label>
+            <label>
+              <input type="checkbox" /> 高铁/动车
+            </label>
           </div>
         </div>
         <div className="form-row">
-          <button onClick={handleQuery} className="query-button">查询</button>
+          <button onClick={handleQuery} className="query-button">
+            查询
+          </button>
         </div>
       </div>
     </div>
   );
 };
-
-export { TicketQueryForm };
