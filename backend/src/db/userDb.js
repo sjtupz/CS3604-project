@@ -48,10 +48,21 @@ const createUser = (userData) => {
   });
 };
 
+const updateUserPasswordByPhone = (phoneNumber, hashedPassword) => {
+  return new Promise((resolve, reject) => {
+    const sql = 'UPDATE users SET password = ? WHERE phoneNumber = ?';
+    db.run(sql, [hashedPassword, phoneNumber], function(err) {
+      if (err) reject(err);
+      resolve({ changes: this.changes });
+    });
+  });
+};
+
 module.exports = {
   findUserByUsername,
   findUserByIdentityNumber,
   findUserByEmail,
   findUserByPhoneNumber,
   createUser,
+  updateUserPasswordByPhone,
 };
