@@ -31,7 +31,7 @@ export const checkEmail = async (email: string): Promise<{ isAvailable: boolean 
   return { isAvailable: email !== 'taken@example.com' }; // Example: taken@example.com is taken
 };
 
-export const registerUser = async (userData: RegisterFormData): Promise<void> => {
+export const registerUser = async (userData: Partial<RegisterFormData>): Promise<void> => {
   try {
     const response = await apiClient.post('/api/users/register', userData);
     return response.data;

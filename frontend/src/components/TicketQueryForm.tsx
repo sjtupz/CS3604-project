@@ -16,18 +16,10 @@ interface FormErrors {
 }
 
 export const TicketQueryForm: React.FC = () => {
-  const getToday = () => {
-    const today = new Date();
-    const year = today.getFullYear();
-    const month = String(today.getMonth() + 1).padStart(2, '0');
-    const day = String(today.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-  };
-
   const [formValues, setFormValues] = useState<FormValues>({
     fromStation: '',
     toStation: '',
-    selectedDate: getToday(),
+    selectedDate: '',
   });
 
   const [errors, setErrors] = useState<FormErrors>({ 

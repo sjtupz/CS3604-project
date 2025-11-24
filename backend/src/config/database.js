@@ -32,6 +32,22 @@ function initializeDatabase() {
       console.error("Error creating user table", err.message);
     }
   });
+
+  const createLoginCodesTableSql = `
+    CREATE TABLE IF NOT EXISTS login_codes (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      phone TEXT,
+      identifier TEXT,
+      code TEXT,
+      createdAt INTEGER,
+      valid INTEGER DEFAULT 1
+    );
+  `;
+  db.run(createLoginCodesTableSql, (err) => {
+    if (err) {
+      console.error("Error creating login_codes table", err.message);
+    }
+  });
 }
 
 module.exports = db;
