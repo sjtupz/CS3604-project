@@ -98,7 +98,6 @@ const StationDropdown: React.FC<StationDropdownProps> = ({ value, onSelectStatio
         onBlur={handleBlur}
         placeholder={placeholder || "出发地"}
         style={styles.input}
-        id={id}
       />
       {isDropdownVisible && (
         <div style={styles.dropdown}>

@@ -7,15 +7,6 @@ interface DatePickerProps {
   value?: string;
 }
 
-const DatePicker: React.FC<DatePickerProps> = ({ onDateSelect, defaultDate, id, value }) => {
-  const [selectedDate, setSelectedDate] = useState<string>(value ?? defaultDate ?? '');
-
-  const handleDateChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const newDate = event.target.value;
-    setSelectedDate(newDate);
-    onDateSelect(newDate);
-  };
-
 const DatePicker: React.FC<DatePickerProps> = ({ onDateSelect, defaultDate, value, id }) => {
   const getToday = () => {
     const today = new Date();
@@ -25,7 +16,7 @@ const DatePicker: React.FC<DatePickerProps> = ({ onDateSelect, defaultDate, valu
     return `${year}-${month}-${day}`;
   };
 
-  const [selectedDate, setSelectedDate] = useState<string>(defaultDate ?? getToday());
+  const [selectedDate, setSelectedDate] = useState<string>(value ?? defaultDate ?? getToday());
 
   const handleDateChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const newDate = event.target.value;
@@ -42,7 +33,6 @@ const DatePicker: React.FC<DatePickerProps> = ({ onDateSelect, defaultDate, valu
       min={getToday()}
       style={{ padding: '10px' }}
       data-testid="date-picker-input"
-      id={id}
     />
   );
 };
