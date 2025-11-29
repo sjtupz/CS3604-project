@@ -47,9 +47,9 @@ describe('Cross-Page Navigation', () => {
   });
 
   describe('From Login Page', () => {
-    it('navigates to Register Page when clicking inline "立即注册" link', () => {
+    it('navigates to Register Page when clicking inline "注册12306账户" link', () => {
       renderWithRouter(['/login']);
-      fireEvent.click(screen.getByText('立即注册'));
+      fireEvent.click(screen.getByText('注册12306账户'));
       expect(screen.getByTestId('register-page')).toBeInTheDocument();
     });
   });

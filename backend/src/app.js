@@ -20,6 +20,14 @@ app.use('/api/trains', trainRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/auth', authRoutes);
 
+const userPersonalRoutes = require('./routes/user');
+const orderRoutes = require('./routes/orders');
+const passengerRoutes = require('./routes/passengers');
+
+app.use('/api/user', userPersonalRoutes);
+app.use('/api/orders', orderRoutes);
+app.use('/api/passengers', passengerRoutes);
+
 // Simple error handler
 app.use((err, req, res, next) => {
   console.error(err.stack);

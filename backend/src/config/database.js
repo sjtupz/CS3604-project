@@ -24,6 +24,8 @@ function initializeDatabase() {
       passengerType TEXT NOT NULL,
       email TEXT UNIQUE,
       phoneNumber TEXT UNIQUE,
+      passengers TEXT DEFAULT NULL,
+      tickets TEXT DEFAULT NULL,
       createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
     );
   `;
