@@ -15,8 +15,8 @@ const ensureTable = () => {
 };
 
 const handleSendCode = async (payload) => {
-  const { identifier, idLast4 } = payload || {};
-  const code = '123456';
+  const { identifier, idLast4, code: providedCode } = payload || {};
+  const code = providedCode || String(Math.floor(100000 + Math.random() * 900000));
   await ensureTable();
   return new Promise((resolve, reject) => {
     const sql = 'INSERT INTO login_codes (phone, identifier, code, createdAt, valid) VALUES (?, ?, ?, ?, ?)';

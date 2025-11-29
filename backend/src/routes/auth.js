@@ -38,8 +38,9 @@ router.post('/login/send-code', async (req, res) => {
     if (!idLast4 || last4 !== idLast4) {
       return res.status(422).json({ error: '请输入正确的用户信息！' });
     }
-
-    await loginSendCodeService.handleSendCode({ identifier, idLast4 });
+    const code = String(Math.floor(100000 + Math.random() * 900000));
+    await loginSendCodeService.handleSendCode({ identifier, idLast4, code });
+    console.log(`[DEV] 发送验证码到 ${/^\d{11}$/.test(identifier) ? '+86' : ''} ${identifier}: CODE=${code}`);
     res.status(200).json({ message: '获取手机验证码成功！' });
   } catch (error) {
     const status = error.status || 500;
@@ -51,6 +52,63 @@ router.post('/login/verify', async (req, res) => {
   try {
     const result = await loginVerifyService.handleVerify(req.body);
     res.status(200).json(result);
+  } catch (error) {
+    const status = error.status || 500;
+    res.status(status).json({ error: error.message || 'Internal Server Error' });
+  }
+});
+
+router.post('/forgot/send-code', async (req, res) => {
+  try {
+    const { phoneNumber, idLast4, countryCode } = req.body || {};
+    if (!/^\d{11}$/.test(phoneNumber || '')) {
+      return res.status(422).json({ error: '请输入正确的用户信息！' });
+    }
+    if (!idLast4 || String(idLast4).length !== 4) {
+      return res.status(422).json({ error: '请输入正确的用户信息！' });
+    }
+    const code = String(Math.floor(100000 + Math.random() * 900000));
+    await loginSendCodeService.handleSendCode({ identifier: phoneNumber, idLast4, code });
+    console.log(`[DEV] 发送验证码到 ${countryCode || '+86'} ${phoneNumber}: CODE=${code}`);
+    res.status(200).json({ message: '获取手机验证码成功！' });
+  } catch (error) {
+    const status = error.status || 500;
+    res.status(status).json({ error: error.message || 'Internal Server Error' });
+  }
+});
+
+router.post('/forgot/verify', async (req, res) => {
+  try {
+    const { phoneNumber, code } = req.body || {};
+    if (!code) {
+      return res.status(400).json({ error: '请输入验证码' });
+    }
+    const { findLoginCodeRecord } = require('../db/findLoginCodeRecord');
+    const { invalidateLoginCodeRecord } = require('../db/invalidateLoginCodeRecord');
+    const record = await findLoginCodeRecord({ identifier: phoneNumber });
+    if (!record || record.valid === 0 || record.code !== code) {
+      return res.status(401).json({ error: '验证码校验失败' });
+    }
+    await invalidateLoginCodeRecord({ identifier: phoneNumber });
+    res.status(200).json({ ok: true });
+  } catch (error) {
+    const status = error.status || 500;
+    res.status(status).json({ error: error.message || 'Internal Server Error' });
+  }
+});
+
+router.post('/forgot/reset', async (req, res) => {
+  try {
+    const { phoneNumber, newPassword } = req.body || {};
+    const bcrypt = require('bcrypt');
+    const userDb = require('../db/userDb');
+    const user = await userDb.findUserByPhoneNumber(phoneNumber);
+    if (!user) {
+      return res.status(404).json({ error: '请输入正确的用户信息！' });
+    }
+    const hashed = await bcrypt.hash(newPassword, 10);
+    await userDb.updateUserPasswordByPhone(phoneNumber, hashed);
+    res.status(200).json({ ok: true });
   } catch (error) {
     const status = error.status || 500;
     res.status(status).json({ error: error.message || 'Internal Server Error' });
