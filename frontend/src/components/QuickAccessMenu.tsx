@@ -8,7 +8,7 @@ const QuickAccessMenu = () => {
     { name: '团购服务', to: '/group-service' },
     { name: '会员服务', to: '/membership' },
     { name: '站车服务', to: '/station-service' },
-    { name: '商旅服务', to: '/business-travel' },
+    { name: '商旅服务', to: '/catering/search' },
     { name: '出行指南', to: '/travel-guide' },
     { name: '信息查询', to: '/info-query' },
   ];

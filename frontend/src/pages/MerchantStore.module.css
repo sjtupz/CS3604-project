@@ -1,0 +1,29 @@
+ .store-page { max-width: 1100px; margin: 24px auto; }
+ .header {
+  display: grid;
+  grid-template-columns: 72px auto 320px;
+  align-items: center;
+  gap: 16px;
+  background: #fff;
+  border: 1px solid #e6e6e6;
+  border-radius: 8px;
+  padding: 16px;
+  box-shadow: 0 6px 16px rgba(0,0,0,0.08);
+ }
+ .logo { width: 72px; height: 72px; background: #f5f5f5; border: 1px dashed #ddd; display:flex; align-items:center; justify-content:center; font-size:12px; color:#999; }
+ .title { font-size:18px; color:#333; }
+ .meta { font-size:12px; color:#666; margin-top:6px; }
+ .fees { display:flex; gap:12px; justify-content:flex-end; }
+ .badge { background:#f7faff; border:1px solid #cfe3ff; color:#2d6cdf; border-radius:6px; padding:6px 10px; font-size:12px; }
+ .tabs { display:flex; gap:24px; margin:18px 0 8px; font-size:14px; }
+ .tab { color:#0077ff; }
+ .categories { display:flex; flex-wrap:wrap; gap:10px; padding:12px; background:#fff; border:1px solid #e6e6e6; border-radius:8px; }
+ .cat { font-size:12px; color:#333; background:#f8f8f8; border:1px solid #e1e1e1; border-radius:14px; padding:6px 12px; }
+ .section { margin-top:16px; }
+ .section-title { font-size:14px; color:#333; margin-bottom:10px; }
+ .products { display:grid; grid-template-columns: repeat(4, 1fr); gap:16px; }
+ .card { background:#fff; border:1px solid #e9e9e9; border-radius:8px; overflow:hidden; }
+ .card-img { height:140px; background:#f0f0f0; border-bottom:1px solid #e9e9e9; display:flex; align-items:center; justify-content:center; color:#999; font-size:12px; }
+ .card-body { padding:10px; }
+ .card-name { font-size:13px; color:#333; }
+ .card-price { margin-top:6px; font-size:13px; color:#ff7f2a; }
