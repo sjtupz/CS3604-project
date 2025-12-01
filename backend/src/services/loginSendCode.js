@@ -1,19 +1,15 @@
-const db = require('../config/database');
+const { createLoginCodeRecord } = require('../db/createLoginCodeRecord');
+const userDb = require('../db/userDb');
 
-const ensureTable = () => {
-  return new Promise((resolve, reject) => {
-    const ddl = `CREATE TABLE IF NOT EXISTS login_codes (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      phone TEXT,
-      identifier TEXT,
-      code TEXT,
-      createdAt INTEGER,
-      valid INTEGER DEFAULT 1
-    )`;
-    db.run(ddl, [], (err) => (err ? reject(err) : resolve(null)));
-  });
+const resolveUserByIdentifier = async (identifier) => {
+  if (/^\d{11}$/.test(identifier)) {
+    return await userDb.findUserByPhoneNumber(identifier);
+  }
+  if (/.+@.+\..+/.test(identifier)) {
+    return await userDb.findUserByEmail(identifier);
+  }
+  return await userDb.findUserByUsername(identifier);
 };
-
 const handleSendCode = async (payload) => {
   const { identifier, idLast4, code: providedCode } = payload || {};
   const code = providedCode || String(Math.floor(100000 + Math.random() * 900000));
@@ -28,4 +24,4 @@ const handleSendCode = async (payload) => {
   });
 };
 
-module.exports = { handleSendCode };
+module.exports = { handleSendCode, resolveUserByIdentifier };

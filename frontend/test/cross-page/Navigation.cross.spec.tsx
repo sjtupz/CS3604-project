@@ -52,5 +52,10 @@ describe('Cross-Page Navigation', () => {
       fireEvent.click(screen.getByText('注册12306账户'));
       expect(screen.getByTestId('register-page')).toBeInTheDocument();
     });
+    it('navigates to Forgot Password Page when clicking "忘记密码？" link', () => {
+      renderWithRouter(['/login']);
+      fireEvent.click(screen.getByText('忘记密码？'));
+      expect(screen.getByTestId('forgot-password-page')).toBeInTheDocument();
+    });
   });
 });

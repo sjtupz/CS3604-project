@@ -1,9 +1,10 @@
 // frontend/src/components/RegisterForm.tsx
-import React from 'react';
+import React, { useState } from 'react';
 import { useRegisterForm } from '../hooks/useRegisterForm';
 import './RegisterForm.css'; // 引入样式文件
 import { PasswordStrength } from './PasswordStrength';
-import { IDENTITY_TYPE_OPTIONS, PASSENGER_TYPE_OPTIONS } from '../constants/registerForm';
+import { IDENTITY_TYPE_OPTIONS, PASSENGER_TYPE_OPTIONS, USERNAME_RULE_HINT, USERNAME_RULE_SUCCESS, PLACEHOLDERS, LIMITS, HINT_MESSAGES, MODAL_MESSAGES, ERROR_MESSAGES } from '../constants/registerForm';
+import { AlertModal } from './AlertModal';
 
 interface RegisterFormProps {
   onRegisterSuccess: () => void;
@@ -16,11 +17,28 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onRegisterSuccess })
     handleCheckboxChange,
     handleBlur,
     handleSubmit,
+    clearFormError,
   } = useRegisterForm(onRegisterSuccess);
 
+  const [modalVisible, setModalVisible] = useState(false);
+  const [modalMessage, setModalMessage] = useState('');
+
+  const handleSubmitWithModal = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!state.phoneNumber) {
+      setModalMessage(MODAL_MESSAGES.PHONE_REQUIRED);
+      setModalVisible(true);
+    } else if (!state.agreeToTerms) {
+      setModalMessage(MODAL_MESSAGES.CONFIRM_TERMS);
+      setModalVisible(true);
+    }
+    handleSubmit(e);
+  };
+
   return (
-    <form onSubmit={handleSubmit} className="register-form" aria-label="注册表单">
-      {state.errors.form && <div className="form-error">{state.errors.form}</div>}
+    <form onSubmit={handleSubmitWithModal} className="register-form" aria-label="注册表单">
+      
+      {}
 
       <div className="form-group">
         <label htmlFor="username">用户名</label>
@@ -28,11 +46,18 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onRegisterSuccess })
           id="username"
           type="text"
           name="username"
-          placeholder="用户名设置成功后不可更改"
+          placeholder={PLACEHOLDERS.USERNAME}
           value={state.username}
           onChange={handleInputChange}
           onBlur={handleBlur}
+          maxLength={LIMITS.MAX_USERNAME_LENGTH}
         />
+        {!state.usernameAvailable && (
+          <span className="hint-message">{USERNAME_RULE_HINT}</span>
+        )}
+        {state.usernameAvailable && (
+          <span className="success-message">{USERNAME_RULE_SUCCESS}</span>
+        )}
         {state.errors.username && <span className="error-message">{state.errors.username}</span>}
       </div>
 
@@ -42,10 +67,11 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onRegisterSuccess })
           id="password"
           type="password"
           name="password"
-          placeholder="6-20位字母、数字或符号"
+          placeholder={PLACEHOLDERS.PASSWORD}
           value={state.password}
           onChange={handleInputChange}
           onBlur={handleBlur}
+          maxLength={LIMITS.MAX_PASSWORD_LENGTH}
         />
         <PasswordStrength strength={state.passwordStrength} />
         {state.errors.password && <span className="error-message">{state.errors.password}</span>}
@@ -57,11 +83,14 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onRegisterSuccess })
           id="confirmPassword"
           type="password"
           name="confirmPassword"
-          placeholder="再次输入您的登录密码"
+          placeholder={PLACEHOLDERS.CONFIRM_PASSWORD}
           value={state.confirmPassword}
           onChange={handleInputChange}
           onBlur={handleBlur}
         />
+        {!state.errors.confirmPassword && state.confirmPassword && state.password === state.confirmPassword && (
+          <span className="success-message">✅</span>
+        )}
         {state.errors.confirmPassword && <span className="error-message">{state.errors.confirmPassword}</span>}
       </div>
 
@@ -70,7 +99,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onRegisterSuccess })
         <select
           id="identityType"
           name="identityType"
-          value={state.identityType}
+          value={state.identityType || '居民身份证'}
           onChange={handleInputChange}
         >
           <option value="">请选择</option>
@@ -89,11 +118,12 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onRegisterSuccess })
           id="fullName"
           type="text"
           name="fullName"
-          placeholder="请输入姓名"
+          placeholder={PLACEHOLDERS.FULL_NAME}
           value={state.fullName}
           onChange={handleInputChange}
           onBlur={handleBlur}
         />
+        <span className="hint-message">{HINT_MESSAGES.IDENTITY_VERIFICATION}</span>
         {state.errors.fullName && <span className="error-message">{state.errors.fullName}</span>}
       </div>
 
@@ -103,11 +133,12 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onRegisterSuccess })
           id="identityNumber"
           type="text"
           name="identityNumber"
-          placeholder="请输入您的证件号码"
+          placeholder={PLACEHOLDERS.IDENTITY_NUMBER}
           value={state.identityNumber}
           onChange={handleInputChange}
           onBlur={handleBlur}
         />
+        <span className="hint-message">{HINT_MESSAGES.IDENTITY_VERIFICATION}</span>
         {state.errors.identityNumber && <span className="error-message">{state.errors.identityNumber}</span>}
       </div>
 
@@ -116,7 +147,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onRegisterSuccess })
         <select
           id="passengerType"
           name="passengerType"
-          value={state.passengerType}
+          value={state.passengerType || '成人'}
           onChange={handleInputChange}
         >
           <option value="">请选择</option>
@@ -135,11 +166,12 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onRegisterSuccess })
           id="phoneNumber"
           type="text"
           name="phoneNumber"
-          placeholder="手机号码"
+          placeholder={PLACEHOLDERS.PHONE_NUMBER}
           value={state.phoneNumber}
           onChange={handleInputChange}
           onBlur={handleBlur}
         />
+        <span className="hint-message">{HINT_MESSAGES.PHONE_VERIFICATION}</span>
         {state.errors.phoneNumber && <span className="error-message">{state.errors.phoneNumber}</span>}
       </div>
 
@@ -149,12 +181,13 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onRegisterSuccess })
           id="email"
           type="text"
           name="email"
-          placeholder="请输入邮箱"
+          placeholder={PLACEHOLDERS.EMAIL}
           value={state.email}
           onChange={handleInputChange}
           onBlur={handleBlur}
         />
         {state.errors.email && <span className="error-message">{state.errors.email}</span>}
+        {state.errors.email && <span className="error-message">{ERROR_MESSAGES.INVALID_EMAIL_ADDRESS_ALT}</span>}
       </div>
 
       <div className="form-group-checkbox">
@@ -176,6 +209,14 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onRegisterSuccess })
       <button type="submit" className="submit-button" disabled={state.isLoading}>
         {state.isLoading ? '注册中...' : '下一步'}
       </button>
+      <AlertModal
+        visible={modalVisible || !!state.errors.form}
+        message={modalVisible ? modalMessage : state.errors.form || ''}
+        onClose={() => {
+          setModalVisible(false);
+          clearFormError();
+        }}
+      />
     </form>
   );
 };

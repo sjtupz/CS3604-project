@@ -8,27 +8,18 @@ const loginVerifyService = require('../services/loginVerify');
 // 对应 API-POST-Register
 router.post('/register', async (req, res) => {
   try {
-    const result = await authService.registerUser(req.body);
-    res.status(201).json({ message: 'Registration successful, please proceed to login.', userId: result.id });
+    await authService.registerUser(req.body);
+    res.status(201).json({ message: 'Registration successful, please proceed to login.' });
   } catch (error) {
     res.status(409).json({ error: error.message });
   }
 });
 
-module.exports = router;
 router.post('/login/send-code', async (req, res) => {
   try {
     const { identifier, idLast4 } = req.body || {};
-    const userDb = require('../db/userDb');
-
-    let user = null;
-    if (/^\d{11}$/.test(identifier)) {
-      user = await userDb.findUserByPhoneNumber(identifier);
-    } else if (/.+@.+\..+/.test(identifier)) {
-      user = await userDb.findUserByEmail(identifier);
-    } else {
-      user = await userDb.findUserByUsername(identifier);
-    }
+    const { resolveUserByIdentifier } = loginSendCodeService;
+    const user = await resolveUserByIdentifier(identifier);
 
     if (!user) {
       return res.status(404).json({ error: '请输入正确的用户信息！' });
@@ -114,3 +105,4 @@ router.post('/forgot/reset', async (req, res) => {
     res.status(status).json({ error: error.message || 'Internal Server Error' });
   }
 });
+module.exports = router;

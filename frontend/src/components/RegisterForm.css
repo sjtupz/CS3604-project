@@ -1,80 +1,172 @@
 .register-form {
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
-  max-width: 500px;
+  width: 900px;
   margin: 0 auto;
-  padding: 20px;
-  border: 1px solid #ccc;
-  border-radius: 8px;
+  margin-top: 32px;
+  padding: 24px 28px;
+  border: 1px solid #e6e6e6;
+  border-radius: 0;
+  background-color: #ffffff;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  display: grid;
+  grid-auto-rows: minmax(48px, auto);
+  row-gap: 12px;
+  font-family: "PingFang SC", "Microsoft YaHei", "Segoe UI", Arial, sans-serif;
 }
 
 .form-group {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: 120px 360px 1fr;
+  column-gap: 16px;
+  align-items: center;
 }
 
 .form-group label {
-  margin-bottom: 5px;
-  font-weight: bold;
+  font-size: 14px;
+  color: #333333;
+  line-height: 1;
+  position: relative;
+}
+
+.form-group label::before {
+  content: '*';
+  color: #d0021b;
+  font-weight: 600;
+  margin-right: 6px;
+}
+
+label[for="email"]::before {
+  content: '';
 }
 
 .form-group input,
 .form-group select {
-  padding: 8px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
+  grid-column: 2;
+  height: 34px;
+  padding: 8px 12px;
+  border: 1px solid #c9c9c9;
+  border-radius: 0;
+  background-color: #fff;
+  font-size: 14px;
+  color: #333;
+}
+
+.form-group select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24"><path fill="%239aa0a6" d="M7 10l5 5 5-5z"/></svg>');
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 12px 12px;
+  padding-right: 32px;
+}
+
+.form-group input::placeholder,
+.form-group select::placeholder {
+  color: #9aa0a6;
+}
+
+.form-group input:hover,
+.form-group select:hover {
+  border-color: #bfbfbf;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: #ff8200;
+  box-shadow: 0 0 0 2px rgba(255,130,0,0.15);
+}
+
+.hint-message {
+  grid-column: 3;
+  align-self: center;
+  font-size: 12px;
+  color: #f0b72b;
+}
+
+.success-message {
+  grid-column: 3;
+  align-self: center;
+  font-size: 12px;
+  color: #2aa44f;
+}
+
+.error-message {
+  grid-column: 2;
+  margin-top: 6px;
+  font-size: 12px;
+  color: #e53935;
+}
+
+.form-group:has(.error-message) input,
+.form-group:has(.error-message) select {
+  border-color: #e53935;
 }
 
 .form-group-checkbox {
-  display: flex;
+  display: grid;
+  grid-template-columns: 24px 1fr;
+  column-gap: 8px;
   align-items: center;
 }
 
 .form-group-checkbox input {
-  margin-right: 10px;
+  width: 16px;
+  height: 16px;
 }
 
-.error-message {
-  color: red;
-  font-size: 0.875em;
-  margin-top: 5px;
+.form-group-checkbox label {
+  font-size: 14px;
+  color: #333;
 }
 
-.form-error {
-  color: red;
-  background-color: #fdd;
-  padding: 10px;
-  border-radius: 4px;
-  text-align: center;
-  margin-bottom: 15px;
+.form-group-checkbox a {
+  color: #1e6ad6;
+  text-decoration: none;
+  margin: 0 4px;
+}
+
+.form-group-checkbox a:hover {
+  text-decoration: underline;
 }
 
 .submit-button {
-  padding: 10px 15px;
-  background-color: #007bff;
-  color: white;
+  justify-self: center;
+  padding: 10px 22px;
+  background-color: #ff7f27;
+  color: #ffffff;
   border: none;
-  border-radius: 4px;
+  border-radius: 0;
   cursor: pointer;
-  font-size: 1em;
+  font-size: 14px;
+  line-height: 1;
+}
+
+.submit-button:hover {
+  background-color: #ff8f40;
+}
+
+.submit-button:active {
+  background-color: #e86f1f;
 }
 
 .submit-button:disabled {
-  background-color: #ccc;
+  background-color: #cccccc;
   cursor: not-allowed;
 }
 
-/* Password Strength Indicator */
 .password-strength-indicator {
+  grid-column: 3;
   display: flex;
-  height: 5px;
-  margin-top: 5px;
+  height: 6px;
+  align-self: center;
+  width: 180px;
 }
 
 .strength-bar {
   flex-grow: 1;
-  background-color: #eee; /* Default color for empty bars */
+  background-color: #eeeeee;
   margin-right: 2px;
 }
 
@@ -82,14 +174,6 @@
   margin-right: 0;
 }
 
-.strength-bar.red {
-  background-color: red;
-}
-
-.strength-bar.orange {
-  background-color: orange;
-}
-
-.strength-bar.green {
-  background-color: green;
-}
+.strength-bar.red { background-color: #e53935; }
+.strength-bar.orange { background-color: #f0b72b; }
+.strength-bar.green { background-color: #2aa44f; }

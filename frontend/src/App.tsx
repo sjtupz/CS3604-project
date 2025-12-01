@@ -24,6 +24,7 @@ function App() {
         <Route index element={<HomePage />} />
         <Route path="login" element={<LoginPage />} />
         <Route path="register" element={<RegisterPage />} />
+        <Route path="forgot-password" element={<ForgotPasswordPage />} />
         <Route path="profile" element={<UserProfilePage />} />
         <Route path="forgot-password" element={<ForgotPasswordPage />} />
       </Route>
