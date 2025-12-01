@@ -44,16 +44,16 @@
 .search-input {
     width: 350px;
     padding: 8px 12px;
-    border: 1px solid #007bff;
+    border: 1px solid #3B99FC;
     border-radius: 4px 0 0 4px;
     outline: none;
 }
 
 .search-button {
     padding: 8px 20px;
-    background-color: #007bff;
+    background-color: #3B99FC;
     color: white;
-    border: 1px solid #007bff;
+    border: 1px solid #3B99FC;
     border-left: none;
     border-radius: 0 4px 4px 0;
     cursor: pointer;

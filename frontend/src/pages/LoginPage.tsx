@@ -1,5 +1,5 @@
-import { Link } from 'react-router-dom';
 import { LoginForm } from '../components/LoginForm';
+import { Link } from 'react-router-dom';
 
 const LoginPage: React.FC = () => {
   return (
@@ -8,6 +8,7 @@ const LoginPage: React.FC = () => {
       <div style={{ flex: 1 }}>
         <div style={{ maxWidth: 960, margin: '0 auto', padding: 24 }}>
           <h1 style={{ margin: 0, fontSize: 20 }}>登录页面</h1>
+          <p style={{ marginTop: 8 }}>还没有账户？ <Link to="/register">立即注册</Link></p>
           <div style={{ marginTop: 16 }}>
             <LoginForm />
           </div>
