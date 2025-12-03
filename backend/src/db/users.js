@@ -1,30 +1,62 @@
 // backend/src/db/users.js
-
-// 骨架函数，所有函数都返回一个会使测试失败的默认值
+const db = require('../config/database');
 
 async function findUserByUsername(username) {
-  // TODO: 实现数据库查询逻辑 (DB-FindUserByUsername)
-  return null; // 返回null表示用户不存在
+  return new Promise((resolve, reject) => {
+    db.get('SELECT * FROM users WHERE username = ?', [username], (err, row) => {
+      if (err) return reject(err);
+      resolve(row || null);
+    });
+  });
 }
 
 async function findUserByIdentity(identityType, identityNumber) {
-  // TODO: 实现数据库查询逻辑 (DB-FindUserByIdentity)
-  return null;
+  return new Promise((resolve, reject) => {
+    db.get(
+      'SELECT * FROM users WHERE identityType = ? AND identityNumber = ?',
+      [identityType, identityNumber],
+      (err, row) => {
+        if (err) return reject(err);
+        resolve(row || null);
+      }
+    );
+  });
 }
 
 async function findUserByEmail(email) {
-  // TODO: 实现数据库查询逻辑 (DB-FindUserByEmail)
-  return null;
+  return new Promise((resolve, reject) => {
+    db.get('SELECT * FROM users WHERE email = ?', [email], (err, row) => {
+      if (err) return reject(err);
+      resolve(row || null);
+    });
+  });
 }
 
 async function findUserByPhone(phoneNumber) {
-  // TODO: 实现数据库查询逻辑 (DB-FindUserByPhone)
-  return null;
+  return new Promise((resolve, reject) => {
+    db.get('SELECT * FROM users WHERE phoneNumber = ?', [phoneNumber], (err, row) => {
+      if (err) return reject(err);
+      resolve(row || null);
+    });
+  });
 }
 
 async function createUser(userData) {
-  // TODO: 实现数据库插入逻辑 (DB-CreateUser)
-  return null;
+  const { username, password, fullName, identityType, identityNumber, passengerType, email, phoneNumber } = userData;
+  return new Promise((resolve, reject) => {
+    const sql = `
+      INSERT INTO users (username, password, fullName, identityType, identityNumber, passengerType, email, phoneNumber)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `;
+    db.run(
+      sql,
+      [username, password, fullName, identityType, identityNumber, passengerType, email, phoneNumber],
+      function (err) {
+        if (err) return reject(err);
+        resolve({ id: this.lastID });
+      }
+    );
+  });
 }
 
 module.exports = {

@@ -250,6 +250,21 @@ export const useRegisterForm = (onRegisterSuccess: () => void) => {
         email: state.email,
         phoneNumber: state.phoneNumber,
       });
+      if (typeof window !== 'undefined') {
+        const payload = {
+          username: state.username,
+          password: state.password,
+          identityType: state.identityType,
+          fullName: state.fullName,
+          identityNumber: state.identityNumber,
+          passengerType: state.passengerType,
+          email: state.email,
+          phoneNumber: state.phoneNumber,
+        };
+        try {
+          window.localStorage.setItem('register_payload', JSON.stringify(payload));
+        } catch {}
+      }
       onRegisterSuccess();
     } catch (error) {
       const err = error as { response?: { status?: number; data?: { error?: string } } };

@@ -77,24 +77,30 @@
   acceptanceCriteria:
     - 成功执行后，users表中会增加一条新记录。
     - 如果用户名、证件、邮箱或手机号已存在，操作应失败并抛出唯一性约束错误。
+    - 初始写入包含：username、password、fullName、identityType、identityNumber、passengerType、email(可为空)、phoneNumber。
+    - 其它信息（如乘车人信息、本人车票信息）初始化为空或NULL，供后续页面写入。
   changeLog:
     - date: "2025-11-23"
       description: "创建，用于用户注册。"
+    - date: "2025-12-01"
+      description: "更新验收标准，明确基础信息写入与其它信息初始化为空。"
 
 - type: Database
   id: DB-CreateLoginCodeRecord
-  description: 记录登录短信验证码及其关联手机号、标识符。
+  description: 记录短信验证码（登录/注册/忘记密码）及其关联手机号或标识符。
   dependencies:
     - none
   acceptanceCriteria:
-    - 成功执行后，login_codes表新增一条包含phone、identifier、code、createdAt的记录。
+    - 成功执行后，login_codes表新增一条包含phone或identifier、code、createdAt、valid的记录。
   changeLog:
     - date: "2025-11-24"
       description: "新增，用于登录流程中记录短信验证码。"
+    - date: "2025-12-01"
+      description: "扩展适用范围至注册与忘记密码流程，并补充valid字段。"
 
 - type: Database
   id: DB-FindLoginCodeRecord
-  description: 根据手机号或标识符查询最近一次登录验证码记录。
+  description: 根据手机号或标识符查询最近一次短信验证码记录（登录/注册/忘记密码）。
   dependencies:
     - none
   acceptanceCriteria:
@@ -103,10 +109,12 @@
   changeLog:
     - date: "2025-11-24"
       description: "新增，用于登录流程中校验短信验证码。"
+    - date: "2025-12-01"
+      description: "扩展至注册与忘记密码场景。"
 
 - type: Database
   id: DB-InvalidateLoginCodeRecord
-  description: 作废已使用或过期的登录验证码记录。
+  description: 作废已使用或过期的短信验证码记录（登录/注册/忘记密码）。
   dependencies:
     - none
   acceptanceCriteria:
@@ -114,3 +122,5 @@
   changeLog:
     - date: "2025-11-24"
       description: "新增，用于登录流程中验证码的生命周期管理。"
+    - date: "2025-12-01"
+      description: "扩展至注册与忘记密码场景。"

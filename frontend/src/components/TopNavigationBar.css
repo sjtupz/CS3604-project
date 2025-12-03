@@ -2,10 +2,27 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 10px 80px;
+    padding: 10px 220px;
     background-color: white;
     border-bottom: 1px solid #e0e0e0;
-    height: 60px;
+    height: 56px;
+}
+
+.nav-bar.login {
+    padding: 10px 220px;
+    height: 56px;
+    justify-content: flex-start;
+}
+
+.nav-bar.login .search-container,
+.nav-bar.login .user-actions {
+    display: none;
+}
+
+.nav-bar.login .header-welcome {
+    font-size: 20px;
+    color: #170101;
+    margin-left: 50px;
 }
 
 .logo-container {
@@ -15,7 +32,7 @@
 }
 
 .logo-img {
-    height: 40px;
+    height: 55px;
     margin-right: 10px;
 }
 

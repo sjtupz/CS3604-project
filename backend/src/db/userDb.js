@@ -38,7 +38,11 @@ const findUserByPhoneNumber = (phoneNumber) => {
 };
 
 const createUser = (userData) => {
-  const { username, password, identityType, fullName, identityNumber, passengerType, email, phoneNumber } = userData;
+  const { username, password, identityType, fullName, identityNumber, passengerType } = userData;
+  const emailRaw = userData.email;
+  const phoneRaw = userData.phoneNumber;
+  const email = emailRaw && String(emailRaw).trim() ? String(emailRaw).trim() : null;
+  const phoneNumber = phoneRaw && String(phoneRaw).trim() ? String(phoneRaw).trim() : null;
   return new Promise((resolve, reject) => {
     // 注册时将 passengers 和 tickets 初始化为空字符串或 null (这里使用 DEFAULT NULL，无需显式插入)
     const sql = 'INSERT INTO users (username, password, identityType, fullName, identityNumber, passengerType, email, phoneNumber) VALUES (?, ?, ?, ?, ?, ?, ?, ?)';

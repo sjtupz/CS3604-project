@@ -29,7 +29,8 @@ router.post('/login/send-code', async (req, res) => {
     if (!idLast4 || last4 !== idLast4) {
       return res.status(422).json({ error: '请输入正确的用户信息！' });
     }
-    const code = String(Math.floor(100000 + Math.random() * 900000));
+    const { generateSixDigitCode } = require('../utils/validators');
+    const code = generateSixDigitCode();
     await loginSendCodeService.handleSendCode({ identifier, idLast4, code });
     console.log(`[DEV] 发送验证码到 ${/^\d{11}$/.test(identifier) ? '+86' : ''} ${identifier}: CODE=${code}`);
     res.status(200).json({ message: '获取手机验证码成功！' });
@@ -58,7 +59,8 @@ router.post('/forgot/send-code', async (req, res) => {
     if (!idLast4 || String(idLast4).length !== 4) {
       return res.status(422).json({ error: '请输入正确的用户信息！' });
     }
-    const code = String(Math.floor(100000 + Math.random() * 900000));
+    const { generateSixDigitCode } = require('../utils/validators');
+    const code = generateSixDigitCode();
     await loginSendCodeService.handleSendCode({ identifier: phoneNumber, idLast4, code });
     console.log(`[DEV] 发送验证码到 ${countryCode || '+86'} ${phoneNumber}: CODE=${code}`);
     res.status(200).json({ message: '获取手机验证码成功！' });
@@ -105,4 +107,28 @@ router.post('/forgot/reset', async (req, res) => {
     res.status(status).json({ error: error.message || 'Internal Server Error' });
   }
 });
+
+router.post('/register/send-code', async (req, res) => {
+  try {
+    const { phoneNumber } = req.body || {};
+    const { handleRegisterSendCode } = require('../services/registerSendCode');
+    const result = await handleRegisterSendCode({ phoneNumber });
+    res.status(200).json(result);
+  } catch (error) {
+    const status = error.status || 500;
+    res.status(status).json({ error: error.message || 'Internal Server Error' });
+  }
+});
+
+router.post('/register/verify', async (req, res) => {
+  try {
+    const { handleRegisterVerify } = require('../services/registerVerify');
+    const result = await handleRegisterVerify(req.body);
+    res.status(201).json(result);
+  } catch (error) {
+    const status = error.status || 500;
+    res.status(status).json({ error: error.message || 'Internal Server Error' });
+  }
+});
+
 module.exports = router;

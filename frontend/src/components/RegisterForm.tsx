@@ -1,5 +1,6 @@
 // frontend/src/components/RegisterForm.tsx
 import React, { useState } from 'react';
+import { Navigate, useInRouterContext, Link } from 'react-router-dom';
 import { useRegisterForm } from '../hooks/useRegisterForm';
 import './RegisterForm.css'; // 引入样式文件
 import { PasswordStrength } from './PasswordStrength';
@@ -11,6 +12,12 @@ interface RegisterFormProps {
 }
 
 export const RegisterForm: React.FC<RegisterFormProps> = ({ onRegisterSuccess }) => {
+  const inRouter = useInRouterContext();
+  const [submitted, setSubmitted] = useState(false);
+  const onSuccess = () => {
+    setSubmitted(true);
+    onRegisterSuccess();
+  };
   const {
     state,
     handleInputChange,
@@ -18,7 +25,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onRegisterSuccess })
     handleBlur,
     handleSubmit,
     clearFormError,
-  } = useRegisterForm(onRegisterSuccess);
+  } = useRegisterForm(onSuccess);
 
   const [modalVisible, setModalVisible] = useState(false);
   const [modalMessage, setModalMessage] = useState('');
@@ -37,6 +44,12 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onRegisterSuccess })
 
   return (
     <form onSubmit={handleSubmitWithModal} className="register-form" aria-label="注册表单">
+      {submitted && inRouter && (
+        <Navigate
+          to={`/register/verify?phone=${encodeURIComponent(state.phoneNumber)}&username=${encodeURIComponent(state.username)}&password=${encodeURIComponent(state.password)}&identityType=${encodeURIComponent(state.identityType)}&fullName=${encodeURIComponent(state.fullName)}&identityNumber=${encodeURIComponent(state.identityNumber)}&passengerType=${encodeURIComponent(state.passengerType)}&email=${encodeURIComponent(state.email || '')}`}
+          replace
+        />
+      )}
       
       {}
 
@@ -200,8 +213,16 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onRegisterSuccess })
         />
         <label htmlFor="agreeToTerms">
           我已同意
-          <a href="#" target="_blank" rel="noopener noreferrer">《中国铁路客户服务中心网站服务条款》</a>
-          <a href="#" target="_blank" rel="noopener noreferrer">《隐私权政策》</a>
+          {inRouter ? (
+            <Link to="/terms">《中国铁路客户服务中心网站服务条款》</Link>
+          ) : (
+            <a href="#" target="_blank" rel="noopener noreferrer">《中国铁路客户服务中心网站服务条款》</a>
+          )}
+          {inRouter ? (
+            <Link to="/privacy">《隐私权政策》</Link>
+          ) : (
+            <a href="#" target="_blank" rel="noopener noreferrer">《隐私权政策》</a>
+          )}
         </label>
         {state.errors.agreeToTerms && <div className="error-message">{state.errors.agreeToTerms}</div>}
       </div>

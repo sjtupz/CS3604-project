@@ -33,7 +33,7 @@ const Stepper: React.FC<{ step: Step }> = ({ step }) => {
       </div>
       <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8 }}>
         {stepLabels.map((text, i) => (
-          <div key={text} style={label(step >= (i + 1) as Step)}>{text}</div>
+          <div key={text} style={label(step >= (i + 1))}>{text}</div>
         ))}
       </div>
     </div>
@@ -155,6 +155,7 @@ const ForgotPasswordPage: React.FC = () => {
   };
 
   return (
+    <div data-testid="forgot-password-page">
     <Container>
       <Stepper step={step} />
 
@@ -261,6 +262,7 @@ const ForgotPasswordPage: React.FC = () => {
         </div>
       )}
     </Container>
+    </div>
   );
 };
 

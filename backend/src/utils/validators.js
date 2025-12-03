@@ -5,6 +5,16 @@ function isValidUsername(username) {
   return usernameRegex.test(username);
 }
 
+function isValidPhone(phone) {
+  return /^\d{11}$/.test(phone || '');
+}
+
+function generateSixDigitCode() {
+  return String(Math.floor(100000 + Math.random() * 900000));
+}
+
 module.exports = {
   isValidUsername,
+  isValidPhone,
+  generateSixDigitCode,
 };

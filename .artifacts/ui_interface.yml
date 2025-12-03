@@ -117,17 +117,83 @@
     - isLoading
   dependencies:
     - API-GET-CheckUsername
-    - API-POST-Register
+    - API-POST-Register-SendCode
+    - UI-RegisterVerificationPage
   acceptanceCriteria:
     - 组件应渲染所有必需的输入框、选择框和复选框。
     - 输入时应进行实时格式验证，并显示相应的提示或错误信息。
     - 用户名输入框失去焦点时，应调用 API-GET-CheckUsername 检查用户名是否可用。
-    - 点击“下一步”按钮时，应进行最终校验，然后调用 API-POST-Register 接口。
+    - 点击“下一步”按钮时，应进行最终校验；校验通过后跳转到“验证码输入页”，并初始化验证码发送流程。
     - 当 isLoading 状态为 true 时，提交按钮应被禁用。
     - 注册成功后，应调用 onRegisterSuccess 回调。
   changeLog:
     - date: "2025-11-23"
       description: "创建，用于支持用户注册功能。"
+    - date: "2025-12-01"
+      description: "调整依赖与流程，改为经验证码页完成注册。"
+
+- type: Frontend
+  id: UI-TermsPage
+  description: 《中国铁路客户服务中心网站服务条款》页面容器。
+  properties: []
+  state: []
+  dependencies:
+    - UI-TopNavigationBar
+    - UI-QuickAccessMenu
+  acceptanceCriteria:
+    - 页面布局与首页一致，上中为导航与快捷入口，下方为条款文本，标题“服务条款”居中显示。
+  changeLog:
+    - date: "2025-12-01"
+      description: "新增以满足注册页条款链接跳转。"
+
+- type: Frontend
+  id: UI-PrivacyPolicyPage
+  description: 《隐私权政策》页面容器。
+  properties: []
+  state: []
+  dependencies:
+    - UI-TopNavigationBar
+    - UI-QuickAccessMenu
+  acceptanceCriteria:
+    - 页面布局与首页一致，下方为政策文本；中文标题“隐私权政策”和英文标题“NOTICE”居中显示。
+  changeLog:
+    - date: "2025-12-01"
+      description: "新增以满足注册页隐私政策链接跳转。"
+
+- type: Frontend
+  id: UI-RegisterVerificationPage
+  description: 注册验证码输入页，包含自动发送、倒计时、重新发送与下一步校验逻辑。
+  properties: []
+  state:
+    - code
+    - countdown
+    - sendButtonState
+    - error
+  dependencies:
+    - API-POST-Register-SendCode
+    - API-POST-Register-Verify
+  acceptanceCriteria:
+    - 页面加载时自动向注册手机号发送6位验证码并开始60秒倒计时，按钮不可点击。
+    - 倒计时结束后按钮变为可点击，点击后重新发送验证码并重置倒计时。
+    - 未输入验证码点击“下一步”显示“❌请输入验证码”；错误验证码显示“❌验证码错误，请重新输入”。
+    - 验证通过后跳转至“注册成功页”。
+  changeLog:
+    - date: "2025-12-01"
+      description: "新增以满足注册验证码流程页面。"
+
+- type: Frontend
+  id: UI-RegisterSuccessPage
+  description: 注册成功页，展示成功文案与登录按钮。
+  properties: []
+  state: []
+  dependencies:
+    - UI-TopNavigationBar
+    - UI-QuickAccessMenu
+  acceptanceCriteria:
+    - 显示“恭喜您，注册成功！”文案；点击“登录”按钮跳转至登录页。
+  changeLog:
+    - date: "2025-12-01"
+      description: "新增以满足注册成功页面交互。"
 
 - type: Frontend
   id: UI-LoginPage

@@ -1,5 +1,6 @@
 const { createLoginCodeRecord } = require('../db/createLoginCodeRecord');
 const userDb = require('../db/userDb');
+const { generateSixDigitCode } = require('../utils/validators');
 
 const resolveUserByIdentifier = async (identifier) => {
   if (/^\d{11}$/.test(identifier)) {
@@ -12,16 +13,16 @@ const resolveUserByIdentifier = async (identifier) => {
 };
 const handleSendCode = async (payload) => {
   const { identifier, idLast4, code: providedCode } = payload || {};
-  const code = providedCode || String(Math.floor(100000 + Math.random() * 900000));
-  await ensureTable();
-  return new Promise((resolve, reject) => {
-    const sql = 'INSERT INTO login_codes (phone, identifier, code, createdAt, valid) VALUES (?, ?, ?, ?, ?)';
-    const phoneValue = /^\d{11}$/.test(identifier) ? identifier : null;
-    db.run(sql, [phoneValue, identifier, code, Date.now(), 1], function (err) {
-      if (err) return reject(err);
-      resolve({ message: '获取手机验证码成功！' });
-    });
+  const code = providedCode || generateSixDigitCode();
+  const phoneValue = /^\d{11}$/.test(identifier) ? identifier : null;
+  await createLoginCodeRecord({
+    phone: phoneValue,
+    identifier,
+    code,
+    createdAt: Date.now(),
+    valid: 1,
   });
+  return { message: '获取手机验证码成功！' };
 };
 
 module.exports = { handleSendCode, resolveUserByIdentifier };

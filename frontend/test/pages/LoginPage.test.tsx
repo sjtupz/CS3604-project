@@ -1,12 +1,12 @@
 import { test, expect } from 'vitest';
 import { MemoryRouter } from 'react-router-dom';
 import { render, screen } from '@testing-library/react';
-import LoginPage from '../../src/pages/LoginPage';
+import App from '../../src/App';
 
 test('Given user enters login page When page loads Then shows welcome banner and fixed layout', () => {
   render(
-    <MemoryRouter>
-      <LoginPage />
+    <MemoryRouter initialEntries={["/login"]}>
+      <App />
     </MemoryRouter>
   );
   expect(screen.getByText('欢迎登录12306')).toBeInTheDocument();

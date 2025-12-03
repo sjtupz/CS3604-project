@@ -33,7 +33,7 @@ export const checkEmail = async (email: string): Promise<{ isAvailable: boolean 
 
 export const registerUser = async (userData: Partial<RegisterFormData>): Promise<void> => {
   try {
-    const response = await apiClient.post('/api/users/register', userData);
+    const response = await apiClient.post('/api/auth/register', userData);
     return response.data;
   } catch (error) {
     console.error('Error registering user:', error);
