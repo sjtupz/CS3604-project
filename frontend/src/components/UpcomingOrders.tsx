@@ -19,12 +19,14 @@ interface UpcomingOrdersProps {
   orders?: Order[];
   onRefund?: (orderId: string) => void;
   onModify?: (orderId: string) => void;
+  onNavigateToBooking?: () => void;
 }
 
 const UpcomingOrders: React.FC<UpcomingOrdersProps> = ({
   orders = [],
   onRefund,
-  onModify
+  onModify,
+  onNavigateToBooking
 }) => {
   const [queryType, setQueryType] = useState<'按订票日期' | '按乘车日期'>('按订票日期');
   const [startDate, setStartDate] = useState<string>('');
@@ -147,7 +149,7 @@ const UpcomingOrders: React.FC<UpcomingOrdersProps> = ({
             }}
           >
             <img
-              src="/assets/uncompleted-order-icon.png"
+              src="/assets/personal_center/未完成订单.png"
               alt="未出行订单图标"
               style={{
                 width: '120px',
@@ -162,7 +164,7 @@ const UpcomingOrders: React.FC<UpcomingOrdersProps> = ({
               <div style={{ fontSize: '16px', color: '#666', lineHeight: '1.6', textAlign: 'center' }}>
                 您可以通过
                 <span
-                  onClick={() => {}}
+                  onClick={onNavigateToBooking}
                   style={{
                     color: '#1890ff',
                     textDecoration: 'underline',

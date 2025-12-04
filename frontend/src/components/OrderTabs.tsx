@@ -23,7 +23,7 @@ const OrderTabs: React.FC<OrderTabsProps> = ({
     onTabChange?.(tab);
   };
 
-  const tabs = ['未完成订单', '未出行订单', '历史订单'];
+  const tabs = ['未完成订单', '未出行订单', '历史订单', '已退票订单'];
 
   return (
     <div style={{ display: 'flex', gap: '20px', borderBottom: '1px solid #ccc' }}>

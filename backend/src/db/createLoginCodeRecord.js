@@ -1,29 +1,16 @@
-const db = require('../config/database');
+const { run } = require('./personal_database');
 
 const ensureLoginCodesTable = () => {
-  return new Promise((resolve, reject) => {
-    const ddl = `CREATE TABLE IF NOT EXISTS login_codes (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      phone TEXT,
-      identifier TEXT,
-      code TEXT,
-      createdAt INTEGER,
-      valid INTEGER DEFAULT 1
-    )`;
-    db.run(ddl, [], (err) => (err ? reject(err) : resolve(null)));
-  });
+  // Table creation is handled in personal_database.js initializeDatabase
+  return Promise.resolve();
 };
 
 const createLoginCodeRecord = async (record) => {
   const { phone, identifier, code, createdAt, valid = 1 } = record;
-  await ensureLoginCodesTable();
-  return new Promise((resolve, reject) => {
-    const sql = 'INSERT INTO login_codes (phone, identifier, code, createdAt, valid) VALUES (?, ?, ?, ?, ?)';
-    db.run(sql, [phone, identifier, code, createdAt, valid], function (err) {
-      if (err) return reject(err);
-      resolve({ id: this.lastID });
-    });
-  });
+  // await ensureLoginCodesTable(); // No longer needed as init is handled centrally
+  const sql = 'INSERT INTO login_codes (phone, identifier, code, createdAt, valid) VALUES (?, ?, ?, ?, ?)';
+  const result = await run(sql, [phone, identifier, code, createdAt, valid]);
+  return { id: result.lastID };
 };
 
 module.exports = { createLoginCodeRecord, ensureLoginCodesTable };

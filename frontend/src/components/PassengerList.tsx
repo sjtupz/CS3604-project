@@ -1,6 +1,15 @@
 import React, { useMemo, useState } from 'react'
 
-type Passenger = { id: string; name: string; isSelf?: boolean }
+interface Passenger {
+  passengerId: string;
+  name: string;
+  idType?: string;
+  idNumber?: string;
+  phone?: string;
+  verificationStatus?: string;
+  discountType?: string;
+  isSelf?: boolean;
+}
 
 type Props = {
   passengers?: Passenger[]
@@ -46,7 +55,20 @@ export default function PassengerList({ passengers = [], onAdd, onBatchDelete }:
           onChange={(e) => setSearchName(e.currentTarget.value)}
           style={{ flex: '0 0 240px', height: 32, border: '1px solid #d9d9d9', borderRadius: 4, padding: '0 8px' }}
         />
-        <button onClick={() => setSearchName(searchName.trim())}>查询</button>
+        <button 
+          onClick={() => setSearchName(searchName.trim())}
+          style={{
+            height: 32,
+            padding: '0 15px',
+            backgroundColor: '#1890ff',
+            color: 'white',
+            border: 'none',
+            borderRadius: 4,
+            cursor: 'pointer'
+          }}
+        >
+          查询
+        </button>
       </div>
 
       {/* 表头行（第二行，灰色底） */}
@@ -60,7 +82,9 @@ export default function PassengerList({ passengers = [], onAdd, onBatchDelete }:
           display: 'grid',
           gridTemplateColumns: '70px 110px 110px 180px 140px 110px 110px',
           columnGap: 8,
-          overflow: 'hidden'
+          overflow: 'hidden',
+          fontWeight: 'bold',
+          color: '#333'
         }}
       >
         <div style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>序号</div>
@@ -73,48 +97,79 @@ export default function PassengerList({ passengers = [], onAdd, onBatchDelete }:
       </div>
 
       {/* 乘车人信息展示区域（蓝色边框） */}
-      <div style={{ border: '1px solid #1890ff', borderRadius: 4, padding: 12 }}>
+      <div style={{ border: '1px solid #91d5ff', borderRadius: 4, padding: 12 }}>
         {/* 第一行：左侧添加/批量删除按钮 */}
         <div style={{ display: 'flex', gap: 12, marginBottom: 12 }}>
-          <button onClick={onAdd}>添加</button>
-          <button onClick={handleBatchDelete}>批量删除</button>
+          <button 
+            onClick={onAdd}
+            style={{
+              padding: '5px 15px',
+              backgroundColor: '#faad14',
+              color: 'white',
+              border: 'none',
+              borderRadius: 4,
+              cursor: 'pointer'
+            }}
+          >
+            + 添加
+          </button>
+          <button 
+            onClick={handleBatchDelete}
+            style={{
+              padding: '5px 15px',
+              backgroundColor: '#ff4d4f',
+              color: 'white',
+              border: 'none',
+              borderRadius: 4,
+              cursor: 'pointer'
+            }}
+          >
+            批量删除
+          </button>
         </div>
-        {message && <div>{message}</div>}
+        {message && <div style={{ color: '#ff4d4f', marginBottom: 8 }}>{message}</div>}
 
         {/* 列表行 */}
         <div style={{ display: 'grid', rowGap: 8 }}>
-          {rows.map((p, idx) => {
-            const rowNo = idx + 1
-            const isSelf = idx === 0 && p.isSelf
-            return (
-              <div
-                key={p.id}
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: '70px 110px 110px 180px 140px 110px 110px',
-                  columnGap: 8,
-                  alignItems: 'center',
-                  padding: '6px 8px',
-                  borderBottom: '1px solid #f0f0f0',
-                }}
-              >
-                <div>
-                  <input
-                    type="checkbox"
-                    data-testid={`row-${rowNo}-checkbox`}
-                    onChange={(e) => toggle(p.id, e.currentTarget.checked)}
-                  />
-                  <span style={{ marginLeft: 8, whiteSpace: 'nowrap' }}>{rowNo}</span>
+          {rows.length === 0 ? (
+             <div style={{ padding: '20px', textAlign: 'center', color: '#999' }}>暂无乘车人信息</div>
+          ) : (
+            rows.map((p, idx) => {
+              const rowNo = idx + 1
+              return (
+                <div
+                  key={p.passengerId}
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: '70px 110px 110px 180px 140px 110px 110px',
+                    columnGap: 8,
+                    alignItems: 'center',
+                    padding: '6px 8px',
+                    borderBottom: '1px solid #f0f0f0',
+                    fontSize: '13px'
+                  }}
+                >
+                  <div>
+                    <input
+                      type="checkbox"
+                      data-testid={`row-${rowNo}-checkbox`}
+                      onChange={(e) => toggle(p.passengerId, e.currentTarget.checked)}
+                    />
+                    <span style={{ marginLeft: 8, whiteSpace: 'nowrap' }}>{rowNo}</span>
+                  </div>
+                  <div style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.name}</div>
+                  <div style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.idType || '中国居民身份证'}</div>
+                  <div style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.idNumber || '-'}</div>
+                  <div style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.phone || '-'}</div>
+                  <div style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', color: p.verificationStatus === '已通过' ? '#52c41a' : '#faad14' }}>{p.verificationStatus || '未核验'}</div>
+                  <div style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    <span style={{ color: '#1890ff', cursor: 'pointer', marginRight: 8 }}>编辑</span>
+                    <span style={{ color: '#ff4d4f', cursor: 'pointer' }}>删除</span>
+                  </div>
                 </div>
-                <div style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.name}</div>
-                <div style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}></div>
-                <div style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}></div>
-                <div style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}></div>
-                <div style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}></div>
-                <div style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{isSelf ? null : null}</div>
-              </div>
-            )
-          })}
+              )
+            })
+          )}
         </div>
       </div>
     </div>

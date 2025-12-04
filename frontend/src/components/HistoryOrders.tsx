@@ -18,11 +18,13 @@ interface Order {
 interface HistoryOrdersProps {
   orders?: Order[];
   onPrintInfo?: (orderId: string) => void;
+  onNavigateToBooking?: () => void;
 }
 
 const HistoryOrders: React.FC<HistoryOrdersProps> = ({
   orders = [],
-  onPrintInfo
+  onPrintInfo,
+  onNavigateToBooking
 }) => {
   const [startDate, setStartDate] = useState<string>('');
   const [endDate, setEndDate] = useState<string>('');
@@ -136,7 +138,7 @@ const HistoryOrders: React.FC<HistoryOrdersProps> = ({
             }}
           >
             <img
-              src="/assets/uncompleted-order-icon.png"
+              src="/assets/personal_center/未完成订单.png"
               alt="历史订单图标"
               style={{
                 width: '120px',
@@ -151,7 +153,7 @@ const HistoryOrders: React.FC<HistoryOrdersProps> = ({
               <div style={{ fontSize: '16px', color: '#666', lineHeight: '1.6', textAlign: 'center' }}>
                 您可以通过
                 <span
-                  onClick={() => {}}
+                  onClick={onNavigateToBooking}
                   style={{
                     color: '#1890ff',
                     textDecoration: 'underline',

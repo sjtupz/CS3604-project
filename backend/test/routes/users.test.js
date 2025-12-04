@@ -1,12 +1,16 @@
 // backend/test/routes/users.test.js
 const request = require('supertest');
 const app = require('../../src/app');
-const db = require('../../src/config/database');
+const { run, waitForInit } = require('../../src/db/personal_database');
 const userDb = require('../../src/db/userDb');
 
 describe('API-GET-CheckUsername: /api/users/check-username', () => {
+  beforeAll(async () => {
+    await waitForInit();
+  });
+
   beforeEach(async () => {
-    await new Promise((resolve) => db.run('DELETE FROM users', resolve));
+    await run('DELETE FROM users');
   });
 
   // 场景 3.3.1 - 用户名合法且未被占用

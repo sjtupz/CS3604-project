@@ -1,9 +1,16 @@
 const express = require('express');
 const cors = require('cors');
-const db = require('./config/database'); // Import the database connection
+const { waitForInit } = require('./db/personal_database'); // Use unified database
 const stationRoutes = require('./routes/stations');
 
 const app = express();
+
+// Initialize database
+waitForInit().then(() => {
+  console.log('Database initialized successfully');
+}).catch(err => {
+  console.error('Failed to initialize database:', err);
+});
 
 app.use(cors({ origin: ['http://localhost:5173', 'http://localhost:5174'] }));
 app.use(express.json());

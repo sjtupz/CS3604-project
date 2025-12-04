@@ -1,10 +1,10 @@
 const userDb = require('../../src/db/userDb');
-const db = require('../../src/config/database');
+const { run } = require('../../src/db/personal_database');
 
 describe('Database Integration: User Registration', () => {
   beforeEach(async () => {
     // 清理数据库，确保每个测试从干净状态开始
-    await new Promise((resolve) => db.run('DELETE FROM users', resolve));
+    await run('DELETE FROM users');
   });
 
   // 场景 5.1 & 5.2 - 基础信息写入

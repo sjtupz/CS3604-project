@@ -1,11 +1,16 @@
 const request = require('supertest');
 const app = require('../../src/app');
-const db = require('../../src/config/database');
+const { run, get, waitForInit } = require('../../src/db/personal_database');
 const userDb = require('../../src/db/userDb');
 
 describe('API-POST-Login-SendCode: /api/auth/login/send-code', () => {
+  beforeAll(async () => {
+    await waitForInit();
+  });
+
   beforeEach(async () => {
-    await new Promise((resolve) => db.run('DELETE FROM users', resolve));
+    await run('DELETE FROM users');
+    await run('DELETE FROM login_codes');
   });
 
   test('Given identifier is 11-digit number When user clicks get code Then system treats identifier as phone and sends code', async () => {
@@ -39,6 +44,7 @@ describe('API-POST-Login-SendCode: /api/auth/login/send-code', () => {
     const res = await request(app)
       .post('/api/auth/login/send-code')
       .send({ identifier: 'user2@example.com', idLast4: '9999' });
+    if (res.statusCode !== 200) console.error(res.body);
     expect(res.statusCode).toBe(200);
     expect(res.body.message).toContain('获取手机验证码成功');
   });
@@ -56,6 +62,7 @@ describe('API-POST-Login-SendCode: /api/auth/login/send-code', () => {
     const res = await request(app)
       .post('/api/auth/login/send-code')
       .send({ identifier: 'user3', idLast4: '1234' });
+    if (res.statusCode !== 200) console.error(res.body);
     expect(res.statusCode).toBe(200);
     expect(res.body.message).toContain('获取手机验证码成功');
   });
@@ -100,11 +107,8 @@ describe('API-POST-Login-SendCode: /api/auth/login/send-code', () => {
       .send({ identifier: '13500135000', idLast4: '0001' });
     expect(res.statusCode).toBe(200);
     expect(res.body.message).toContain('获取手机验证码成功');
-    const recordCount = await new Promise((resolve) => {
-      db.get('SELECT COUNT(1) AS cnt FROM login_codes', [], (err, row) => {
-        resolve(row ? row.cnt : 0);
-      });
-    });
+    const row = await get('SELECT COUNT(1) AS cnt FROM login_codes');
+    const recordCount = row ? row.cnt : 0;
     expect(recordCount).toBeGreaterThan(0);
   });
 });

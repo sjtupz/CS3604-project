@@ -16,7 +16,9 @@ const getOrdersByStatus = async (userId, status) => {
         passenger_info as passengerInfo,
         seat_info as seatInfo,
         price,
-        status
+        status,
+        refund_fee as refundFee,
+        refund_date as refundDate
       FROM orders
       WHERE user_id = ? AND status = ?
     `;
@@ -63,7 +65,9 @@ const getOrdersByDateRange = async (userId, queryParams) => {
         passenger_info as passengerInfo,
         seat_info as seatInfo,
         price,
-        status
+        status,
+        refund_fee as refundFee,
+        refund_date as refundDate
       FROM orders
       WHERE user_id = ?
     `;

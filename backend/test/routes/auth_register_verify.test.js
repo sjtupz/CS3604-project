@@ -1,12 +1,14 @@
 const request = require('supertest');
 const app = require('../../src/app');
-const db = require('../../src/config/database');
+const { run, get, waitForInit } = require('../../src/db/personal_database');
 
 describe('API-POST-Register-Verify', () => {
+  beforeAll(async () => {
+    await waitForInit();
+  });
+
   beforeEach(async () => {
-    await new Promise((resolve) => {
-      db.run('DELETE FROM login_codes', [], resolve);
-    });
+    await run('DELETE FROM login_codes');
   });
 
   test('Given 未输入验证码 When 点击下一步 Then 返回400和请输入验证码', async () => {
@@ -18,9 +20,7 @@ describe('API-POST-Register-Verify', () => {
   });
 
   test('Given 输入错误验证码 When 点击下一步 Then 返回401并提示验证码错误', async () => {
-    await new Promise((resolve) => {
-      db.run('INSERT INTO login_codes (phone, identifier, code, createdAt, valid) VALUES (?, ?, ?, ?, ?)', ['13800138000', '13800138000', '123456', Date.now(), 1], resolve);
-    });
+    await run('INSERT INTO login_codes (phone, identifier, code, createdAt, valid) VALUES (?, ?, ?, ?, ?)', ['13800138000', '13800138000', '123456', Date.now(), 1]);
     const res = await request(app)
       .post('/api/auth/register/verify')
       .send({ phoneNumber: '13800138000', code: '000000' });
@@ -29,9 +29,7 @@ describe('API-POST-Register-Verify', () => {
   });
 
   test('Given 输入正确验证码 When 点击下一步 Then 返回201并作废验证码', async () => {
-    await new Promise((resolve) => {
-      db.run('INSERT INTO login_codes (phone, identifier, code, createdAt, valid) VALUES (?, ?, ?, ?, ?)', ['13800138000', '13800138000', '654321', Date.now(), 1], resolve);
-    });
+    await run('INSERT INTO login_codes (phone, identifier, code, createdAt, valid) VALUES (?, ?, ?, ?, ?)', ['13800138000', '13800138000', '654321', Date.now(), 1]);
     const payload = {
       phoneNumber: '13800138000',
       code: '654321',
@@ -47,9 +45,7 @@ describe('API-POST-Register-Verify', () => {
       .post('/api/auth/register/verify')
       .send(payload);
     expect(res.statusCode).toBe(201);
-    const row = await new Promise((resolve) => {
-      db.get('SELECT valid FROM login_codes WHERE identifier = ?', ['13800138000'], (err, r) => resolve(r));
-    });
+    const row = await get('SELECT valid FROM login_codes WHERE identifier = ?', ['13800138000']);
     expect(row && row.valid).toBe(0);
   });
 });
