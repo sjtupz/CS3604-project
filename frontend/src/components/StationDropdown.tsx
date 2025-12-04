@@ -7,22 +7,23 @@ interface StationDropdownProps {
   onSelectStation: (stationName: string) => void;
   placeholder?: string;
   onInputChange?: (term: string) => void;
+  id?: string;
 }
 
 const styles = {
   container: { position: 'relative' as const },
   input: { padding: '10px', width: '100%', boxSizing: 'border-box' as const },
-  dropdown: { border: '1px solid #ccc', backgroundColor: 'white', position: 'absolute' as const, zIndex: 1, width: '100%' },
+  dropdown: { border: '1px solid #ccc', backgroundColor: 'white', position: 'absolute' as const, zIndex: 1000, width: '100%' },
   dropdownItem: { padding: '10px', cursor: 'pointer' },
   noMatch: { padding: '10px', color: '#999' }
 };
 
-const StationDropdown: React.FC<StationDropdownProps> = ({ value, onSelectStation, placeholder, onInputChange }) => {
+const StationDropdown: React.FC<StationDropdownProps> = ({ value, onSelectStation, placeholder, onInputChange, id }) => {
   const [stations, setStations] = useState<Station[]>([]);
   const [filteredStations, setFilteredStations] = useState<Station[]>([]);
   const [inputValue, setInputValue] = useState(value);
   const [isDropdownVisible, setIsDropdownVisible] = useState(false);
-  const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const debounceTimeoutRef = useRef<number | null>(null);
 
   useEffect(() => {
     const fetchStations = async () => {
@@ -51,7 +52,7 @@ const StationDropdown: React.FC<StationDropdownProps> = ({ value, onSelectStatio
       clearTimeout(debounceTimeoutRef.current);
     }
 
-    debounceTimeoutRef.current = setTimeout(() => {
+    debounceTimeoutRef.current = window.setTimeout(() => {
       if (term) {
         setFilteredStations(
           stations.filter(station =>
@@ -92,6 +93,7 @@ const StationDropdown: React.FC<StationDropdownProps> = ({ value, onSelectStatio
     <div style={styles.container}>
       <input
         type="text"
+        id={id}
         value={inputValue}
         onChange={handleInputChange}
         onFocus={() => setIsDropdownVisible(true)}

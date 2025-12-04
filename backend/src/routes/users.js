@@ -18,7 +18,7 @@ router.get('/check-username', async (req, res) => {
     }
     res.status(200).json({ isAvailable: true });
   } catch (error) {
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(500).json({ error: 'Internal Server Error' });
   }
 });
 

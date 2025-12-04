@@ -1,6 +1,6 @@
 const db = require('../config/database');
 
-const ensureTable = () => {
+const ensureLoginCodesTable = () => {
   return new Promise((resolve, reject) => {
     const ddl = `CREATE TABLE IF NOT EXISTS login_codes (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -16,7 +16,7 @@ const ensureTable = () => {
 
 const createLoginCodeRecord = async (record) => {
   const { phone, identifier, code, createdAt, valid = 1 } = record;
-  await ensureTable();
+  await ensureLoginCodesTable();
   return new Promise((resolve, reject) => {
     const sql = 'INSERT INTO login_codes (phone, identifier, code, createdAt, valid) VALUES (?, ?, ?, ?, ?)';
     db.run(sql, [phone, identifier, code, createdAt, valid], function (err) {
@@ -26,4 +26,4 @@ const createLoginCodeRecord = async (record) => {
   });
 };
 
-module.exports = { createLoginCodeRecord };
+module.exports = { createLoginCodeRecord, ensureLoginCodesTable };

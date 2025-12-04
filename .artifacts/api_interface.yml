@@ -116,11 +116,13 @@
     - DB-FindUserByPhone
     - DB-CreateUser
   acceptanceCriteria:
-    - 当接收到合法且未注册的数据时，应创建新用户并返回 201 Created。
+    - 通常在验证码校验成功后执行，创建新用户并返回 201 Created。
     - 当用户名、证件、邮箱或手机号已存在时，应返回 409 Conflict 及具体错误信息。
   changeLog:
     - date: "2025-11-23"
       description: "创建，用于处理用户注册流程。"
+    - date: "2025-12-01"
+      description: "更新验收标准以配合验证码页流程。"
 
 - type: Backend
   id: API-POST-Login-SendCode
@@ -190,3 +192,70 @@
   changeLog:
     - date: "2025-11-24"
       description: "依据登录页短信验证提交流程新增。"
+- type: Backend
+  id: API-POST-Register-SendCode
+  route: POST /api/auth/register/send-code
+  description: 在进入验证码输入页时（或用户点击重新发送）向注册手机号发送6位验证码并记录。
+  input:
+    type: JSON
+    body:
+      phoneNumber: string
+  output:
+    success:
+      statusCode: 200
+      body: { message: "获取手机验证码成功！" }
+    error:
+      - statusCode: 422
+        body: { error: "请输入正确的用户信息！" }
+      - statusCode: 429
+        body: { error: "操作过于频繁，请稍后再试。" }
+  dependencies:
+    - DB-CreateLoginCodeRecord
+  acceptanceCriteria:
+    - 当传入合法手机号时，生成并发送6位验证码，保存到数据库并返回成功消息。
+    - 返回消息用于页面显示与倒计时提示；服务端应具备频控以防滥发。
+  changeLog:
+    - date: "2025-12-01"
+      description: "新增，以满足注册验证码页的自动发送与重新发送需求。"
+
+- type: Backend
+  id: API-POST-Register-Verify
+  route: POST /api/auth/register/verify
+  description: 校验注册短信验证码并在成功后创建用户。
+  input:
+    type: JSON
+    body:
+      phoneNumber: string
+      code: string
+      username: string
+      password: string
+      identityType: string
+      fullName: string
+      identityNumber: string
+      passengerType: string
+      email: string (optional)
+  output:
+    success:
+      statusCode: 201
+      body: { message: "Registration successful, please proceed to login." }
+    error:
+      - statusCode: 400
+        body: { error: "请输入验证码" }
+      - statusCode: 401
+        body: { error: "验证码校验失败" }
+      - statusCode: 409
+        body: { error: "Username, identity, email, or phone number already exists." }
+  dependencies:
+    - DB-FindLoginCodeRecord
+    - DB-InvalidateLoginCodeRecord
+    - DB-FindUserByUsername
+    - DB-FindUserByIdentity
+    - DB-FindUserByEmail
+    - DB-FindUserByPhone
+    - DB-CreateUser
+  acceptanceCriteria:
+    - 未填写或验证码不匹配时返回相应错误；验证成功后创建用户并返回 201。
+    - 验证码使用后应作废，不允许重复使用。
+  changeLog:
+    - date: "2025-12-01"
+      description: "新增，以满足注册验证码页的校验与最终注册。"

@@ -1,8 +1,8 @@
 import axios from 'axios';
 
 const apiClient = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL,
-  timeout: 5000, // 5秒超时
+  baseURL: import.meta.env.DEV ? undefined : import.meta.env.VITE_API_BASE_URL,
+  timeout: 5000,
 });
 
 // 请求拦截器

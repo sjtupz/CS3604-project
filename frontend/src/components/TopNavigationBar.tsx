@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import './TopNavigationBar.css';
 
 interface TopNavigationBarProps {
@@ -7,6 +7,25 @@ interface TopNavigationBarProps {
 }
 
 const TopNavigationBar: React.FC<TopNavigationBarProps> = ({ isLoggedIn = false }) => {
+  const { pathname } = useLocation();
+
+  if (pathname === '/login') {
+    return (
+      <div className="nav-bar login">
+        <div className="logo-container">
+          <Link to="/" aria-label="首页">
+            <img src="/src/assets/logo.png" alt="中国铁路12306" className="logo-img" data-testid="logo" />
+          </Link>
+          <div className="logo-text-container">
+            <div className="logo-title">中国铁路12306</div>
+            <div className="logo-subtitle">12306 CHINA RAILWAY</div>
+          </div>
+        </div>
+        <div className="header-welcome">欢迎登录12306</div>
+      </div>
+    );
+  }
+
   return (
     <div className="nav-bar">
       <div className="logo-container">
