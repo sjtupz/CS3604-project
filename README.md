@@ -147,6 +147,11 @@ project/
    - 配置数据库连接（SQLite）
    - 配置测试环境
 
+### 4. Backend Developer（后端开发工程师）
+- **职责**: 实现后端功能和数据库操作，确保所有测试通过
+- **输入**: 测试文件、API 和数据库接口定义
+- **输出**: 后端实现代码（TDD GREEN-REFACTOR 阶段）
+
 ### 开发流程
 
 1. **准备需求文档**
@@ -174,13 +179,6 @@ project/
 
 详细开发流程请参考：[Agent Prompts/README.md](./Agent%20Prompts/README.md)
 
-### 运行流程
-
-前端后端各开一个终端：
-
-前端请使用 npm run dev
-
-后端请使用 npm start
 
 ## 需求文档
 
