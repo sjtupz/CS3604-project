@@ -174,6 +174,36 @@ const PersonalCenter: React.FC<PersonalCenterProps> = () => {
     navigate('/verification');
   };
 
+  const handleUpdateDiscountType = async (discountType: string, studentQualification?: { school?: string; studentId?: string }) => {
+    try {
+      await apiClient.put('/api/user/discount-type', {
+        discountType,
+        studentQualification
+      });
+      
+      // Refresh user info
+      const userResponse = await apiClient.get('/api/user/info');
+      const userInfo = userResponse.data;
+      setCurrentUser({
+        username: userInfo.username,
+        realName: userInfo.realName,
+        country: userInfo.country,
+        idType: userInfo.idType,
+        idNumber: userInfo.idNumber,
+        verificationStatus: userInfo.verificationStatus,
+        phoneNumber: userInfo.phoneNumber,
+        email: userInfo.email,
+        phoneVerified: userInfo.phoneVerified,
+        discountType: userInfo.discountType,
+        gender: (userInfo.gender === 'female' ? 'female' : 'male') as 'male' | 'female'
+      });
+      return true;
+    } catch (error) {
+      console.error('Error updating discount type:', error);
+      return false;
+    }
+  };
+
   const handleLogout = () => {
     localStorage.removeItem('authToken');
     window.dispatchEvent(new Event('auth-change'));
@@ -202,6 +232,7 @@ const PersonalCenter: React.FC<PersonalCenterProps> = () => {
         onModify={handleModify}
         onPrintInfo={handlePrintInfo}
         onNavigateToPhoneVerification={handleNavigateToPhoneVerification}
+        onUpdateDiscountType={handleUpdateDiscountType}
       />
     </div>
   );

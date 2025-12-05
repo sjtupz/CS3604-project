@@ -18,18 +18,21 @@ interface UserInfo {
 interface UserInfoViewProps {
   userInfo?: UserInfo;
   onEditContact?: () => void;
-  onEditDiscountType?: () => void;
+  onEditDiscountType?: () => void; // Keep this for now if used elsewhere, but we might rely on internal state
   onNavigateToPhoneVerification?: () => void;
+  onUpdateDiscountType?: (discountType: string, studentQualification?: { school?: string; studentId?: string }) => Promise<boolean>;
 }
 
 const UserInfoView: React.FC<UserInfoViewProps> = ({
   userInfo,
   onEditContact,
   onEditDiscountType,
-  onNavigateToPhoneVerification
+  onNavigateToPhoneVerification,
+  onUpdateDiscountType
 }) => {
   const [isEditingContact, setIsEditingContact] = useState(false);
   const [isEditingDiscountType, setIsEditingDiscountType] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [currentDiscountType, setCurrentDiscountType] = useState(userInfo?.discountType || '');
 
   useEffect(() => {
@@ -38,10 +41,40 @@ const UserInfoView: React.FC<UserInfoViewProps> = ({
     }
   }, [userInfo?.discountType]);
 
-  const handleSaveDiscountType = () => {
-    // TODO: 调用API保存优惠类型
-    setIsEditingDiscountType(false);
+  const handleSaveDiscountType = async () => {
+    if (onUpdateDiscountType) {
+      // If switching to Student type and qualification is missing, provide a default empty object
+      // to satisfy backend validation or allow initial save.
+      let qualification = userInfo?.studentQualification;
+      if (currentDiscountType === '学生' && !qualification) {
+        qualification = { school: '', studentId: '' };
+      }
+
+      const success = await onUpdateDiscountType(currentDiscountType, qualification);
+      if (success) {
+        setShowSuccessModal(true);
+      } else {
+        alert('保存失败，请重试');
+      }
+    } else {
+      setIsEditingDiscountType(false);
+    }
   };
+
+  const handleModalConfirm = () => {
+    setShowSuccessModal(false);
+    setIsEditingDiscountType(false);
+    // window.location.reload(); // Removed per user request
+  };
+
+  // Data masking
+  const maskedIdNumber = userInfo?.idNumber 
+    ? userInfo.idNumber.substring(0, 4) + '***********' + userInfo.idNumber.substring(15) 
+    : '-';
+    
+  const maskedPhoneNumber = userInfo?.phoneNumber
+    ? userInfo.phoneNumber.substring(0, 3) + '****' + userInfo.phoneNumber.substring(7)
+    : '-';
 
   return (
     <div style={{ padding: '20px' }}>
@@ -53,8 +86,13 @@ const UserInfoView: React.FC<UserInfoViewProps> = ({
           <p>姓名: {userInfo?.realName || '-'}</p>
           <p>国家/地区: {userInfo?.country || '-'}</p>
           <p>证件类型: {userInfo?.idType || '-'}</p>
-          <p>证件号码: {userInfo?.idNumber || '-'}</p>
-          <p>核验状态: {userInfo?.verificationStatus || '-'}</p>
+          <p>证件号码: {maskedIdNumber}</p>
+          <p>
+            核验状态: 
+            <span style={{ color: userInfo?.verificationStatus === '已通过' ? '#ff8c00' : 'inherit', marginLeft: '5px' }}>
+              {userInfo?.verificationStatus || '-'}
+            </span>
+          </p>
         </div>
       </div>
 
@@ -66,8 +104,10 @@ const UserInfoView: React.FC<UserInfoViewProps> = ({
             {isEditingContact ? '完成' : '编辑'}
           </button>
         </div>
-        <p>手机号: {userInfo?.phoneNumber || '-'}</p>
-        {userInfo?.phoneVerified && <span style={{ color: 'green', fontSize: '14px' }}>已通过核验</span>}
+        <p style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          手机号: {maskedPhoneNumber}
+          {userInfo?.phoneVerified && <span style={{ color: '#ff8c00', marginLeft: '10px', fontSize: '14px' }}>已通过核验</span>}
+        </p>
         {isEditingContact && userInfo?.phoneVerified && (
           <div style={{ marginTop: '10px' }}>
             <button onClick={onNavigateToPhoneVerification} style={{ padding: '5px 10px', backgroundColor: '#1890ff', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
@@ -81,13 +121,24 @@ const UserInfoView: React.FC<UserInfoViewProps> = ({
       {/* 优惠类型板块 */}
       <div style={{ marginBottom: '30px', border: '1px solid #eee', padding: '15px', borderRadius: '4px', textAlign: 'center' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <h3>优惠类型</h3>
-          <button onClick={() => { setIsEditingDiscountType(!isEditingDiscountType); onEditDiscountType?.(); }} style={{ padding: '5px 10px' }}>
+          <h3>优惠(待)类型</h3>
+          <button 
+            onClick={() => { 
+              if (isEditingDiscountType) {
+                handleSaveDiscountType();
+              } else {
+                setIsEditingDiscountType(true); 
+                onEditDiscountType?.(); 
+              }
+            }} 
+            style={{ padding: '5px 10px' }}
+          >
             {isEditingDiscountType ? '保存' : '编辑'}
           </button>
         </div>
         {isEditingDiscountType ? (
           <div style={{ marginTop: '10px' }}>
+            <label style={{ marginRight: '10px' }}>优惠(待)类型:</label>
             <select
               value={currentDiscountType}
               onChange={(e) => setCurrentDiscountType(e.target.value)}
@@ -98,16 +149,13 @@ const UserInfoView: React.FC<UserInfoViewProps> = ({
               <option value="学生">学生</option>
               <option value="残疾军人">残疾军人</option>
             </select>
-            <button onClick={handleSaveDiscountType} style={{ padding: '5px 10px', backgroundColor: '#1890ff', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
-              保存
-            </button>
           </div>
         ) : (
-          <p>当前优惠类型: {userInfo?.discountType || '-'}</p>
+          <p>优惠(待)类型: {userInfo?.discountType || '-'}</p>
         )}
 
-        {/* 学生资质查询板块 */}
-        {currentDiscountType === '学生' && (
+        {/* 学生资质查询板块 - only show if SAVED type is student */}
+        {userInfo?.discountType === '学生' && (
           <div style={{ marginTop: '20px', borderTop: '1px dashed #eee', paddingTop: '15px' }}>
             <h4>学生资质查询</h4>
             <button style={{ marginRight: '10px', padding: '5px 10px' }}>刷新</button>
@@ -115,6 +163,26 @@ const UserInfoView: React.FC<UserInfoViewProps> = ({
           </div>
         )}
       </div>
+
+      {/* Success Modal */}
+      {showSuccessModal && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000
+        }}>
+          <div style={{
+            backgroundColor: 'white', padding: '30px', borderRadius: '8px', width: '300px', textAlign: 'center',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
+          }}>
+            <div style={{ fontSize: '18px', marginBottom: '20px', fontWeight: 'bold' }}>保存成功</div>
+            <button onClick={handleModalConfirm} style={{
+              backgroundColor: '#ff8c00', color: 'white', border: 'none', padding: '10px 30px', borderRadius: '4px', cursor: 'pointer', fontSize: '16px'
+            }}>
+              确定
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

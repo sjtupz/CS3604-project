@@ -26,8 +26,16 @@ export default function PassengerList({ passengers = [], onAdd, onBatchDelete }:
 
   const rows = useMemo(() => {
     const list = passengers
-    if (!searchName.trim()) return list
-    return list.filter((p) => (p.name || '').includes(searchName.trim()))
+    let filtered = list
+    if (searchName.trim()) {
+      filtered = list.filter((p) => (p.name || '').includes(searchName.trim()))
+    }
+    // Sort so isSelf is first
+    return [...filtered].sort((a, b) => {
+      if (a.isSelf && !b.isSelf) return -1;
+      if (!a.isSelf && b.isSelf) return 1;
+      return 0;
+    });
   }, [passengers, searchName])
 
   const toggle = (id: string, checked: boolean) => {
@@ -159,8 +167,16 @@ export default function PassengerList({ passengers = [], onAdd, onBatchDelete }:
                   </div>
                   <div style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.name}</div>
                   <div style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.idType || '中国居民身份证'}</div>
-                  <div style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.idNumber || '-'}</div>
-                  <div style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.phone || '-'}</div>
+                  <div style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {p.idNumber 
+                      ? p.idNumber.substring(0, 4) + '***********' + p.idNumber.substring(15) 
+                      : '-'}
+                  </div>
+                  <div style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {p.phone 
+                      ? '(+86)' + p.phone.substring(0, 3) + '****' + p.phone.substring(7) 
+                      : '-'}
+                  </div>
                   <div style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', color: p.verificationStatus === '已通过' ? '#52c41a' : '#faad14' }}>{p.verificationStatus || '未核验'}</div>
                   <div style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                     <span style={{ color: '#1890ff', cursor: 'pointer', marginRight: 8 }}>编辑</span>

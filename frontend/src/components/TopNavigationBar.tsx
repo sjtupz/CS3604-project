@@ -13,7 +13,7 @@ interface TopNavigationBarProps {
   onLogout?: () => void;
 }
 
-const TopNavigationBar: React.FC<TopNavigationBarProps> = ({
+export const TopNavigationBar: React.FC<TopNavigationBarProps> = ({
   currentUser,
   isLoggedIn,
   onNavigate,
@@ -34,22 +34,27 @@ const TopNavigationBar: React.FC<TopNavigationBarProps> = ({
     } else {
       localStorage.removeItem('authToken');
       window.dispatchEvent(new Event('auth-change'));
+      // The requirement says: "在登陆后，点击退出前保持账号登录状态". 
+      // "点击后退出当前账号的登录状态" - After clicking, logout.
+      // Usually logout redirects or refreshes. Here we just update state.
+      // We might want to navigate to home or login, but requirement doesn't explicitly say.
+      // I'll navigate to login to be safe/standard.
       navigate('/login');
     }
   };
 
-  const handleNavigateToPersonalCenter = () => {
-    navigate('/profile');
+  const handleMy12306Click = () => {
+    if (isLoggedIn) {
+      navigate('/profile');
+    } else {
+      navigate('/login');
+    }
   };
 
-  const handleNavigateToLogin = () => {
-    navigate('/login');
-  };
-
-  const handleNavigateToRegister = () => {
-    navigate('/register');
-  };
-
+  // Special case for Login Page: Render simplified header or nothing?
+  // Requirement: "最顶部右侧导航栏中...在除登陆页面中全都存在"
+  // This implies on Login page, this specific nav bar is NOT present.
+  // The existing code rendered a simplified header. I will keep that behavior.
   if (location.pathname === '/login') {
     return (
       <div style={{ backgroundColor: 'white', borderBottom: '1px solid #e8e8e8' }}>
@@ -117,7 +122,7 @@ const TopNavigationBar: React.FC<TopNavigationBarProps> = ({
           />
         </div>
 
-        {/* 中间搜索栏 */}
+        {/* 中间搜索栏 - Keeping existing */}
         <div
           style={{
             flex: 1,
@@ -182,86 +187,88 @@ const TopNavigationBar: React.FC<TopNavigationBarProps> = ({
           style={{
             display: 'flex',
             alignItems: 'center',
-            gap: '15px',
+            gap: '10px', // Reduced gap slightly to fit content
             fontSize: '14px'
           }}
         >
-          <span
-            style={{ color: '#1890ff', cursor: 'pointer' }}
-            onClick={() => console.log('无障碍')}
-          >
-            无障碍
-          </span>
-          <span style={{ color: '#999' }}>|</span>
-          <span
-            style={{ color: '#1890ff', cursor: 'pointer' }}
-            onClick={() => console.log('敬老版')}
-          >
-            敬老版
-          </span>
-          <span style={{ color: '#999' }}>|</span>
-          <span
-            style={{ color: '#1890ff', cursor: 'pointer' }}
-            onClick={() => console.log('English')}
-          >
-            English
-          </span>
-          <span style={{ color: '#999' }}>|</span>
+          {/* Static Links */}
+          <span style={{ color: '#1890ff', cursor: 'pointer' }}>无障碍</span>
+          <span style={{ color: '#1890ff' }}>|</span>
+          <span style={{ color: '#1890ff', cursor: 'pointer' }}>敬老版</span>
+          <span style={{ color: '#1890ff' }}>|</span>
+          <span style={{ color: '#1890ff', cursor: 'pointer' }}>English</span>
+          <span style={{ color: '#1890ff', marginLeft: '5px' }}> </span>{/* Space after English? "English |" */}
+          <span style={{ color: '#1890ff' }}>|</span>
           
-          {(isLoggedIn || currentUser) ? (
-            <>
-              <span
-                style={{ color: '#1890ff', cursor: 'pointer' }}
-                onClick={handleNavigateToPersonalCenter}
-              >
-                我的12306
+          <span 
+            style={{ color: '#1890ff', cursor: 'pointer' }}
+            onClick={handleMy12306Click}
+          >
+            我的12306
+          </span>
+          
+          {/* Dynamic Content */}
+          <div style={{ marginLeft: '10px', display: 'flex', alignItems: 'center' }}>
+            {isLoggedIn ? (
+              // Authenticated State
+              <span style={{ display: 'flex', alignItems: 'center' }}>
+                <span style={{ color: 'black' }}>您好，</span>
+                <span 
+                  style={{ color: '#1890ff', cursor: 'pointer' }}
+                  onClick={() => navigate('/profile')}
+                >
+                  {currentUser?.realName || currentUser?.username || '用户'}
+                </span>
+                <span style={{ color: 'black', margin: '0 5px' }}> | </span>
+                <span 
+                  style={{ color: 'black', cursor: 'pointer' }}
+                  onClick={handleLogout}
+                >
+                  退出
+                </span>
               </span>
-              <span style={{ color: '#999' }}>|</span>
-              {currentUser?.username && (
-                <>
-                  <span>
-                    <span style={{ color: '#000' }}>您好，</span>
-                    <span
-                      style={{ color: '#1890ff', cursor: 'pointer' }}
-                      onClick={handleNavigateToPersonalCenter}
-                    >
-                      {currentUser.realName || currentUser.username}
-                    </span>
-                  </span>
-                  <span style={{ color: '#999' }}>|</span>
-                </>
-              )}
-              <span
-                style={{ color: '#1890ff', cursor: 'pointer' }}
-                onClick={handleLogout}
-              >
-                退出
+            ) : location.pathname === '/register' ? (
+              // Register Page State
+              <span style={{ display: 'flex', alignItems: 'center' }}>
+                <span style={{ color: 'black' }}>您好，请</span>
+                <span 
+                  style={{ color: 'black', cursor: 'pointer', marginLeft: '5px' }}
+                  onClick={() => navigate('/login')}
+                >
+                  登录
+                </span>
+                <span 
+                  style={{ color: 'black', cursor: 'pointer', marginLeft: '10px' }}
+                  onClick={() => navigate('/register')}
+                >
+                  注册
+                </span>
               </span>
-            </>
-          ) : (
-            <>
-               <span
-                style={{ color: '#1890ff', cursor: 'pointer' }}
-                onClick={handleNavigateToLogin}
-              >
-                登录
+            ) : (
+              // Default Unauthenticated (e.g. Homepage)
+              <span style={{ display: 'flex', alignItems: 'center' }}>
+                <span 
+                  style={{ color: 'black', cursor: 'pointer' }}
+                  onClick={() => navigate('/login')}
+                >
+                  登录
+                </span>
+                <span 
+                  style={{ color: 'black', cursor: 'pointer', marginLeft: '10px' }}
+                  onClick={() => navigate('/register')}
+                >
+                  注册
+                </span>
               </span>
-              <span style={{ color: '#999' }}>|</span>
-              <span
-                style={{ color: '#1890ff', cursor: 'pointer' }}
-                onClick={handleNavigateToRegister}
-              >
-                注册
-              </span>
-            </>
-          )}
+            )}
+          </div>
         </div>
       </div>
 
-      {/* 蓝色导航栏 */}
-      <QuickAccessMenu />
+      {/* Blue Main Navigation Bar */}
+      {location.pathname !== '/login' && (
+        <QuickAccessMenu />
+      )}
     </div>
   );
 };
-
-export { TopNavigationBar };

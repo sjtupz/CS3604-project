@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Routes, Route, Outlet } from 'react-router-dom';
 import { TopNavigationBar } from './components/TopNavigationBar';
+import { getUserInfo } from './api/personal_user';
 import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
@@ -13,11 +14,37 @@ import { PrivacyPolicyPage } from './pages/PrivacyPolicyPage';
 
 const AppLayout = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem('authToken'));
+  const [currentUser, setCurrentUser] = useState<{ realName?: string; username?: string } | undefined>(undefined);
 
   useEffect(() => {
-    const handleAuthChange = () => {
-      setIsLoggedIn(!!localStorage.getItem('authToken'));
+    const fetchUser = async () => {
+      if (localStorage.getItem('authToken')) {
+        try {
+          const info = await getUserInfo();
+          setCurrentUser(info);
+        } catch (e) {
+          console.error('Failed to fetch user info:', e);
+          // Optional: if token is invalid, maybe logout? But for now just log error.
+        }
+      } else {
+        setCurrentUser(undefined);
+      }
     };
+
+    const handleAuthChange = () => {
+      const loggedIn = !!localStorage.getItem('authToken');
+      setIsLoggedIn(loggedIn);
+      if (loggedIn) {
+        fetchUser();
+      } else {
+        setCurrentUser(undefined);
+      }
+    };
+
+    // Initial fetch
+    if (isLoggedIn) {
+      fetchUser();
+    }
 
     window.addEventListener('auth-change', handleAuthChange);
     // Also listen to storage event for cross-tab updates
@@ -31,7 +58,7 @@ const AppLayout = () => {
 
   return (
     <>
-      <TopNavigationBar isLoggedIn={isLoggedIn} />
+      <TopNavigationBar isLoggedIn={isLoggedIn} currentUser={currentUser} />
       <Outlet />
     </>
   );

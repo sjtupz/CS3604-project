@@ -23,10 +23,10 @@ const OrderTabs: React.FC<OrderTabsProps> = ({
     onTabChange?.(tab);
   };
 
-  const tabs = ['未完成订单', '未出行订单', '历史订单', '已退票订单'];
+  const tabs = ['未完成订单', '未出行订单', '历史订单'];
 
   return (
-    <div style={{ display: 'flex', gap: '20px', borderBottom: '1px solid #ccc' }}>
+    <div style={{ display: 'flex', borderBottom: '1px solid #ccc' }}>
       {tabs.map((tab) => (
         <button
           key={tab}
@@ -34,11 +34,14 @@ const OrderTabs: React.FC<OrderTabsProps> = ({
           style={{
             padding: '10px 20px',
             border: '1px solid #e8e8e8',
-            background: 'transparent',
+            borderBottom: currentTab === tab ? '2px solid blue' : '1px solid #e8e8e8',
+            background: currentTab === tab ? '#fff' : '#f5f5f5',
             cursor: 'pointer',
-            borderBottom: currentTab === tab ? '2px solid blue' : '2px solid transparent',
             color: currentTab === tab ? 'blue' : 'black',
-            fontWeight: currentTab === tab ? 'bold' : 'normal'
+            fontWeight: currentTab === tab ? 'bold' : 'normal',
+            marginRight: '-1px',
+            zIndex: currentTab === tab ? 1 : 0,
+            position: 'relative'
           }}
         >
           {tab}

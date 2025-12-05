@@ -1,5 +1,5 @@
 // TODO: 实现历史订单列表组件
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 
 interface Order {
   orderId: string;
@@ -31,14 +31,32 @@ const HistoryOrders: React.FC<HistoryOrdersProps> = ({
   const [searchText, setSearchText] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
+  useEffect(() => {
+    const end = new Date();
+    end.setDate(end.getDate() - 1);
+    const start = new Date();
+    start.setDate(end.getDate() - 15);
+
+    const formatDate = (date: Date) => {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    };
+
+    setStartDate(formatDate(start));
+    setEndDate(formatDate(end));
+  }, []);
+
   const filteredOrders = useMemo(() => {
     let filtered = [...orders];
 
     // 按乘车日期筛选
     if (startDate && endDate) {
       filtered = filtered.filter(order => {
-        const dateField = order.travelDate;
-        if (!dateField) return false;
+        const rawDate = order.travelDate;
+        if (!rawDate) return false;
+        const dateField = rawDate.replace(/\//g, '-');
         return dateField >= startDate && dateField <= endDate;
       });
     }
@@ -184,7 +202,7 @@ const HistoryOrders: React.FC<HistoryOrdersProps> = ({
                 {filteredOrders.map((order) => (
                   <tr key={order.orderId}>
                     <td style={{ padding: '10px', border: '1px solid #ddd' }}>
-                      {order.bookingDate || '-'}
+                      {order.bookingDate ? order.bookingDate.replace(/\//g, '-') : '-'}
                     </td>
                     <td style={{ padding: '10px', border: '1px solid #ddd' }}>
                       {order.trainNumber || order.trainInfo}
