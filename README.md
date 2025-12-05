@@ -147,6 +147,12 @@ project/
    - 配置数据库连接（SQLite）
    - 配置测试环境
 
+4. **启动项目**
+   - 同时开启两个终端
+   - 终端1：cd frontend; npm run dev
+   - 终端2: cd backend; npm run dev
+   - ctrl + 点击 打开frontend中本地端口
+
 ### 开发流程
 
 1. **准备需求文档**
@@ -174,13 +180,6 @@ project/
 
 详细开发流程请参考：[Agent Prompts/README.md](./Agent%20Prompts/README.md)
 
-### 运行流程
-
-前端后端各开一个终端：
-
-前端请使用 npm run dev
-
-后端请使用 npm start
 
 ## 需求文档
 
