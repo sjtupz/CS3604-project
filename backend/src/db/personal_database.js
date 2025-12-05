@@ -38,6 +38,7 @@ const initializeDatabase = () => {
       CREATE TABLE IF NOT EXISTS users (
         id TEXT PRIMARY KEY,
         username TEXT NOT NULL UNIQUE,
+        password TEXT,
         real_name TEXT,
         country TEXT DEFAULT '中国',
         id_type TEXT,
@@ -125,57 +126,84 @@ const initializeDatabase = () => {
                 }
               });
             }
-            
-            // 插入测试用户（如果不存在）
-            database.get('SELECT id FROM users WHERE id = ?', ['test-user-id'], (err, row) => {
-              if (err) {
-                reject(err);
-                return;
-              }
-              
-              if (!row) {
-                database.run(`
-                  INSERT INTO users (
-                    id, username, real_name, country, id_type, id_number,
-                    verification_status, phone_number, email, phone_verified,
-                    discount_type, gender
-                  ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                `, [
-                  'test-user-id',
-                  'zhangsan',
-                  '张三',
-                  '中国',
-                  '身份证',
-                  '110101199001011234',
-                  '已通过',
-                  '13800138000',
-                  'zhangsan@example.com',
-                  1,
-                  '成人',
-                  'male'
-                ], (err) => {
-                  if (err) {
-                    console.error('Error inserting test user:', err);
-                    // 不阻止数据库初始化，只记录错误
-                  } else {
-                    console.log('Test user created successfully');
-                  }
-                  resolve();
-                });
-              } else {
-                // 如果用户已存在但gender为空，更新gender
-                database.run("UPDATE users SET gender = 'male' WHERE id = 'test-user-id' AND (gender IS NULL OR gender = '')", (err) => {
-                  if (err) {
-                    console.error('Error updating user gender:', err);
-                  }
-                  resolve();
-                });
-              }
+
+            const hasPasswordColumn = columns.some(col => col.name === 'password');
+            if (!hasPasswordColumn) {
+              database.run("ALTER TABLE users ADD COLUMN password TEXT", (err) => {
+                if (err) {
+                  console.error('Error adding password column:', err);
+                }
+              });
+            }
+
+            // Login Codes Table
+            database.run(`
+              CREATE TABLE IF NOT EXISTS login_codes (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                phone TEXT,
+                identifier TEXT,
+                code TEXT,
+                createdAt INTEGER,
+                valid INTEGER DEFAULT 1
+              )
+            `, (err) => {
+               if (err) console.error('Error creating login_codes table:', err);
+               
+               // 插入测试用户（如果不存在）
+               insertTestUser(database, reject, resolve);
             });
           });
         });
       });
     });
+  });
+};
+
+const insertTestUser = (database, reject, resolve) => {
+  database.get('SELECT id FROM users WHERE id = ?', ['test-user-id'], (err, row) => {
+    if (err) {
+      reject(err);
+      return;
+    }
+    
+    if (!row) {
+      database.run(`
+        INSERT INTO users (
+          id, username, real_name, country, id_type, id_number,
+          verification_status, phone_number, email, phone_verified,
+          discount_type, gender
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `, [
+        'test-user-id',
+        'zhangsan',
+        '张三',
+        '中国',
+        '身份证',
+        '110101199001011234',
+        '已通过',
+        '13800138000',
+        'zhangsan@example.com',
+        1,
+        '成人',
+        'male'
+      ], (err) => {
+        if (err) {
+          console.error('Error inserting test user:', err);
+          // 不阻止数据库初始化，只记录错误
+        } else {
+          console.log('Test user created successfully');
+        }
+        resolve();
+      });
+    } else {
+      // 如果用户已存在但gender为空，更新gender
+      database.run("UPDATE users SET gender = 'male' WHERE id = 'test-user-id' AND (gender IS NULL OR gender = '')", (err) => {
+        if (err) {
+          console.error('Error updating user gender:', err);
+        }
+        resolve();
+      });
+    }
   });
 };
 

@@ -32,6 +32,8 @@ const initDb = async () => {
     await insertStation(3, '北京', 'beijing');
     await insertStation(4, '北京西', 'beijingxi');
     await insertStation(5, '北京东', 'beijingdong');
+    await insertStation(6, '上海南', 'shanghainan');
+    await insertStation(7, '平阳', 'pingyang');
 
     await runQuery("CREATE TABLE IF NOT EXISTS trains (id INT, trainNumber TEXT, fromStation TEXT, toStation TEXT, date TEXT, isHighSpeed BOOLEAN)");
     await insertTrain(1, 'G1', '北京南', '上海虹桥', '2025-11-17', 1);

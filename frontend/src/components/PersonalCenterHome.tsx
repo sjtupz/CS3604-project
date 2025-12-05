@@ -46,7 +46,7 @@ const PersonalCenterHome: React.FC<PersonalCenterHomeProps> = ({
       <div style={{ marginBottom: '40px' }}>
         <div style={{ display: 'flex', alignItems: 'flex-end', gap: '10px' }}>
           <img
-            src="/assets/home-speaker-icon.png"
+            src="/assets/personal_center/首页小喇叭.png"
             alt="小喇叭"
             style={{
               width: '128px',
@@ -126,7 +126,7 @@ const PersonalCenterHome: React.FC<PersonalCenterHomeProps> = ({
               boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
             }}>
               <img
-                src="/assets/wechat-qrcode.png"
+                src="/assets/personal_center/微信二维码.png"
                 alt="微信二维码"
                 style={{
                   width: '100%',
@@ -154,7 +154,7 @@ const PersonalCenterHome: React.FC<PersonalCenterHomeProps> = ({
               boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
             }}>
               <img
-                src="/assets/alipay-qrcode.png"
+                src="/assets/personal_center/支付宝二维码.png"
                 alt="支付宝二维码"
                 style={{
                   width: '100%',

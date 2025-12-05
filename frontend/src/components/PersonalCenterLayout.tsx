@@ -1,6 +1,5 @@
 // TODO: 实现个人中心页面布局组件
-import React, { useState } from 'react';
-import TopNavigationBar from './PersonalTopNavigationBar';
+import React, { useState, useEffect } from 'react';
 import PersonalCenterHome from './PersonalCenterHome';
 import OrderTabs from './OrderTabs';
 import UncompletedOrders from './UncompletedOrders';
@@ -23,19 +22,81 @@ interface UserInfo {
   gender?: 'male' | 'female';
 }
 
+interface Order {
+  orderId: string;
+  orderNumber?: string;
+  trainNumber?: string;
+  passengerName?: string;
+  bookingDate?: string;
+  travelDate?: string;
+  trainInfo?: string;
+  passengerInfo?: string;
+  seatInfo?: string;
+  price?: number;
+  status?: string;
+}
+
+interface Passenger {
+  passengerId: string;
+  name: string;
+  idType: string;
+  idNumber: string;
+  phone?: string;
+  verificationStatus?: string;
+  discountType?: string;
+  expiryDate?: string;
+  birthDate?: string;
+}
+
 interface PersonalCenterLayoutProps {
   currentUser?: UserInfo;
+  orders?: Order[];
+  passengers?: Passenger[];
+  activeSection?: string;
+  onSectionChange?: (section: string) => void;
   onNavigate?: (section: string) => void;
   onLogout?: () => void;
+  onNavigateToService?: (service: string) => void;
+  onNavigateToPayment?: (orderId: string) => void;
+  onNavigateToBooking?: () => void;
+  onRefund?: (orderId: string) => void;
+  onModify?: (orderId: string) => void;
+  onPrintInfo?: (orderId: string) => void;
+  onNavigateToPhoneVerification?: () => void;
+  onUpdateDiscountType?: (discountType: string, studentQualification?: { school?: string; studentId?: string }) => Promise<boolean>;
 }
 
 const PersonalCenterLayout: React.FC<PersonalCenterLayoutProps> = ({
   currentUser,
+  orders = [],
+  passengers = [],
+  activeSection,
+  onSectionChange,
   onNavigate,
-  onLogout
+  onLogout,
+  onNavigateToService,
+  onNavigateToPayment,
+  onNavigateToBooking,
+  onRefund,
+  onModify,
+  onPrintInfo,
+  onNavigateToPhoneVerification,
+  onUpdateDiscountType
 }) => {
-  const [currentSection, setCurrentSection] = useState<string>('个人中心');
+  const [internalSection, setInternalSection] = useState<string>('个人中心');
+  const currentSection = activeSection !== undefined ? activeSection : internalSection;
   const [orderTab, setOrderTab] = useState<string>('未完成订单'); // For OrderTabs internal state
+
+  const implementedSections = ['个人中心', '火车票订单', '查看个人信息', '乘车人'];
+  const [contentSection, setContentSection] = useState<string>(
+    implementedSections.includes(currentSection) ? currentSection : '个人中心'
+  );
+
+  useEffect(() => {
+    if (implementedSections.includes(currentSection)) {
+      setContentSection(currentSection);
+    }
+  }, [currentSection]);
 
   const sidebarItems = [
     { id: '个人中心', label: '个人中心', subsections: [] },
@@ -61,31 +122,54 @@ const PersonalCenterLayout: React.FC<PersonalCenterLayoutProps> = ({
   ];
 
   const handleSectionClick = (section: string) => {
-    setCurrentSection(section);
+    if (onSectionChange) {
+      onSectionChange(section);
+    } else {
+      setInternalSection(section);
+    }
     onNavigate?.(section);
   };
 
   const renderContent = () => {
-    switch (currentSection) {
+    switch (contentSection) {
       case '个人中心':
-        return <PersonalCenterHome userInfo={currentUser} />;
+        return <PersonalCenterHome userInfo={currentUser} onNavigateToService={onNavigateToService} />;
       case '火车票订单':
         return (
           <div>
             <OrderTabs activeTab={orderTab} onTabChange={setOrderTab} />
             {orderTab === '未完成订单' && (
-              <UncompletedOrders orders={[]} /> // TODO: Pass actual orders
+              <UncompletedOrders 
+                orders={[]} 
+                onNavigateToPayment={onNavigateToPayment}
+                onNavigateToBooking={onNavigateToBooking}
+              />
             )}
             {orderTab === '未出行订单' && (
-              <UpcomingOrders orders={[]} /> // TODO: Pass actual orders
+              <UpcomingOrders 
+                orders={[]} 
+                onRefund={onRefund}
+                onModify={onModify}
+                onNavigateToBooking={onNavigateToBooking}
+              />
             )}
             {orderTab === '历史订单' && (
-              <HistoryOrders orders={[]} /> // TODO: Pass actual orders
+              <HistoryOrders 
+                orders={[]} 
+                onPrintInfo={onPrintInfo}
+                onNavigateToBooking={onNavigateToBooking}
+              />
             )}
           </div>
         );
       case '查看个人信息':
-        return <UserInfoView userInfo={currentUser} />; // TODO: Pass actual user info
+        return (
+          <UserInfoView 
+            userInfo={currentUser} 
+            onNavigateToPhoneVerification={onNavigateToPhoneVerification}
+            onUpdateDiscountType={onUpdateDiscountType}
+          />
+        );
       case '乘车人':
         return <PassengerList passengers={[]} />; // TODO: Pass actual passengers
       default:
@@ -95,13 +179,6 @@ const PersonalCenterLayout: React.FC<PersonalCenterLayoutProps> = ({
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', backgroundColor: 'white' }}>
-      {/* 顶部导航栏 */}
-      <TopNavigationBar
-        currentUser={currentUser}
-        onNavigate={onNavigate}
-        onLogout={onLogout}
-      />
-
       {/* 主体内容区域：左侧栏固定宽度，右侧内容自适应 */}
       <div style={{
         display: 'grid',

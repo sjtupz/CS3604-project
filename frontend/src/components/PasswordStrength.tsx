@@ -9,7 +9,7 @@ interface PasswordStrengthProps {
 const PasswordStrength: React.FC<PasswordStrengthProps> = ({ strength }) => {
   return (
     <div className="password-strength-indicator">
-      <div className={`strength-bar ${strength === 'weak' || strength === 'medium' || strength === 'strong' ? 'red' : ''}`}></div>
+      <div className={`strength-bar red`}></div>
       <div className={`strength-bar ${strength === 'medium' || strength === 'strong' ? 'orange' : ''}`}></div>
       <div className={`strength-bar ${strength === 'strong' ? 'green' : ''}`}></div>
     </div>

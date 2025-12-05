@@ -1,9 +1,16 @@
 const express = require('express');
 const cors = require('cors');
-const db = require('./config/database'); // Import the database connection
+const { waitForInit } = require('./db/personal_database'); // Use unified database
 const stationRoutes = require('./routes/stations');
 
 const app = express();
+
+// Initialize database
+waitForInit().then(() => {
+  console.log('Database initialized successfully');
+}).catch(err => {
+  console.error('Failed to initialize database:', err);
+});
 
 app.use(cors({ origin: ['http://localhost:5173', 'http://localhost:5174'] }));
 app.use(express.json());
@@ -31,12 +38,11 @@ app.use('/api/passengers', passengerRoutes);
 // Simple error handler
 app.use((err, req, res, next) => {
   console.error(err.stack);
-  res.status(500).send('Something broke!');
+  res.status(500).json({ error: 'Internal Server Error' });
 });
 
-// Handler for 404 - Resource Not Found
 app.use((req, res, next) => {
-  res.status(404).send('We think you are lost!');
+  res.status(404).json({ error: 'Not Found' });
 });
 
 module.exports = app;

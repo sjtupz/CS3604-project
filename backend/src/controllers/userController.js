@@ -5,7 +5,7 @@ const userService = require('../services/userService');
 const getUserInfo = async (req, res) => {
   try {
     // 从认证中间件获取用户ID
-    const userId = req.user?.userId;
+    const userId = req.user?.id || req.user?.userId;
     
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized. User not logged in.' });
@@ -28,7 +28,7 @@ const getUserInfo = async (req, res) => {
 const updateUserContact = async (req, res) => {
   try {
     // 从认证中间件获取用户ID
-    const userId = req.user?.userId;
+    const userId = req.user?.id || req.user?.userId;
     
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized. User not logged in.' });
@@ -48,7 +48,7 @@ const updateUserContact = async (req, res) => {
 const updateUserDiscountType = async (req, res) => {
   try {
     // 从认证中间件获取用户ID
-    const userId = req.user?.userId;
+    const userId = req.user?.id || req.user?.userId;
     
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized. User not logged in.' });

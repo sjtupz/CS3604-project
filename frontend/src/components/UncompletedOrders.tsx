@@ -51,7 +51,7 @@ const UncompletedOrders: React.FC<UncompletedOrdersProps> = ({
             }}
           >
             <img
-              src="/assets/uncompleted-order-icon.png"
+              src="/assets/personal_center/未完成订单.png"
               alt="未完成订单图标"
               style={{
                 width: '120px',

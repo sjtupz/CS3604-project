@@ -1,31 +1,28 @@
-const db = require('../config/database');
+const { createLoginCodeRecord } = require('../db/createLoginCodeRecord');
+const userDb = require('../db/userDb');
+const { generateSixDigitCode } = require('../utils/validators');
 
-const ensureTable = () => {
-  return new Promise((resolve, reject) => {
-    const ddl = `CREATE TABLE IF NOT EXISTS login_codes (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      phone TEXT,
-      identifier TEXT,
-      code TEXT,
-      createdAt INTEGER,
-      valid INTEGER DEFAULT 1
-    )`;
-    db.run(ddl, [], (err) => (err ? reject(err) : resolve(null)));
-  });
+const resolveUserByIdentifier = async (identifier) => {
+  if (/^\d{11}$/.test(identifier)) {
+    return await userDb.findUserByPhoneNumber(identifier);
+  }
+  if (/.+@.+\..+/.test(identifier)) {
+    return await userDb.findUserByEmail(identifier);
+  }
+  return await userDb.findUserByUsername(identifier);
 };
-
 const handleSendCode = async (payload) => {
-  const { identifier, idLast4 } = payload || {};
-  const code = '123456';
-  await ensureTable();
-  return new Promise((resolve, reject) => {
-    const sql = 'INSERT INTO login_codes (phone, identifier, code, createdAt, valid) VALUES (?, ?, ?, ?, ?)';
-    const phoneValue = /^\d{11}$/.test(identifier) ? identifier : null;
-    db.run(sql, [phoneValue, identifier, code, Date.now(), 1], function (err) {
-      if (err) return reject(err);
-      resolve({ message: '获取手机验证码成功！' });
-    });
+  const { identifier, idLast4, code: providedCode } = payload || {};
+  const code = providedCode || generateSixDigitCode();
+  const phoneValue = /^\d{11}$/.test(identifier) ? identifier : null;
+  await createLoginCodeRecord({
+    phone: phoneValue,
+    identifier,
+    code,
+    createdAt: Date.now(),
+    valid: 1,
   });
+  return { message: '获取手机验证码成功！' };
 };
 
-module.exports = { handleSendCode };
+module.exports = { handleSendCode, resolveUserByIdentifier };

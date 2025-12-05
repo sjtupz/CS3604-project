@@ -5,7 +5,7 @@ const passengerService = require('../services/passengerService');
 const getPassengers = async (req, res) => {
   try {
     // 从认证中间件获取用户ID
-    const userId = req.user?.userId;
+    const userId = req.user?.id || req.user?.userId;
     
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized. User not logged in.' });
@@ -25,7 +25,7 @@ const getPassengers = async (req, res) => {
 const createPassenger = async (req, res) => {
   try {
     // 从认证中间件获取用户ID
-    const userId = req.user?.userId;
+    const userId = req.user?.id || req.user?.userId;
     
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized. User not logged in.' });
@@ -51,7 +51,7 @@ const createPassenger = async (req, res) => {
 const updatePassenger = async (req, res) => {
   try {
     // 从认证中间件获取用户ID
-    const userId = req.user?.userId;
+    const userId = req.user?.id || req.user?.userId;
     
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized. User not logged in.' });
@@ -81,7 +81,7 @@ const updatePassenger = async (req, res) => {
 const deletePassenger = async (req, res) => {
   try {
     // 从认证中间件获取用户ID
-    const userId = req.user?.userId;
+    const userId = req.user?.id || req.user?.userId;
     
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized. User not logged in.' });
@@ -106,7 +106,7 @@ const deletePassenger = async (req, res) => {
 const deletePassengers = async (req, res) => {
   try {
     // 从认证中间件获取用户ID
-    const userId = req.user?.userId;
+    const userId = req.user?.id || req.user?.userId;
     
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized. User not logged in.' });

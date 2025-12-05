@@ -3,7 +3,11 @@ const userDb = require('../db/userDb');
 const bcrypt = require('bcrypt');
 
 const registerUser = async (userData) => {
-  const { username, password, identityNumber, email, phoneNumber } = userData;
+  const { username, password, identityNumber } = userData;
+  const emailRaw = userData.email;
+  const phoneRaw = userData.phoneNumber;
+  const email = emailRaw && String(emailRaw).trim() ? String(emailRaw).trim() : null;
+  const phoneNumber = phoneRaw && String(phoneRaw).trim() ? String(phoneRaw).trim() : null;
 
   // 检查用户名是否已存在
   const existingUserByUsername = await userDb.findUserByUsername(username);
@@ -37,7 +41,7 @@ const registerUser = async (userData) => {
   const hashedPassword = await bcrypt.hash(password, 10);
 
   // 创建用户
-  const newUser = { ...userData, password: hashedPassword };
+  const newUser = { ...userData, email, phoneNumber, password: hashedPassword };
   const result = await userDb.createUser(newUser);
 
   return result;

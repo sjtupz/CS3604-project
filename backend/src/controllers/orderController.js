@@ -5,7 +5,7 @@ const orderService = require('../services/orderService');
 const getOrders = async (req, res) => {
   try {
     // 从认证中间件获取用户ID
-    const userId = req.user?.userId;
+    const userId = req.user?.id || req.user?.userId;
     
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized. User not logged in.' });
@@ -25,7 +25,7 @@ const getOrders = async (req, res) => {
 const processRefund = async (req, res) => {
   try {
     // 从认证中间件获取用户ID
-    const userId = req.user?.userId;
+    const userId = req.user?.id || req.user?.userId;
     
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized. User not logged in.' });

@@ -1,14 +1,18 @@
 // backend/test/routes/auth.test.js
 const request = require('supertest');
 const app = require('../../src/app');
-const db = require('../../src/config/database');
+const { run, waitForInit } = require('../../src/db/personal_database');
 const userDb = require('../../src/db/userDb');
 
 describe('API-POST-Register: /api/auth/register', () => {
 
+  beforeAll(async () => {
+    await waitForInit();
+  });
+
   beforeEach(async () => {
     // 清理数据库
-    await new Promise((resolve) => db.run('DELETE FROM users', resolve));
+    await run('DELETE FROM users');
   });
 
   // 场景 3.3.11 - 用户已完成所有必填信息的规范填写

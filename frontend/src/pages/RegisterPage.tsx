@@ -1,7 +1,6 @@
 // frontend/src/pages/RegisterPage.tsx
 import React from 'react';
 import { RegisterForm } from '../components/RegisterForm';
-import { QuickAccessMenu } from '../components/QuickAccessMenu';
 
 export const RegisterPage: React.FC = () => {
   const handleRegisterSuccess = () => {
@@ -11,8 +10,7 @@ export const RegisterPage: React.FC = () => {
 
   return (
     <div data-testid="register-page">
-      <QuickAccessMenu />
-      <h1>用户注册</h1>
+      <h1 style={{ position: 'absolute', left: '-10000px' }}>用户注册</h1>
       <RegisterForm onRegisterSuccess={handleRegisterSuccess} />
     </div>
   );

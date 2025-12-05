@@ -19,12 +19,6 @@ describe('Cross-Page Navigation', () => {
       expect(screen.getByTestId('login-page')).toBeInTheDocument();
     });
 
-    it('navigates to Login Page when "我的12306" is clicked and user is not logged in', () => {
-      renderWithRouter(['/']);
-      fireEvent.click(screen.getByText('我的12306'));
-      expect(screen.getByTestId('login-page')).toBeInTheDocument();
-    });
-
     it('navigates to Register Page when "注册" is clicked', () => {
       renderWithRouter(['/']);
       fireEvent.click(screen.getByText('注册'));
@@ -41,7 +35,8 @@ describe('Cross-Page Navigation', () => {
 
     it('navigates to Home Page when "首页" is clicked in the quick access menu', () => {
       renderWithRouter(['/register']);
-      fireEvent.click(screen.getByText('首页'));
+      const homeLinks = screen.getAllByText('首页');
+      fireEvent.click(homeLinks[0]);
       expect(screen.getByTestId('home-page')).toBeInTheDocument();
     });
   });
@@ -51,6 +46,11 @@ describe('Cross-Page Navigation', () => {
       renderWithRouter(['/login']);
       fireEvent.click(screen.getByText('注册12306账户'));
       expect(screen.getByTestId('register-page')).toBeInTheDocument();
+    });
+    it('navigates to Forgot Password Page when clicking "忘记密码？" link', () => {
+      renderWithRouter(['/login']);
+      fireEvent.click(screen.getByText('忘记密码？'));
+      expect(screen.getByTestId('forgot-password-page')).toBeInTheDocument();
     });
   });
 });

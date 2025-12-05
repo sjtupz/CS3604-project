@@ -30,9 +30,20 @@ const getUserInfo = async (userId) => {
     }
 
     // 转换phoneVerified为布尔值
+    // Parse studentQualification if it's a string
+    let studentQualification = result.studentQualification;
+    if (studentQualification && typeof studentQualification === 'string') {
+      try {
+        studentQualification = JSON.parse(studentQualification);
+      } catch (e) {
+        // ignore parse error
+      }
+    }
+
     return {
       ...result,
-      phoneVerified: Boolean(result.phoneVerified)
+      phoneVerified: Boolean(result.phoneVerified),
+      studentQualification
     };
   } catch (error) {
     console.error('Error in getUserInfo:', error);
