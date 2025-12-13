@@ -45,18 +45,27 @@
     - isLoading
   dependencies:
     - API-GET-Stations
+    - API-GET-Stations-Groups
     - API-GET-Trains
+    - API-GET-Trains-RoundTrip
+    - UI-RoundTripToggle
+    - UI-PassengerCategoryToggle
+    - UI-StationGroupSelector
     - UI-StationDropdown
     - UI-DatePicker
   acceptanceCriteria:
-    - 用户未输入出发地、到达地或日期时，点击查询按钮应显示错误提示。
-    - 用户输入合法信息并点击查询，应跳转到车次列表页。
-    - 点击出发地或到达地输入框时，应显示站点下拉列表。
+    - 用户未输入出发地、到达地或出发日期时，点击查询按钮应显示错误提示。
+    - 选择“单程/双程”后，双程应开放并必填返程日；单程隐藏返程日。
+    - 选择“普通/学生”后，应携带 passengerCategory 参数用于查询。
+    - 用户输入合法信息并点击查询，应跳转到车次列表页并触发对应接口（单程调用 API-GET-Trains，双程调用 API-GET-Trains-RoundTrip）。
+    - 点击出发地或到达地输入框时，应显示分组下拉（热门与字母分组），支持手写输入模糊搜索。
     - 点击日期输入框时，应显示日期选择器。
     - 点击交换按钮应交换出发地和到达地。
   changeLog:
     - date: "2025-11-17"
       description: "初始创建。"
+    - date: "2025-12-07"
+      description: "新增单程/双程与普通/学生选择，接入分组站点与双程接口。"
 
 - type: Frontend
   id: UI-StationDropdown
@@ -299,3 +308,211 @@
   changeLog:
     - date: "2025-11-24"
       description: "新增，用于支持登录成功后跳转。"
+
+- type: Frontend
+  id: UI-TrainListPage
+  description: 车次列表页，包含顶部导航栏、查询栏、详细信息选择区、车次信息展示区与底部导航栏。
+  properties: []
+  state:
+    - isLoggedIn
+    - tripType
+    - passengerCategory
+    - fromStation
+    - toStation
+    - departureDate
+    - returnDate
+    - selectedDate
+    - filters
+    - trains
+    - pagination
+    - isLoading
+    - error
+  dependencies:
+    - UI-TopNavigationBar
+    - UI-QuickAccessMenu
+    - UI-TicketQueryForm
+    - UI-TrainFilterBar
+    - UI-TrainFilterPanel
+    - UI-TrainList
+    - UI-Pagination
+    - UI-RoundTripToggle
+    - UI-PassengerCategoryToggle
+    - API-GET-Trains
+    - API-GET-Trains-RoundTrip
+  acceptanceCriteria:
+    - 页面自上而下包含五部分；背景为白色。
+    - 初始进入时随机填充出发地与目的地，出发/返程为当前日期；默认模式为单程。
+    - 出行信息不全时点击查询不展示车票且不报错；信息完整时展示当日两地间车票。
+    - 在详细信息选择区选择任意筛选项后，下方车票信息立即更新，无需再次点击查询。
+    - 点击上方日期或时间范围时，更新查询条件并刷新列表。
+    - 点击“预定”按钮：未登录跳转登录页；已登录跳转订单填写页。
+    - 切换为双程时，页面展示去程与返程两个列表，分别分页；单程展示单列表。
+  responsive:
+    breakpoints:
+      - name: sm
+        width: 576
+      - name: md
+        width: 768
+      - name: lg
+        width: 992
+  changeLog:
+    - date: "2025-12-07"
+      description: "新增以满足车次列表页整体布局与交互。"
+    - date: "2025-12-07"
+      description: "补充双程与乘客类别交互与接口依赖。"
+
+- type: Frontend
+  id: UI-RoundTripToggle
+  description: 单程/双程切换组件，控制返程日输入的启用状态。
+  properties:
+    - name: onTripTypeChange
+      type: function
+      description: "切换出行类型的回调。"
+  state:
+    - tripType
+  dependencies: []
+  acceptanceCriteria:
+    - 初始为单程；切换为双程时应启用并显示返程日输入栏。
+  changeLog:
+    - date: "2025-12-07"
+      description: "新增以满足查询栏单程/双程选择。"
+
+- type: Frontend
+  id: UI-PassengerCategoryToggle
+  description: 乘客类别选择组件，支持“普通/学生”。
+  properties:
+    - name: onPassengerCategoryChange
+      type: function
+      description: "切换乘客类别的回调。"
+  state:
+    - passengerCategory
+  dependencies: []
+  acceptanceCriteria:
+    - 默认“普通”；切换至“学生”时应带上 passengerCategory=student 进行查询。
+  changeLog:
+    - date: "2025-12-07"
+      description: "新增以满足查询栏乘客类别选择。"
+
+- type: Frontend
+  id: UI-StationGroupSelector
+  description: 站点分组选择组件，展示热门与字母分组并支持搜索。
+  properties:
+    - name: onSelectStation
+      type: function
+      description: "选择站点回调。"
+  state:
+    - groups
+    - searchTerm
+  dependencies:
+    - API-GET-Stations-Groups
+  acceptanceCriteria:
+    - 加载后展示“热门”和ABCDE/FGHIJ/KLMNO/PQRST/UVWXYZ分组；点击任一站点触发onSelectStation。
+    - 输入搜索词时进行模糊过滤；无匹配时展示空状态。
+  changeLog:
+    - date: "2025-12-07"
+      description: "新增以满足分组站点选择。"
+
+- type: Frontend
+  id: UI-TrainFilterBar
+  description: 日期与发车时间范围筛选栏。
+  properties:
+    - name: onDateChange
+      type: function
+      description: "选择日期后的回调。"
+    - name: onTimeRangeChange
+      type: function
+      description: "选择时间范围后的回调。"
+  state:
+    - selectedDate
+    - timeRange
+  dependencies:
+    - UI-DatePicker
+  acceptanceCriteria:
+    - 展示连续14天的日期选项，当前选中与出发日期一致；默认时间范围0:00-24:00，可选择其它范围。
+    - 点击任一选项即触发回调并刷新列表。
+  changeLog:
+    - date: "2025-12-07"
+      description: "新增以满足日期与时间范围筛选。"
+
+- type: Frontend
+  id: UI-TrainFilterPanel
+  description: 车次类型、出发/到达车站、席别等筛选面板。
+  properties:
+    - name: onFiltersChange
+      type: function
+      description: "筛选条件变更回调。"
+  state:
+    - trainTypes
+    - departureStation
+    - arrivalStation
+    - seatTypes
+  dependencies:
+    - UI-StationDropdown
+  acceptanceCriteria:
+    - 包含“GC-高铁”、“D-动车”、“Z-直达”类型；包含出发/到达车站选择与席别选择。
+    - 点击任意筛选项时立即更新列表，无需再次点击查询。
+  changeLog:
+    - date: "2025-12-07"
+      description: "新增以满足详细信息筛选。"
+
+- type: Frontend
+  id: UI-TrainList
+  description: 车次信息展示列表。
+  properties: []
+  state:
+    - items
+  dependencies:
+    - UI-TrainListItem
+  acceptanceCriteria:
+    - 列表列包括：车次、出发站/到达站、出发时间/到达时间、历时、席别状态、备注。
+  changeLog:
+    - date: "2025-12-07"
+      description: "新增以承载车次信息列表渲染。"
+
+- type: Frontend
+  id: UI-TrainListItem
+  description: 单条车次信息项，展示各席别的余票/候补/无此席别状态与“预定”按钮。
+  properties:
+    - name: onReserve
+      type: function
+      description: "点击预定触发的回调。"
+  state:
+    - train
+  dependencies:
+    - UI-SeatStatusLegend
+  acceptanceCriteria:
+    - 无此席别显示灰色横杠；无余票显示“候补”橙色；余票>20显示绿色“有”；余票<20显示余票数量黑字。
+    - 点击“预定”触发onReserve。
+  changeLog:
+    - date: "2025-12-07"
+      description: "新增以满足席别状态展示与预定交互。"
+
+- type: Frontend
+  id: UI-SeatStatusLegend
+  description: 席别状态图例，用于统一展示与解释不同状态。
+  properties: []
+  state: []
+  dependencies: []
+  acceptanceCriteria:
+    - 提供“灰色横杠=无此席别”，“橙色候补=无票”，“绿色有=余票>20”，“黑色数字=余票<20”的统一说明。
+  changeLog:
+    - date: "2025-12-07"
+      description: "新增以满足列表状态说明。"
+
+- type: Frontend
+  id: UI-Pagination
+  description: 列表分页组件。
+  properties:
+    - name: onPageChange
+      type: function
+      description: "页码变更回调。"
+  state:
+    - currentPage
+    - perPage
+    - totalPages
+  dependencies: []
+  acceptanceCriteria:
+    - 默认每页20条；展示当前页与总页数；切换页码后调用onPageChange并刷新列表。
+  changeLog:
+    - date: "2025-12-07"
+      description: "新增以满足分页交互。"

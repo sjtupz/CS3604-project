@@ -27,5 +27,12 @@
     "types": ["vitest/globals", "vite/client"]
   },
   "include": ["src"],
+  "exclude": [
+    "src/**/__tests__/**",
+    "src/**/*.test.ts",
+    "src/**/*.test.tsx",
+    "src/**/*.stories.ts",
+    "src/**/*.stories.tsx"
+  ],
   "references": [{ "path": "./tsconfig.node.json" }]
 }

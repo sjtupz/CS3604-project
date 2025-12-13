@@ -11,15 +11,24 @@
 
 - type: Database
   id: DB-FindTrains
-  description: 根据出发地、到达地、出发日期和列车类型在数据库中查询车次信息。
+  description: 按条件查询车次列表，支持分页与多条件筛选（AND）。
   dependencies:
     - none
   acceptanceCriteria:
-    - 成功执行后，返回所有匹配条件的车次列表。
-    - 如果没有匹配的车次，返回空列表。
+    - 必填参数：from（出发地）、to（到达地）、date（出发日期）。
+    - 可选筛选：trainTypes（GC/D/Z）、departureStation、arrivalStation、seatTypes、departureTimeStart、departureTimeEnd、passengerCategory(normal/student)。
+    - 支持分页：page（默认1）、pageSize（默认20），返回总记录数与分页元数据。
+    - 排序支持：sortBy(trainNumber|departureTime|arrivalTime|duration)、sortOrder(asc|desc)。
+    - 查询需命中索引（trainNumber、date、from+to组合、departureTime、arrivalTime、duration），以满足P99≤500ms。
+    - 当命中缓存时，优先返回Redis缓存（TTL 900s），座位状态更新时应失效对应缓存键。
+    - 如果没有匹配的车次，返回空items与total=0。
   changeLog:
     - date: "2025-11-17"
       description: "初始创建，用于支持车票查询功能。"
+    - date: "2025-12-07"
+      description: "扩展分页与筛选项，增加性能与缓存要求。"
+    - date: "2025-12-07"
+      description: "新增乘客类别筛选与排序支持。"
 
 - type: Database
   id: DB-FindUserByUsername
@@ -124,3 +133,159 @@
       description: "新增，用于登录流程中验证码的生命周期管理。"
     - date: "2025-12-01"
       description: "扩展至注册与忘记密码场景。"
+
+- type: Database
+  id: DB-DefineTrainSchema
+  description: 定义车票数据库的列车与线路相关数据模型。
+  dependencies:
+    - none
+  acceptanceCriteria:
+    - 列车模型包含：trainNumber(string, unique, indexed)、trainType(enum: G/D/Z/other)、routeStations(array<stationId>)、departureStation(stationId)、arrivalStation(stationId)。
+    - 时刻信息：departureTime(datetime, indexed)、arrivalTime(datetime, indexed)、duration(minutes, indexed)、arrivalDayIndicator(enum: sameDay/nextDay)。
+    - 全量时刻表：stationSchedules(array<{stationId, arrivalTime(datetime|nullable), departureTime(datetime|nullable), segmentId, dwellMinutes(int>=0)}>)，站序与时间一致性校验。
+    - 车厢与座席：coaches(array<coach>)，coach包含coachNo、seatType(enum: 一等座/二等座/软卧/硬卧/软座/硬座/无座)、seats(array<seat>)；seat包含seatNo、statusBySegment(map<segmentId, enum: 空闲/已被预定>)。
+    - 价格：segmentFare(map<segmentId, number>=0)，总票价为出发-到达区间的segmentFare之和。
+    - 约束：所有引用的stationId须存在于站点表；trainNumber唯一；时间与站序一致性校验；stationSchedules 覆盖 routeStations。
+  changeLog:
+    - date: "2025-12-07"
+      description: "新增以覆盖车次列表页的数据实体定义。"
+    - date: "2025-12-07"
+      description: "补充全量时刻表结构与索引字段以支持新接口。"
+
+- type: Database
+  id: DB-DefineStationSchema
+  description: 定义站点数据模型与约束。
+  dependencies:
+    - none
+  acceptanceCriteria:
+    - 站点模型包含：stationId(uuid)、name(string, unique)、pinyin(string, indexed)、city(string, optional)。
+    - 约束：name唯一；pinyin支持模糊检索；与列车routeStations建立引用关系。
+  changeLog:
+    - date: "2025-12-07"
+      description: "新增以支持站点选择与检索。"
+
+- type: Database
+  id: DB-ImportTrainInfoFromJSON
+  description: 从“车次信息.json”导入车次基础数据至数据库。
+  dependencies:
+    - DB-DefineTrainSchema
+    - DB-DefineStationSchema
+  acceptanceCriteria:
+    - 成功导入有效JSON记录；无效记录被跳过并记录日志。
+    - 导入后建立必要索引；保持trainNumber唯一性与引用完整性。
+  changeLog:
+    - date: "2025-12-07"
+      description: "新增以满足数据初始化来源。"
+
+- type: Database
+  id: DB-CreateIndexes-Trains
+  description: 为常用查询字段创建索引以提升查询性能。
+  dependencies:
+    - DB-DefineTrainSchema
+  acceptanceCriteria:
+    - 在trainNumber、date、departureTime、arrivalTime、duration、from+to组合上建立B+树或哈希索引。
+    - 索引统计信息定期更新；高并发场景P99≤500ms。
+  changeLog:
+    - date: "2025-12-07"
+      description: "新增以满足性能优化要求。"
+    - date: "2025-12-07"
+      description: "扩展索引列以支持排序字段。"
+
+- type: Database
+  id: DB-GetTrainSchedule
+  description: 根据车次号与日期返回该车次的全量站序时刻表。
+  dependencies:
+    - DB-DefineTrainSchema
+  acceptanceCriteria:
+    - 输入：trainNumber(string, required)、date(date, optional)。
+    - 输出：stationSchedules数组，元素包含stationId、arrivalTime、departureTime、segmentId、dwellMinutes。
+    - 当车次不存在时返回空数组；当日期为空时返回最新时刻表版本。
+  changeLog:
+    - date: "2025-12-07"
+      description: "新增以满足车次时刻表展示需求。"
+
+- type: Database
+  id: DB-GetStationsGrouped
+  description: 返回站点分组数据（热门与按首字母分组）。
+  dependencies:
+    - DB-DefineStationSchema
+  acceptanceCriteria:
+    - 输出包含groups数组：如“热门”、“ABCDE”、“FGHIJ”、“KLMNO”、“PQRST”、“UVWXYZ”，每组含站点列表。
+    - “热门”来源于近N天点击/查询量TOP列表或预设；字母分组基于pinyin首字母范围。
+  changeLog:
+    - date: "2025-12-07"
+      description: "新增以满足站点下拉的分组展示。"
+
+- type: Database
+  id: DB-FindTrainsRoundTrip
+  description: 同时查询去程与返程车次列表，分别分页返回。
+  dependencies:
+    - DB-FindTrains
+  acceptanceCriteria:
+    - 输入：from(string)、to(string)、departDate(date)、returnDate(date)、共享筛选与排序参数；均必填除筛选项。
+    - 输出：outbound与return两个结果集，各含items与分页元数据。
+    - 任一方向缺失参数返回错误；当结果为空时对应items为空、total=0。
+  changeLog:
+    - date: "2025-12-07"
+      description: "新增以满足双程查询场景。"
+
+- type: Database
+  id: DB-Cache-TrainsQueryResults
+  description: 使用Redis对车次查询结果进行缓存，TTL 900秒。
+  dependencies:
+    - DB-FindTrains
+  acceptanceCriteria:
+    - 缓存键包含筛选条件摘要（from、to、date、filters、page、pageSize）。
+    - 命中缓存直接返回；发生座位状态更新或列车增删时，应失效相关键。
+  changeLog:
+    - date: "2025-12-07"
+      description: "新增以满足缓存层设计。"
+
+- type: Database
+  id: DB-GetRemainingTickets
+  description: 计算指定区间与席别的余票数量（以座位为单位）。
+  dependencies:
+    - DB-DefineTrainSchema
+  acceptanceCriteria:
+    - 相邻两站：直接统计该席别在相邻站段的空闲座位数并返回。
+    - 非相邻区间：仅当某座位在出发-到达全区间均为空闲时计数+1；遍历所有相关车厢座位后返回。
+    - 当所有座位在任意中途区间为已被预定时，该席别余票=0。
+    - 统计单位为“座位”，任何跨段拼接不得计为1。
+  changeLog:
+    - date: "2025-12-07"
+      description: "新增以匹配余票计算规则。"
+
+- type: Database
+  id: DB-CalculateTicketPrice
+  description: 计算出发-到达区间的票价（席别维度）。
+  dependencies:
+    - DB-DefineTrainSchema
+  acceptanceCriteria:
+    - 票价=所有途经相邻站段该席别的价格之和；结果为非负数。
+  changeLog:
+    - date: "2025-12-07"
+      description: "新增以覆盖票价计算规则。"
+
+- type: Database
+  id: DB-UpdateSeatStatusOnReservation
+  description: 预定成功后，更新对应车次/车厢/座位在相关站段的座位状态为“已被预定”。
+  dependencies:
+    - DB-DefineTrainSchema
+  acceptanceCriteria:
+    - 正确更新座位在出发-到达区间内所有相邻站段的状态为已被预定；写入事务成功且可回滚。
+    - 触发缓存失效，影响到相关查询键。
+  changeLog:
+    - date: "2025-12-07"
+      description: "新增以满足数据库更新与维护要求。"
+
+- type: Database
+  id: DB-ManageTrainSchedule
+  description: 支持新车次加入与已有车次删除的维护操作。
+  dependencies:
+    - DB-DefineTrainSchema
+  acceptanceCriteria:
+    - 新增时校验唯一性与完整性；删除时级联清理相关座位与价格段数据。
+    - 操作完成后更新索引与缓存失效。
+  changeLog:
+    - date: "2025-12-07"
+      description: "新增以满足数据库的更新与维护。"

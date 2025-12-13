@@ -2,6 +2,8 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { QuickAccessMenu } from './QuickAccessMenu';
+import logoImg from '../assets/logo_12306.jpg';
+import './TopNavigationBar.css';
 
 interface TopNavigationBarProps {
   currentUser?: {
@@ -16,7 +18,6 @@ interface TopNavigationBarProps {
 export const TopNavigationBar: React.FC<TopNavigationBarProps> = ({
   currentUser,
   isLoggedIn,
-  onNavigate,
   onLogout
 }) => {
   const [searchValue, setSearchValue] = useState('');
@@ -57,33 +58,11 @@ export const TopNavigationBar: React.FC<TopNavigationBarProps> = ({
   // The existing code rendered a simplified header. I will keep that behavior.
   if (location.pathname === '/login') {
     return (
-      <div style={{ backgroundColor: 'white', borderBottom: '1px solid #e8e8e8' }}>
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            padding: '10px 20px',
-            maxWidth: '1200px',
-            margin: '0 auto',
-            height: '80px'
-          }}
-        >
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              cursor: 'pointer'
-            }}
-            onClick={() => navigate('/')}
-          >
-            <img
-              src="/assets/personal_center/12306logo.png"
-              alt="12306 Logo"
-              style={{
-                height: '50px'
-              }}
-            />
+      <div className="header-root" role="banner">
+        <div className="header-inner" style={{ height: '80px' }}>
+          <div className="logo-wrap" role="button" aria-label="返回首页" tabIndex={0} onClick={() => navigate('/')}
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') navigate('/') }}>
+            <img src={logoImg} alt="12306 Logo" className="logo-img" />
           </div>
           <div style={{ fontSize: '20px', color: '#333' }}>欢迎登录12306</div>
         </div>
@@ -92,59 +71,23 @@ export const TopNavigationBar: React.FC<TopNavigationBarProps> = ({
   }
 
   return (
-    <div style={{ backgroundColor: 'white', borderBottom: '1px solid #e8e8e8' }}>
-      {/* 顶部主导航栏 */}
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          padding: '10px 20px',
-          maxWidth: '1200px',
-          margin: '0 auto'
-        }}
-      >
+    <div className="header-root" role="banner">
+      <div className="header-top">
+        <div className="header-inner">
         {/* 左侧logo */}
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            cursor: 'pointer'
-          }}
-          onClick={() => navigate('/')}
-        >
-          <img
-            src="/assets/personal_center/12306logo.png"
-            alt="12306 Logo"
-            style={{
-              height: '50px'
-            }}
-          />
+        <div className="logo-wrap" role="button" aria-label="返回首页" tabIndex={0} onClick={() => navigate('/')}
+          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') navigate('/') }}>
+          <img src={logoImg} alt="12306 Logo" className="logo-img" />
         </div>
 
         {/* 中间搜索栏 - Keeping existing */}
-        <div
-          style={{
-            flex: 1,
-            maxWidth: '500px',
-            margin: '0 40px',
-            display: 'flex',
-            alignItems: 'center'
-          }}
-        >
+        <div className="search-wrap">
           <input
             type="text"
             value={searchValue}
             onChange={(e) => setSearchValue(e.target.value)}
             placeholder="搜索车票、餐饮、常旅客、相关规章"
-            style={{
-              flex: 1,
-              padding: '8px 15px',
-              border: '1px solid #d9d9d9',
-              borderRadius: '4px 0 0 4px',
-              fontSize: '14px',
-              outline: 'none'
-            }}
+            className="search-input"
             onKeyPress={(e) => {
               if (e.key === 'Enter') {
                 handleSearch();
@@ -153,16 +96,7 @@ export const TopNavigationBar: React.FC<TopNavigationBarProps> = ({
           />
           <button
             onClick={handleSearch}
-            style={{
-              padding: '8px 20px',
-              backgroundColor: '#1890ff',
-              border: 'none',
-              borderRadius: '0 4px 4px 0',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}
+            className="search-button"
           >
             <svg
               width="16"
@@ -192,16 +126,16 @@ export const TopNavigationBar: React.FC<TopNavigationBarProps> = ({
           }}
         >
           {/* Static Links */}
-          <span style={{ color: '#1890ff', cursor: 'pointer' }}>无障碍</span>
-          <span style={{ color: '#1890ff' }}>|</span>
-          <span style={{ color: '#1890ff', cursor: 'pointer' }}>敬老版</span>
-          <span style={{ color: '#1890ff' }}>|</span>
-          <span style={{ color: '#1890ff', cursor: 'pointer' }}>English</span>
-          <span style={{ color: '#1890ff', marginLeft: '5px' }}> </span>{/* Space after English? "English |" */}
-          <span style={{ color: '#1890ff' }}>|</span>
+          <span style={{ color: '#333', cursor: 'pointer' }}>无障碍</span>
+          <span style={{ color: '#333' }}>|</span>
+          <span style={{ color: '#333', cursor: 'pointer' }}>敬老版</span>
+          <span style={{ color: '#333' }}>|</span>
+          <span style={{ color: '#333', cursor: 'pointer' }}>English</span>
+          <span style={{ color: '#333', marginLeft: '5px' }}> </span>
+          <span style={{ color: '#333' }}>|</span>
           
           <span 
-            style={{ color: '#1890ff', cursor: 'pointer' }}
+            style={{ color: '#333', cursor: 'pointer' }}
             onClick={handleMy12306Click}
           >
             我的12306
@@ -209,52 +143,52 @@ export const TopNavigationBar: React.FC<TopNavigationBarProps> = ({
           
           {/* Dynamic Content */}
           <div style={{ marginLeft: '10px', display: 'flex', alignItems: 'center' }}>
-            {isLoggedIn ? (
-              // Authenticated State
+            {location.pathname === '/register' ? (
+              // 注册页：始终显示“您好，请 登录 注册”以引导用户登录或注册
               <span style={{ display: 'flex', alignItems: 'center' }}>
-                <span style={{ color: 'black' }}>您好，</span>
+                <span style={{ color: '#333' }}>您好，请</span>
                 <span 
-                  style={{ color: '#1890ff', cursor: 'pointer' }}
-                  onClick={() => navigate('/profile')}
-                >
-                  {currentUser?.realName || currentUser?.username || '用户'}
-                </span>
-                <span style={{ color: 'black', margin: '0 5px' }}> | </span>
-                <span 
-                  style={{ color: 'black', cursor: 'pointer' }}
-                  onClick={handleLogout}
-                >
-                  退出
-                </span>
-              </span>
-            ) : location.pathname === '/register' ? (
-              // Register Page State
-              <span style={{ display: 'flex', alignItems: 'center' }}>
-                <span style={{ color: 'black' }}>您好，请</span>
-                <span 
-                  style={{ color: 'black', cursor: 'pointer', marginLeft: '5px' }}
+                  style={{ color: '#333', cursor: 'pointer', marginLeft: '5px' }}
                   onClick={() => navigate('/login')}
                 >
                   登录
                 </span>
                 <span 
-                  style={{ color: 'black', cursor: 'pointer', marginLeft: '10px' }}
+                  style={{ color: '#333', cursor: 'pointer', marginLeft: '10px' }}
                   onClick={() => navigate('/register')}
                 >
                   注册
                 </span>
               </span>
+            ) : isLoggedIn ? (
+              // 已登录：显示“您好，用户名 | 退出”
+              <span style={{ display: 'flex', alignItems: 'center' }}>
+                <span style={{ color: '#333' }}>您好，</span>
+                <span 
+                  style={{ color: '#333', cursor: 'pointer' }}
+                  onClick={() => navigate('/profile')}
+                >
+                  {currentUser?.realName || currentUser?.username || '用户'}
+                </span>
+                <span style={{ color: '#333', margin: '0 5px' }}> | </span>
+                <span 
+                  style={{ color: '#333', cursor: 'pointer' }}
+                  onClick={handleLogout}
+                >
+                  退出
+                </span>
+              </span>
             ) : (
-              // Default Unauthenticated (e.g. Homepage)
+              // 未登录（首页等）：显示“登录 注册”入口
               <span style={{ display: 'flex', alignItems: 'center' }}>
                 <span 
-                  style={{ color: 'black', cursor: 'pointer' }}
+                  style={{ color: '#333', cursor: 'pointer' }}
                   onClick={() => navigate('/login')}
                 >
                   登录
                 </span>
                 <span 
-                  style={{ color: 'black', cursor: 'pointer', marginLeft: '10px' }}
+                  style={{ color: '#333', cursor: 'pointer', marginLeft: '10px' }}
                   onClick={() => navigate('/register')}
                 >
                   注册
@@ -263,11 +197,14 @@ export const TopNavigationBar: React.FC<TopNavigationBarProps> = ({
             )}
           </div>
         </div>
+        </div>
       </div>
 
       {/* Blue Main Navigation Bar */}
       {location.pathname !== '/login' && (
-        <QuickAccessMenu />
+        <div className="nav-main">
+          <QuickAccessMenu />
+        </div>
       )}
     </div>
   );

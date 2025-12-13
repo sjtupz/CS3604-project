@@ -1,16 +1,17 @@
 // API客户端配置
-import axios from 'axios';
+import axios, { AxiosRequestConfig } from 'axios';
 
 // 创建axios实例
 const apiClient = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000',
+  // 在开发环境走相对路径，交由 Vite 代理；在预览/生产环境使用显式后端地址
+  baseURL: import.meta.env.DEV ? undefined : (import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'),
   timeout: 10000,
 });
 
 // 请求拦截器 - 添加认证token
 apiClient.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('authToken') || 'test-token';
+    const token = localStorage.getItem('authToken');
     if (token) {
       config.headers.Authorization = token;
     }
@@ -26,6 +27,14 @@ apiClient.interceptors.response.use(
     if (error.response?.status === 401) {
       // 处理未授权错误
       localStorage.removeItem('authToken');
+    }
+    const cfg: (AxiosRequestConfig & { __retryWithBase?: boolean }) = error.config || {};
+    const shouldRetry = !cfg.__retryWithBase && typeof cfg?.url === 'string' && cfg.url.startsWith('/api');
+    const isNetworkError = !error.response || error.code === 'ERR_NETWORK' || /Network Error/i.test(error.message || '');
+    if (shouldRetry && isNetworkError) {
+      const fallbackBase = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
+      const newCfg: AxiosRequestConfig & { __retryWithBase?: boolean } = { ...cfg, baseURL: fallbackBase, __retryWithBase: true };
+      return axios.request(newCfg);
     }
     return Promise.reject(error);
   }

@@ -29,35 +29,84 @@
 - type: Backend
   id: API-GET-Trains
   route: GET /api/trains
-  description: 根据查询条件搜索车次。
+  description: 获取车次列表（分页），支持多条件筛选与鉴权。
+  version: v1
+  auth: JWT
   input:
     type: QueryParams
     params:
       from: string
       to: string
       date: string
-      isHighSpeed: boolean
+      trainTypes: string (optional, values: GC,D,Z)
+      departureStation: string (optional)
+      arrivalStation: string (optional)
+      seatTypes: string (optional, comma separated)
+      departureTimeStart: string (optional, format: HH:mm)
+      departureTimeEnd: string (optional, format: HH:mm)
+      passengerCategory: string (optional, values: normal,student)
+      sortBy: string (optional, values: trainNumber,departureTime,arrivalTime,duration)
+      sortOrder: string (optional, values: asc,desc)
+      page: number (optional, default: 1)
+      pageSize: number (optional, default: 20)
   output:
     success:
       statusCode: 200
-      body: 
-        - trainNumber: "G1"
-          departureTime: "08:00"
-          arrivalTime: "12:30"
-          duration: "4h30m"
+      body:
+        code: 200
+        data:
+          items:
+            - trainNumber: "G108"
+              departureStation: "上海虹桥"
+              arrivalStation: "北京南"
+              departureTime: "08:00"
+              arrivalTime: "12:30"
+              duration: "4h30m"
+              arrivalDayIndicator: "当日到达"
+              seatAvailability:
+                一等座: { remaining: 12 }
+                二等座: { remaining: 0, backupOnly: true }
+                软卧: { remaining: null, hasSeatType: false }
+          pagination:
+            total: 100
+            currentPage: 1
+            perPage: 20
+            totalPages: 5
     error:
       - statusCode: 400
-        body: { error: "Invalid input parameters." }
+        body: { code: 40001, message: "参数不合法" }
+      - statusCode: 401
+        body: { code: 40100, message: "未授权" }
       - statusCode: 500
-        body: { error: "Query failed, please try again later." }
+        body: { code: 50001, message: "查询失败，请稍后重试" }
+  errorCodes:
+    - code: 40001
+      message: 参数不合法
+    - code: 40100
+      message: 未授权
+    - code: 50001
+      message: 查询失败，请稍后重试
   dependencies:
     - DB-FindTrains
+    - DB-GetRemainingTickets
+    - DB-CreateIndexes-Trains
+    - DB-Cache-TrainsQueryResults
   acceptanceCriteria:
-    - 当提供所有必需参数时，返回匹配的车次列表。
-    - 当缺少必需参数时，返回 400 Bad Request。
+    - 缺少必填参数返回40001；鉴权失败返回40100。
+    - 默认分页每页20条；返回包含total/currentPage/perPage/totalPages的分页元数据。
+    - 支持多条件组合筛选（AND逻辑）。
+    - 支持排序字段与方向；当排序参数非法时返回40001。
+    - P99响应时间≤500ms；命中缓存时优先返回缓存。
+  curlExamples:
+    - "curl -H 'Authorization: Bearer <JWT>' \"http://localhost:3000/api/trains?from=上海&to=北京&date=2025-12-25&page=1&pageSize=20&sortBy=departureTime&sortOrder=asc\""
+    - "curl -H 'Authorization: Bearer <JWT>' \"http://localhost:3000/api/trains?from=上海&to=北京&date=2025-12-25&trainTypes=GC&departureTimeStart=06:00&departureTimeEnd=12:00&passengerCategory=student\""
   changeLog:
     - date: "2025-11-17"
       description: "初始创建。"
+    - date: "2025-12-07"
+      description: "重构为分页 envelope 响应，增加筛选与JWT鉴权。"
+    - date: "2025-12-07"
+      description: "新增乘客类别与排序参数。"
 
 - type: Backend
   id: API-GET-CheckUsername
@@ -259,3 +308,211 @@
   changeLog:
     - date: "2025-12-01"
       description: "新增，以满足注册验证码页的校验与最终注册。"
+- type: Backend
+  id: API-GET-Trains-Search
+  route: GET /api/trains/search
+  description: 根据车次号与出发时间范围进行精确搜索，支持分页与鉴权。
+  version: v1
+  auth: JWT
+  input:
+    type: QueryParams
+    params:
+      trainNumber: string (optional, exact match)
+      departureTimeStart: string (optional, format: HH:mm)
+      departureTimeEnd: string (optional, format: HH:mm)
+      from: string (optional)
+      to: string (optional)
+      date: string (optional)
+      sortBy: string (optional, values: trainNumber,departureTime,arrivalTime,duration)
+      sortOrder: string (optional, values: asc,desc)
+      page: number (optional, default: 1)
+      pageSize: number (optional, default: 20)
+  output:
+    success:
+      statusCode: 200
+      body:
+        code: 200
+        data:
+          items:
+            - trainNumber: "G108"
+              departureStation: "上海虹桥"
+              arrivalStation: "北京南"
+              departureTime: "08:00"
+              arrivalTime: "12:30"
+              duration: "4h30m"
+          pagination:
+            total: 2
+            currentPage: 1
+            perPage: 20
+            totalPages: 1
+    error:
+      - statusCode: 400
+        body: { code: 40002, message: "查询条件不合法" }
+      - statusCode: 401
+        body: { code: 40100, message: "未授权" }
+      - statusCode: 500
+        body: { code: 50002, message: "搜索失败，请稍后重试" }
+  errorCodes:
+    - code: 40002
+      message: 查询条件不合法
+    - code: 40100
+      message: 未授权
+    - code: 50002
+      message: 搜索失败，请稍后重试
+  dependencies:
+    - DB-FindTrains
+    - DB-CreateIndexes-Trains
+    - DB-Cache-TrainsQueryResults
+  acceptanceCriteria:
+    - trainNumber为精确匹配；时间范围支持HH:mm格式，start≤end。
+    - 支持多个条件组合（AND），均为可选；缺少全部条件仍允许返回分页结果。
+    - 默认每页20条；返回分页元数据；支持排序；P99≤500ms。
+  curlExamples:
+    - "curl -H 'Authorization: Bearer <JWT>' \"http://localhost:3000/api/trains/search?trainNumber=G108&page=1&pageSize=20&sortBy=departureTime&sortOrder=asc\""
+    - "curl -H 'Authorization: Bearer <JWT>' \"http://localhost:3000/api/trains/search?departureTimeStart=06:00&departureTimeEnd=12:00\""
+  changeLog:
+    - date: "2025-12-07"
+      description: "新增以满足精确搜索与时间范围筛选需求。"
+    - date: "2025-12-07"
+      description: "新增排序参数。"
+
+- type: Backend
+  id: API-GET-Train-Schedule
+  route: GET /api/trains/{trainNumber}/schedule
+  description: 获取指定车次的全量站序时刻表。
+  version: v1
+  auth: JWT
+  input:
+    type: PathAndQuery
+    params:
+      trainNumber: string (path)
+      date: string (optional)
+  output:
+    success:
+      statusCode: 200
+      body:
+        code: 200
+        data:
+          stationSchedules:
+            - stationId: "uuid"
+              stationName: "上海虹桥"
+              arrivalTime: "2025-12-25T07:55:00+08:00"
+              departureTime: "2025-12-25T08:00:00+08:00"
+              segmentId: "uuid"
+              dwellMinutes: 5
+    error:
+      - statusCode: 404
+        body: { code: 40401, message: "车次不存在" }
+      - statusCode: 500
+        body: { code: 50003, message: "时刻表获取失败，请稍后重试" }
+  errorCodes:
+    - code: 40401
+      message: 车次不存在
+    - code: 50003
+      message: 时刻表获取失败，请稍后重试
+  dependencies:
+    - DB-GetTrainSchedule
+  acceptanceCriteria:
+    - 当车次不存在时返回40401；存在时返回完整站序时刻表。
+    - date为空返回最新版本；响应结构与示例一致。
+  curlExamples:
+    - "curl -H 'Authorization: Bearer <JWT>' \"http://localhost:3000/api/trains/G108/schedule\""
+    - "curl -H 'Authorization: Bearer <JWT>' \"http://localhost:3000/api/trains/G108/schedule?date=2025-12-25\""
+  changeLog:
+    - date: "2025-12-07"
+      description: "新增以满足时刻表展示需求。"
+
+- type: Backend
+  id: API-GET-Stations-Groups
+  route: GET /api/stations/groups
+  description: 获取站点分组信息，用于下拉菜单分组展示。
+  version: v1
+  auth: none
+  input:
+    type: QueryParams
+    params: {}
+  output:
+    success:
+      statusCode: 200
+      body:
+        groups:
+          - name: "热门"
+            stations: ["北京南", "上海虹桥"]
+          - name: "ABCDE"
+            stations: ["安庆", "保定"]
+          - name: "FGHIJ"
+            stations: []
+    error:
+      - statusCode: 500
+        body: { code: 50004, message: "站点分组获取失败" }
+  errorCodes:
+    - code: 50004
+      message: 站点分组获取失败
+  dependencies:
+    - DB-GetStationsGrouped
+  acceptanceCriteria:
+    - 返回包含“热门”和字母区间分组；每组包含站点列表。
+  curlExamples:
+    - "curl \"http://localhost:3000/api/stations/groups\""
+  changeLog:
+    - date: "2025-12-07"
+      description: "新增以满足站点分组展示。"
+
+- type: Backend
+  id: API-GET-Trains-RoundTrip
+  route: GET /api/trains/round-trip
+  description: 同时查询去程与返程车次列表，支持分页与筛选。
+  version: v1
+  auth: JWT
+  input:
+    type: QueryParams
+    params:
+      from: string
+      to: string
+      departDate: string
+      returnDate: string
+      trainTypes: string (optional)
+      seatTypes: string (optional)
+      departureTimeStart: string (optional)
+      departureTimeEnd: string (optional)
+      passengerCategory: string (optional, values: normal,student)
+      sortBy: string (optional)
+      sortOrder: string (optional)
+      page: number (optional, default: 1)
+      pageSize: number (optional, default: 20)
+  output:
+    success:
+      statusCode: 200
+      body:
+        code: 200
+        data:
+          outbound:
+            items: []
+            pagination: { total: 0, currentPage: 1, perPage: 20, totalPages: 0 }
+          return:
+            items: []
+            pagination: { total: 0, currentPage: 1, perPage: 20, totalPages: 0 }
+    error:
+      - statusCode: 400
+        body: { code: 40003, message: "去程/返程参数不合法或缺失" }
+      - statusCode: 401
+        body: { code: 40100, message: "未授权" }
+      - statusCode: 500
+        body: { code: 50005, message: "双程查询失败" }
+  errorCodes:
+    - code: 40003
+      message: 去程/返程参数不合法或缺失
+    - code: 50005
+      message: 双程查询失败
+  dependencies:
+    - DB-FindTrainsRoundTrip
+    - DB-CreateIndexes-Trains
+    - DB-Cache-TrainsQueryResults
+  acceptanceCriteria:
+    - 同时返回去程与返程两个集合，各含分页元数据；参数缺失返回40003。
+    - 支持排序与乘客类别筛选；P99≤500ms。
+  curlExamples:
+    - "curl -H 'Authorization: Bearer <JWT>' \"http://localhost:3000/api/trains/round-trip?from=上海&to=北京&departDate=2025-12-25&returnDate=2025-12-26\""
+  changeLog:
+    - date: "2025-12-07"
+      description: "新增以满足双程查询场景。"

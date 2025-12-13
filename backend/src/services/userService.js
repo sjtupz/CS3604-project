@@ -32,19 +32,20 @@ class UserService {
   async updateUserDiscountType(userId, discountData) {
     try {
       const { discountType, studentQualification } = discountData;
+      const normalizedType = String(discountType || '').trim();
 
       // TODO: 验证优惠类型
       const validDiscountTypes = ['成人', '儿童', '学生', '残疾军人'];
-      if (!validDiscountTypes.includes(discountType)) {
+      if (!validDiscountTypes.includes(normalizedType)) {
         throw new Error('Invalid discount type');
       }
 
       // 如果选择学生类型，必须提供学生资质信息
-      if (discountType === '学生' && !studentQualification) {
+      if (normalizedType === '学生' && !studentQualification) {
         throw new Error('Student qualification required for student discount type');
       }
 
-      await updateUserDiscountType(userId, discountData);
+      await updateUserDiscountType(userId, { discountType: normalizedType, studentQualification });
       return true;
     } catch (error) {
       console.error('Error in updateUserDiscountType:', error);

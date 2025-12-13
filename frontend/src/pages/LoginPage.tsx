@@ -4,6 +4,7 @@ import './LoginPage.css';
 const LoginPage: React.FC = () => {
   return (
     <div className="page-login" data-testid="login-page">
+      <div style={{ fontSize: '20px', color: '#333', textAlign: 'center', margin: '16px 0' }}>欢迎登录12306</div>
       <div className="login-panel">
         <div className="login-bg" />
         <div className="login-box">

@@ -1,0 +1,311 @@
+import React, { useEffect, useMemo, useState } from 'react'
+import { useLocation } from 'react-router-dom'
+import { TrainList } from '../components/TrainList'
+import type { TrainListItem } from '../api/trains'
+import { TrainFilterBar } from '../components/TrainFilterBar'
+import { StationDropdown } from '../components/StationDropdown'
+import { DatePicker } from '../components/DatePicker'
+import { getTrains } from '../api/trains'
+import './TrainListPage.css'
+import { TopNavigationBar } from '../components/TopNavigationBar'
+import { Footer } from '../components/Footer'
+
+interface TrainListPageProps {
+  isLoading?: boolean
+  error?: string
+}
+
+export const TrainListPage: React.FC<TrainListPageProps> = ({ isLoading, error }) => {
+  const location = useLocation()
+  const todayStr = useMemo(() => {
+    const t = new Date()
+    const y = t.getFullYear()
+    const m = String(t.getMonth() + 1).padStart(2, '0')
+    const d = String(t.getDate()).padStart(2, '0')
+    return `${y}-${m}-${d}`
+  }, [])
+  const [from, setFrom] = useState('上海')
+  const [to, setTo] = useState('北京')
+  const [date, setDate] = useState(todayStr)
+  const [returnDate, setReturnDate] = useState(todayStr)
+  const [timeRange, setTimeRange] = useState('')
+  const ALL_TRAIN_TYPES = ['GC', 'D', 'Z', 'KT', 'Other']
+  const ALL_SEAT_TYPES = ['商务座', '一等座', '二等座', '软卧', '硬卧', '硬座', '无座', '其他']
+  const [trainTypes, setTrainTypes] = useState<string[]>(ALL_TRAIN_TYPES)
+  const [isRoundTrip, setIsRoundTrip] = useState(false)
+  const [passengerCategory, setPassengerCategory] = useState<'normal' | 'student'>('normal')
+  const [currentPage, setCurrentPage] = useState(1)
+  const [items, setItems] = useState<TrainListItem[]>([])
+  const [sortBy, setSortBy] = useState<'trainNumber'|'departureTime'|'arrivalTime'|'duration'>('departureTime')
+  const [sortOrder, setSortOrder] = useState<'asc'|'desc'>('asc')
+  const [loading, setLoading] = useState(false)
+  const [errMsg, setErrMsg] = useState<string | undefined>(undefined)
+  const [seatTypes, setSeatTypes] = useState<string[]>(ALL_SEAT_TYPES)
+  const [isSwapping, setIsSwapping] = useState(false)
+  const [hasInteracted, setHasInteracted] = useState(false)
+  const [lastTrigger, setLastTrigger] = useState<'filter' | 'button' | undefined>(undefined)
+
+  useEffect(() => {
+    // Initialize from URL params if present
+    const params = new URLSearchParams(location.search);
+    const fromParam = params.get('from');
+    const toParam = params.get('to');
+    const dateParam = params.get('date');
+    const returnDateParam = params.get('returnDate');
+
+    if (fromParam) setFrom(fromParam);
+    if (toParam) setTo(toParam);
+    if (dateParam) setDate(dateParam);
+    
+    if (returnDateParam) {
+      setIsRoundTrip(true);
+      setReturnDate(returnDateParam);
+    }
+
+    if (fromParam && toParam && dateParam) {
+       // Auto query if params exist
+       void handleQuery({ 
+         force: true, 
+         source: 'filter', // Treat as filter/init source
+         params: {
+           from: fromParam,
+           to: toParam,
+           date: dateParam
+         }
+       });
+    }
+  }, [location.search]);
+
+  const filteredTrainList = useMemo(() => {
+    // [DEBUG] Log raw items before filtering
+    console.log('[DEBUG] Filtering items:', items.length);
+
+    // [DEBUG] TEMPORARY: Return all items to check if data exists
+    // return items; 
+
+    return items.filter(item => {
+      // 1. Train Type Filter
+      const trainCode = item.trainNumber || ''
+      const firstChar = trainCode.charAt(0).toUpperCase()
+      
+      // [DEBUG] Log item being filtered
+      // console.log('[DEBUG] Checking item:', trainCode, 'Types:', trainTypes);
+
+      let typeMatch = false
+
+      if (trainTypes.includes('GC') && (firstChar === 'G' || firstChar === 'C')) typeMatch = true
+      else if (trainTypes.includes('D') && firstChar === 'D') typeMatch = true
+      else if (trainTypes.includes('Z') && firstChar === 'Z') typeMatch = true
+      else if (trainTypes.includes('KT') && (firstChar === 'K' || firstChar === 'T')) typeMatch = true
+      else if (trainTypes.includes('Other') && !['G', 'C', 'D', 'Z', 'K', 'T'].includes(firstChar)) typeMatch = true
+
+      if (!typeMatch) {
+          // console.log('[DEBUG] Filtered out by type:', trainCode);
+          return false
+      }
+
+      // 2. Seat Type Filter
+      // If all seat types are selected, return true (show all)
+      if (seatTypes.length === ALL_SEAT_TYPES.length) return true
+
+      const hasSelectedSeat = seatTypes.some(type => {
+        if (type === '商务座') {
+          // Check Business OR Special
+          const swz = item.seatAvailability?.['商务座']
+          const tz = item.seatAvailability?.['特等座']
+          const hasSwz = swz && swz.hasSeatType !== false && swz.remaining !== null && (swz.remaining > 0 || swz.backupOnly)
+          const hasTz = tz && tz.hasSeatType !== false && tz.remaining !== null && (tz.remaining > 0 || tz.backupOnly)
+          return hasSwz || hasTz
+        }
+        
+        const info = item.seatAvailability?.[type]
+        // Check if valid AND not displayed as "-"
+        return info && info.hasSeatType !== false && info.remaining !== null && (info.remaining > 0 || info.backupOnly)
+      })
+
+      return hasSelectedSeat
+    })
+  }, [items, trainTypes, seatTypes])
+
+  const queryDisabled = !from || !to || !date
+
+  const [depStart, depEnd] = (timeRange || '').split('-')
+
+  const handleSwap = () => {
+    if (isSwapping) return
+    setIsSwapping(true)
+    const temp = from
+    setFrom(to)
+    setTo(temp)
+    setHasInteracted(true)
+    setTimeout(() => setIsSwapping(false), 300)
+  }
+
+  const handleQuery = async (opts?: { force?: boolean; source?: 'button' | 'filter'; params?: Partial<import('../api/trains').GetTrainsParams> }) => {
+    if (!opts?.force && queryDisabled) return
+    setLastTrigger(opts?.source ?? 'button')
+    setLoading(true)
+    setErrMsg(undefined)
+    try {
+      if (from === to) {
+        setErrMsg('出发地与目的地不能相同')
+        return
+      }
+      const res = await getTrains({
+        from: opts?.params?.from ?? from,
+        to: opts?.params?.to ?? to,
+        date: opts?.params?.date ?? date,
+        // trainTypes: opts?.params?.trainTypes ?? trainTypes, // Disabled for client-side filtering
+        seatTypes: opts?.params?.seatTypes ?? seatTypes,
+        passengerCategory: opts?.params?.passengerCategory ?? passengerCategory,
+        departureTimeStart: opts?.params?.departureTimeStart ?? depStart,
+        departureTimeEnd: opts?.params?.departureTimeEnd ?? depEnd,
+        sortBy: opts?.params?.sortBy ?? sortBy,
+        sortOrder: opts?.params?.sortOrder ?? sortOrder,
+        page: currentPage,
+        pageSize: 100,
+      })
+      console.log('TrainListPage getTrains response:', res)
+      setItems(res.data.items || [])
+    } catch (e) {
+      console.error('TrainListPage getTrains error:', e)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  
+
+  return (
+    <div data-testid="train-list-page" className="train-list-page responsive-container" data-external-error={error || ''}>
+      {location.pathname === '/trains' ? (
+        <TopNavigationBar />
+      ) : null}
+      {isLoading ? <div data-testid="loading-spinner">Loading...</div> : null}
+      <section className="query-section" aria-label="车次查询" data-testid="query-bar">
+        <div className="query-header">
+          <div className="radio-group" role="radiogroup" aria-label="行程类型">
+            <label className="radio-item">
+              <input type="radio" name="tripMode" aria-label="单程" checked={!isRoundTrip} onChange={() => setIsRoundTrip(false)} />
+              单程
+            </label>
+            <label className="radio-item">
+              <input type="radio" name="tripMode" aria-label="往返" checked={isRoundTrip} onChange={() => setIsRoundTrip(true)} />
+              往返
+            </label>
+          </div>
+          <div className="radio-group" role="radiogroup" aria-label="乘客类型">
+            <label className="radio-item">
+              <input type="radio" name="passengerCategory" aria-label="普通" checked={passengerCategory === 'normal'} onChange={() => setPassengerCategory('normal')} />
+              普通
+            </label>
+            <label className="radio-item">
+              <input type="radio" name="passengerCategory" aria-label="学生" checked={passengerCategory === 'student'} onChange={() => setPassengerCategory('student')} />
+              学生
+            </label>
+          </div>
+        </div>
+        <div className="query-grid">
+          <div className="field">
+            <label htmlFor="fromStation">出发地</label>
+            <StationDropdown id="fromStation" value={from} onSelectStation={(v) => { setFrom(v); setHasInteracted(true) }} onInputChange={(v) => { setFrom(v); setHasInteracted(true) }} isInvalid={!!from && from === to} inputWidth={140} />
+          </div>
+          <button 
+            className={`swap-btn ${isSwapping ? 'swapping' : ''}`} 
+            onClick={handleSwap} 
+            disabled={isSwapping}
+            aria-label="交换出发地和目的地"
+            title="交换出发地和目的地"
+          >
+            ↔
+          </button>
+          <div className="field">
+            <label htmlFor="toStation">目的地</label>
+            <StationDropdown id="toStation" value={to} onSelectStation={(v) => { setTo(v); setHasInteracted(true) }} onInputChange={(v) => { setTo(v); setHasInteracted(true) }} isInvalid={!!to && from === to} inputWidth={140} />
+          </div>
+          <div className="field">
+            <label htmlFor="departDate">出发日</label>
+            <DatePicker 
+              id="departDate" 
+              value={date} 
+              onDateSelect={(d) => {
+                setDate(d);
+                setHasInteracted(true)
+                if (d > returnDate) {
+                  setReturnDate(d);
+                }
+              }} 
+              width={130} 
+              minDate={todayStr}
+              maxDate={( () => { const t = new Date(); const d = new Date(t); d.setDate(t.getDate() + 15); const y=d.getFullYear(); const m=String(d.getMonth()+1).padStart(2,'0'); const dd=String(d.getDate()).padStart(2,'0'); return `${y}-${m}-${dd}`; })()}
+            />
+          </div>
+          {isRoundTrip && (
+            <div className="field">
+              <label htmlFor="returnDate">返程日</label>
+              <DatePicker 
+                id="returnDate" 
+                value={returnDate} 
+                onDateSelect={(d) => { setReturnDate(d); setHasInteracted(true) }} 
+                width={130} 
+                minDate={date}
+                maxDate={( () => { const t = new Date(); const d = new Date(t); d.setDate(t.getDate() + 15); const y=d.getFullYear(); const m=String(d.getMonth()+1).padStart(2,'0'); const dd=String(d.getDate()).padStart(2,'0'); return `${y}-${m}-${dd}`; })()}
+              />
+            </div>
+          )}
+          <div className="field align-right">
+            <button className="query-button" disabled={queryDisabled} onClick={() => { void handleQuery({ source: 'button' }) }} aria-disabled={queryDisabled} aria-label="查询">查询</button>
+          </div>
+        </div>
+        <div className="filters-bar" data-testid="filters">
+          <TrainFilterBar
+            selectedDate={date}
+            timeRange={timeRange}
+            onDateChange={(d) => { setDate(d); setHasInteracted(true); setCurrentPage(1); void handleQuery({ force: true, source: 'filter', params: { date: d } }) }}
+            onTimeRangeChange={(r) => {
+              setTimeRange(r)
+              setHasInteracted(true)
+              setCurrentPage(1)
+              const [s, e] = (r || '').split('-')
+              void handleQuery({ force: true, source: 'filter', params: { departureTimeStart: s, departureTimeEnd: e } })
+            }}
+            selectedTrainTypes={trainTypes}
+            onTrainTypesChange={(v) => { setTrainTypes(v) }}
+            selectedSeatTypes={seatTypes}
+            onSeatTypesChange={(v) => { setSeatTypes(v) }}
+            fromStation={from}
+            toStation={to}
+            onFromStationChange={(name) => { if (name) { setFrom(name); setCurrentPage(1); void handleQuery({ force: true, source: 'filter', params: { from: name } }) } }}
+            onToStationChange={(name) => { if (name) { setTo(name); setCurrentPage(1); void handleQuery({ force: true, source: 'filter', params: { to: name } }) } }}
+          />
+        </div>
+      </section>
+
+      <section className="table-section">
+        <div className="tips-bar" aria-live="polite">
+          {loading ? '正在为您查询车次...' : (items.length === 0 ? '列车已全部发售完毕！下次再来吧' : '以下为查询到的车次信息，具体余票以实际为准')}
+        </div>
+        <div className="table-wrap" role="region" aria-label="车次列表">
+          {(error || errMsg) && (
+            <div style={{ padding: 16, color: '#c00' }}>加载失败: {error || errMsg} <button onClick={() => { setErrMsg(undefined); void handleQuery() }}>重试</button></div>
+          )}
+          {((!loading && items.length === 0 && !errMsg && !error && (lastTrigger === undefined || (lastTrigger === 'button' && !hasInteracted))) || (loading && lastTrigger === 'button' && !hasInteracted)) ? (
+            <div style={{ padding: 24, textAlign: 'center', color: '#666' }}>暂无车票</div>
+          ) : (
+            <>
+              <TrainList items={filteredTrainList} sortBy={sortBy} sortOrder={sortOrder} onSortChange={(key) => {
+            const newOrder = sortBy === key && sortOrder === 'asc' ? 'desc' : 'asc'
+            setSortBy(key)
+            setSortOrder(newOrder)
+            void handleQuery({ force: true, source: 'filter', params: { sortBy: key, sortOrder: newOrder } })
+          }} />
+            </>
+          )}
+        </div>
+      </section>
+
+      
+      <Footer />
+    </div>
+  )
+}

@@ -1,48 +1,62 @@
 const express = require('express');
-const cors = require('cors');
-const { waitForInit } = require('./db/personal_database'); // Use unified database
-const stationRoutes = require('./routes/stations');
+const { corsMiddleware } = require('./config/cors');
+const { initSchema, getDB } = require('./config/database');
+const { generateMockData } = require('./services/generator');
+const http = require('http');
+
+if (process.env.NODE_ENV === 'test') {
+  const _orig = http.request;
+  http.request = function (options, cb) {
+    try {
+      if (options && typeof options.path === 'string' && /[\u00A0-\uFFFF]/.test(options.path)) {
+        const [pathname, query] = options.path.split('?');
+        if (query) {
+          options.path = `${pathname}?${encodeURI(query)}`;
+        }
+      }
+    } catch (_) {}
+    return _orig.call(http, options, cb);
+  };
+}
 
 const app = express();
 
-// Initialize database
-waitForInit().then(() => {
-  console.log('Database initialized successfully');
-}).catch(err => {
-  console.error('Failed to initialize database:', err);
-});
-
-app.use(cors({ origin: ['http://localhost:5173', 'http://localhost:5174'] }));
+// Middlewares
+app.use(corsMiddleware);
 app.use(express.json());
 
-// Placeholder for root so that tests don't fail with 404
-app.get('/', (req, res) => res.status(200).send());
+// Initialize schema on app load
+initSchema();
 
-const trainRoutes = require('./routes/trains');
-const userRoutes = require('./routes/users');
-const authRoutes = require('./routes/auth');
+// Populate data if empty (useful for tests and dev)
+try {
+  const db = getDB();
+  const count = db.prepare('SELECT COUNT(1) as c FROM tickets').get().c;
+  if (count === 0) {
+    generateMockData(14);
+  }
+} catch (e) {
+  // ignore
+}
 
-app.use('/api/stations', stationRoutes);
-app.use('/api/trains', trainRoutes);
-app.use('/api/users', userRoutes);
-app.use('/api/auth', authRoutes);
+// Routes
+app.use('/api/tickets', require('./routes/tickets'));
+app.use('/api', require('./routes/api'));
+app.use('/api/auth', require('./routes/auth'));
+app.use('/api/users', require('./routes/users'));
+app.use('/api/user', require('./routes/user'));
+app.use('/api/orders', require('./routes/orders'));
+app.use('/', require('./routes/trains'));
 
-const userPersonalRoutes = require('./routes/user');
-const orderRoutes = require('./routes/orders');
-const passengerRoutes = require('./routes/passengers');
-
-app.use('/api/user', userPersonalRoutes);
-app.use('/api/orders', orderRoutes);
-app.use('/api/passengers', passengerRoutes);
-
-// Simple error handler
-app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({ error: 'Internal Server Error' });
+// 404
+app.use((req, res) => {
+  res.status(404).json({ code: 404, message: 'Not Found' });
 });
 
-app.use((req, res, next) => {
-  res.status(404).json({ error: 'Not Found' });
+// Error handler
+app.use((err, req, res, next) => {
+  const status = err.status || 500;
+  res.status(status).json({ code: status, message: err.message || 'Internal Server Error' });
 });
 
 module.exports = app;

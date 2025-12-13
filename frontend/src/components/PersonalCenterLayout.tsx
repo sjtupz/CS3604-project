@@ -1,5 +1,5 @@
 // TODO: 实现个人中心页面布局组件
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import PersonalCenterHome from './PersonalCenterHome';
 import OrderTabs from './OrderTabs';
 import UncompletedOrders from './UncompletedOrders';
@@ -68,12 +68,9 @@ interface PersonalCenterLayoutProps {
 
 const PersonalCenterLayout: React.FC<PersonalCenterLayoutProps> = ({
   currentUser,
-  orders = [],
-  passengers = [],
   activeSection,
   onSectionChange,
   onNavigate,
-  onLogout,
   onNavigateToService,
   onNavigateToPayment,
   onNavigateToBooking,
@@ -87,7 +84,7 @@ const PersonalCenterLayout: React.FC<PersonalCenterLayoutProps> = ({
   const currentSection = activeSection !== undefined ? activeSection : internalSection;
   const [orderTab, setOrderTab] = useState<string>('未完成订单'); // For OrderTabs internal state
 
-  const implementedSections = ['个人中心', '火车票订单', '查看个人信息', '乘车人'];
+  const implementedSections = useMemo(() => ['个人中心', '火车票订单', '查看个人信息', '乘车人'], []);
   const [contentSection, setContentSection] = useState<string>(
     implementedSections.includes(currentSection) ? currentSection : '个人中心'
   );
@@ -96,7 +93,7 @@ const PersonalCenterLayout: React.FC<PersonalCenterLayoutProps> = ({
     if (implementedSections.includes(currentSection)) {
       setContentSection(currentSection);
     }
-  }, [currentSection]);
+  }, [currentSection, implementedSections]);
 
   const sidebarItems = [
     { id: '个人中心', label: '个人中心', subsections: [] },

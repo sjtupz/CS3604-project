@@ -24,9 +24,14 @@ const getDb = () => {
     initPromise = initializeDatabase().catch(err => {
       console.error('Error initializing database:', err);
     });
+    // 同步导出db实例供测试直接使用
+    module.exports.db = db;
   }
   return db;
 };
+
+module.exports.getDb = getDb;
+
 
 // 初始化数据库表结构（返回Promise）
 const initializeDatabase = () => {
@@ -52,7 +57,11 @@ const initializeDatabase = () => {
         gender TEXT DEFAULT 'male',
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-      )
+      );
+      CREATE TRIGGER IF NOT EXISTS users_set_id AFTER INSERT ON users
+      WHEN NEW.id IS NULL BEGIN
+        UPDATE users SET id = NEW.rowid WHERE rowid = NEW.rowid;
+      END;
     `, (err) => {
       if (err) {
         reject(err);
@@ -109,6 +118,32 @@ const initializeDatabase = () => {
             reject(err);
             return;
           }
+
+          // 车票表 (train_tickets) - 用于双模式查询
+          database.run(`
+            CREATE TABLE IF NOT EXISTS train_tickets (
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              train_no TEXT,
+              train_type TEXT,
+              start_station TEXT,
+              end_station TEXT,
+              start_time TEXT,
+              end_time TEXT,
+              duration TEXT,
+              date TEXT,
+              swz_num TEXT,
+              yd_num TEXT,
+              ed_num TEXT,
+              rw_num TEXT,
+              yw_num TEXT,
+              yz_num TEXT,
+              wz_num TEXT
+            )
+          `, (err) => {
+            if (err) {
+              console.error('Error creating train_tickets table:', err);
+            }
+          });
           
           // 检查并添加gender字段（如果不存在）
           database.all("PRAGMA table_info(users)", (err, columns) => {
@@ -148,9 +183,29 @@ const initializeDatabase = () => {
               )
             `, (err) => {
                if (err) console.error('Error creating login_codes table:', err);
-               
-               // 插入测试用户（如果不存在）
-               insertTestUser(database, reject, resolve);
+               database.run(`
+                 CREATE TABLE IF NOT EXISTS stations (
+                   id INTEGER PRIMARY KEY,
+                   name TEXT,
+                   city TEXT,
+                   province TEXT
+                 )
+               `, (err) => {
+                 if (err) console.error('Error creating stations table:', err);
+                 database.run(`
+                   CREATE TABLE IF NOT EXISTS trains (
+                     id INTEGER PRIMARY KEY,
+                     trainNumber TEXT,
+                     fromStation TEXT,
+                     toStation TEXT,
+                     date TEXT,
+                     isHighSpeed INTEGER
+                   )
+                 `, (err) => {
+                   if (err) console.error('Error creating trains table:', err);
+                   insertTestUser(database, reject, resolve);
+                 });
+               });
             });
           });
         });
@@ -209,43 +264,61 @@ const insertTestUser = (database, reject, resolve) => {
 
 // 执行查询（返回Promise）
 const query = (sql, params = []) => {
-  return new Promise((resolve, reject) => {
-    const database = getDb();
-    database.all(sql, params, (err, rows) => {
-      if (err) {
-        reject(err);
-      } else {
-        resolve(rows);
-      }
-    });
+  return new Promise(async (resolve, reject) => {
+    try {
+      if (!db) getDb();
+      await initPromise;
+      const database = getDb();
+      database.all(sql, params, (err, rows) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(rows);
+        }
+      });
+    } catch (err) {
+      reject(err);
+    }
   });
 };
 
 // 执行单行查询（返回Promise）
 const get = (sql, params = []) => {
-  return new Promise((resolve, reject) => {
-    const database = getDb();
-    database.get(sql, params, (err, row) => {
-      if (err) {
-        reject(err);
-      } else {
-        resolve(row);
-      }
-    });
+  return new Promise(async (resolve, reject) => {
+    try {
+      if (!db) getDb();
+      await initPromise;
+      const database = getDb();
+      database.get(sql, params, (err, row) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(row);
+        }
+      });
+    } catch (err) {
+      reject(err);
+    }
   });
 };
 
 // 执行更新/插入/删除（返回Promise）
 const run = (sql, params = []) => {
-  return new Promise((resolve, reject) => {
-    const database = getDb();
-    database.run(sql, params, function(err) {
-      if (err) {
-        reject(err);
-      } else {
-        resolve(this);
-      }
-    });
+  return new Promise(async (resolve, reject) => {
+    try {
+      if (!db) getDb();
+      await initPromise;
+      const database = getDb();
+      database.run(sql, params, function(err) {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(this);
+        }
+      });
+    } catch (err) {
+      reject(err);
+    }
   });
 };
 
@@ -281,3 +354,5 @@ module.exports = {
   initializeDatabase
 };
 
+// 预先暴露db实例（在测试环境为内存库）
+module.exports.db = getDb();

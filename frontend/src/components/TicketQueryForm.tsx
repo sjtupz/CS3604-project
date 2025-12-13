@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { StationDropdown } from './StationDropdown';
 import { DatePicker } from './DatePicker';
 import './TicketQueryForm.css';
@@ -7,25 +8,37 @@ interface FormValues {
   fromStation: string;
   toStation: string;
   selectedDate: string;
+  tripType: 'one-way' | 'round-trip';
+  returnDate: string;
 }
 
 interface FormErrors {
   fromStation: string;
   toStation: string;
   selectedDate: string;
+  returnDate: string;
 }
 
-export const TicketQueryForm: React.FC = () => {
+type TicketQueryFormProps = {
+  initialDate?: string;
+};
+
+export const TicketQueryForm: React.FC<TicketQueryFormProps> = ({ initialDate }) => {
+  const navigate = useNavigate();
+
   const [formValues, setFormValues] = useState<FormValues>({
     fromStation: '',
     toStation: '',
-    selectedDate: '',
+    selectedDate: initialDate ?? '',
+    tripType: 'one-way',
+    returnDate: initialDate ?? '',
   });
 
   const [errors, setErrors] = useState<FormErrors>({ 
     fromStation: '',
     toStation: '',
-    selectedDate: ''
+    selectedDate: '',
+    returnDate: ''
   });
 
   const handleSwap = () => {
@@ -38,8 +51,10 @@ export const TicketQueryForm: React.FC = () => {
   };
 
   const validate = () => {
-    const newErrors: FormErrors = { fromStation: '', toStation: '', selectedDate: '' };
+    const newErrors: FormErrors = { fromStation: '', toStation: '', selectedDate: '', returnDate: '' };
     let isValid = true;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
 
     if (!formValues.fromStation) {
       newErrors.fromStation = '❗请输入出发地';
@@ -49,8 +64,25 @@ export const TicketQueryForm: React.FC = () => {
       newErrors.toStation = '❗请输入到达地';
       isValid = false;
     }
+    if (formValues.fromStation && formValues.toStation && formValues.fromStation === formValues.toStation) {
+      newErrors.toStation = '❗出发地和目的地不能相同';
+      isValid = false;
+    }
+
     if (!formValues.selectedDate) {
       newErrors.selectedDate = '❗请输入出发日期';
+      isValid = false;
+    } else {
+       const selected = new Date(formValues.selectedDate);
+       selected.setHours(0, 0, 0, 0);
+       if (selected < today) {
+         newErrors.selectedDate = '❗无效日期：早于当前日期';
+         isValid = false;
+       }
+    }
+
+    if (formValues.tripType === 'round-trip' && !formValues.returnDate) {
+      newErrors.returnDate = '❗请输入返程日期';
       isValid = false;
     }
 
@@ -62,7 +94,17 @@ export const TicketQueryForm: React.FC = () => {
     if (!validate()) {
       return;
     }
-    // Proceed with query
+    
+    const params = new URLSearchParams();
+    params.set('from', formValues.fromStation);
+    params.set('to', formValues.toStation);
+    params.set('date', formValues.selectedDate);
+    
+    if (formValues.tripType === 'round-trip') {
+      params.set('returnDate', formValues.returnDate);
+    }
+    
+    navigate(`/tickets?${params.toString()}`);
   };
 
   return (
@@ -71,11 +113,32 @@ export const TicketQueryForm: React.FC = () => {
         <div className="tab active">车票</div>
       </div>
       <div className="form-content">
+        <div className="form-row" style={{ marginBottom: '15px' }}>
+           <label style={{ marginRight: '15px', display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+             <input 
+               type="radio" 
+               name="tripType" 
+               checked={formValues.tripType === 'one-way'} 
+               onChange={() => setFormValues(prev => ({ ...prev, tripType: 'one-way' }))}
+               style={{ marginRight: '5px' }}
+             /> 单程
+           </label>
+           <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+             <input 
+               type="radio" 
+               name="tripType" 
+               checked={formValues.tripType === 'round-trip'} 
+               onChange={() => setFormValues(prev => ({ ...prev, tripType: 'round-trip' }))}
+               style={{ marginRight: '5px' }}
+             /> 往返
+           </label>
+        </div>
         <div className="form-row-vertical">
           <label htmlFor="fromStation">出发地</label>
           <div className="input-group">
             <StationDropdown
               id="fromStation"
+              selectCityAsFinal
               onSelectStation={(station) => {
                 setFormValues((prev: FormValues) => ({ ...prev, fromStation: station }));
                 setErrors((prev: FormErrors) => ({ ...prev, fromStation: '' }));
@@ -94,6 +157,7 @@ export const TicketQueryForm: React.FC = () => {
           <div className="input-group">
             <StationDropdown
               id="toStation"
+              selectCityAsFinal
               onSelectStation={(station) => {
                 setFormValues((prev: FormValues) => ({ ...prev, toStation: station }));
                 setErrors((prev: FormErrors) => ({ ...prev, toStation: '' }));
@@ -113,13 +177,35 @@ export const TicketQueryForm: React.FC = () => {
             <DatePicker
               id="selectedDate"
               onDateSelect={(date) =>
-                setFormValues((prev: FormValues) => ({ ...prev, selectedDate: date }))
+                setFormValues((prev: FormValues) => {
+                   const updates: Partial<FormValues> = { selectedDate: date };
+                   if (prev.tripType === 'round-trip' && date > prev.returnDate) {
+                     updates.returnDate = date;
+                   }
+                   return { ...prev, ...updates };
+                })
               }
               value={formValues.selectedDate}
             />
             {errors.selectedDate && <span className="error-span">{errors.selectedDate}</span>}
           </div>
         </div>
+        {formValues.tripType === 'round-trip' && (
+          <div className="form-row-vertical">
+            <label htmlFor="returnDate">返程日期</label>
+            <div className="input-group">
+              <DatePicker
+                id="returnDate"
+                onDateSelect={(date) =>
+                  setFormValues((prev: FormValues) => ({ ...prev, returnDate: date }))
+                }
+                value={formValues.returnDate}
+                minDate={formValues.selectedDate}
+              />
+              {errors.returnDate && <span className="error-span">{errors.returnDate}</span>}
+            </div>
+          </div>
+        )}
         <button onClick={handleSwap} className="swap-button" title="交换出发地和目的地">
           ↔
         </button>

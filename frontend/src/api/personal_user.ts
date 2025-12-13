@@ -26,13 +26,13 @@ export const updateUserDiscountType = async (discountData: {
 };
 
 // 获取订单列表
-export const getOrders = async (params?: any) => {
+export const getOrders = async (params?: Record<string, string | number | boolean | undefined>) => {
   const response = await apiClient.get('/api/orders', { params });
   return response.data;
 };
 
 // 获取乘车人列表
-export const getPassengers = async (params?: any) => {
+export const getPassengers = async (params?: Record<string, string | number | boolean | undefined>) => {
   const response = await apiClient.get('/api/passengers', { params });
   return response.data;
 };

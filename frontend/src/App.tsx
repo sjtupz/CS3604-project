@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Routes, Route, Outlet } from 'react-router-dom';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Routes, Route, Outlet, useLocation } from 'react-router-dom';
 import { TopNavigationBar } from './components/TopNavigationBar';
 import { getUserInfo } from './api/personal_user';
 import HomePage from './pages/HomePage';
@@ -11,54 +11,60 @@ import { RegisterVerificationPage } from './pages/RegisterVerificationPage';
 import { RegisterSuccessPage } from './pages/RegisterSuccessPage';
 import { TermsPage } from './pages/TermsPage';
 import { PrivacyPolicyPage } from './pages/PrivacyPolicyPage';
+import { TrainListPage } from './pages/TrainListPage';
+import LogoExportPage from './pages/LogoExportPage';
 
 const AppLayout = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem('authToken'));
   const [currentUser, setCurrentUser] = useState<{ realName?: string; username?: string } | undefined>(undefined);
+  const location = useLocation();
+
+  const fetchUser = useCallback(async () => {
+    if (localStorage.getItem('authToken')) {
+      try {
+        const info = await getUserInfo();
+        setCurrentUser(info);
+      } catch (e) {
+        console.error('Failed to fetch user info:', e);
+      }
+    } else {
+      setCurrentUser(undefined);
+    }
+  }, []);
 
   useEffect(() => {
-    const fetchUser = async () => {
-      if (localStorage.getItem('authToken')) {
-        try {
-          const info = await getUserInfo();
-          setCurrentUser(info);
-        } catch (e) {
-          console.error('Failed to fetch user info:', e);
-          // Optional: if token is invalid, maybe logout? But for now just log error.
-        }
-      } else {
-        setCurrentUser(undefined);
-      }
-    };
-
     const handleAuthChange = () => {
       const loggedIn = !!localStorage.getItem('authToken');
       setIsLoggedIn(loggedIn);
       if (loggedIn) {
-        fetchUser();
+        void fetchUser();
       } else {
         setCurrentUser(undefined);
       }
     };
 
-    // Initial fetch
-    if (isLoggedIn) {
-      fetchUser();
-    }
-
     window.addEventListener('auth-change', handleAuthChange);
-    // Also listen to storage event for cross-tab updates
     window.addEventListener('storage', handleAuthChange);
 
     return () => {
       window.removeEventListener('auth-change', handleAuthChange);
       window.removeEventListener('storage', handleAuthChange);
     };
-  }, []);
+  }, [fetchUser]);
+
+  useEffect(() => {
+    if (isLoggedIn) {
+      void fetchUser();
+    } else {
+      setCurrentUser(undefined);
+    }
+  }, [isLoggedIn, fetchUser]);
 
   return (
     <>
-      <TopNavigationBar isLoggedIn={isLoggedIn} currentUser={currentUser} />
+      {location.pathname !== '/login' && (
+        <TopNavigationBar isLoggedIn={isLoggedIn} currentUser={currentUser} />
+      )}
       <Outlet />
     </>
   );
@@ -69,6 +75,7 @@ function App() {
     <Routes>
       <Route path="/" element={<AppLayout />}>
         <Route index element={<HomePage />} />
+        <Route path="tickets" element={<TrainListPage />} />
         <Route path="login" element={<LoginPage />} />
         <Route path="register" element={<RegisterPage />} />
         <Route path="register/verify" element={<RegisterVerificationPage />} />
@@ -77,6 +84,7 @@ function App() {
         <Route path="profile" element={<PersonalCenter />} />
         <Route path="terms" element={<TermsPage />} />
         <Route path="privacy" element={<PrivacyPolicyPage />} />
+        <Route path="logo-export" element={<LogoExportPage />} />
       </Route>
     </Routes>
   );
