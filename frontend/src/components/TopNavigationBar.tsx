@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { QuickAccessMenu } from './QuickAccessMenu';
-import logoImg from '../assets/logo_12306.jpg';
+import logoImg from '../assets/good_logo.png';
 import './TopNavigationBar.css';
 
 interface TopNavigationBarProps {

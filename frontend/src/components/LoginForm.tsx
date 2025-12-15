@@ -66,6 +66,8 @@ export const LoginForm: React.FC = () => {
         />
       </div>
 
+      {error && <div className="form-error">{error}</div>}
+
       <button className="submit" onClick={handleSubmit}>立即登录</button>
 
       <div className="links">
@@ -73,8 +75,6 @@ export const LoginForm: React.FC = () => {
         <span className="link-sep">|</span>
         <Link to="/forgot-password" className="link-secondary">忘记密码？</Link>
       </div>
-
-      {error && <div className="form-error">{error}</div>}
 
       {showSmsModal && (
         <div className="modal-container">

@@ -1,10 +1,28 @@
 import { LoginForm } from '../components/LoginForm';
+import { useNavigate } from 'react-router-dom';
+import logoImg from '../assets/good_logo.png';
 import './LoginPage.css';
+import '../components/TopNavigationBar.css';
 
 const LoginPage: React.FC = () => {
+  const navigate = useNavigate();
   return (
     <div className="page-login" data-testid="login-page">
-      <div style={{ fontSize: '20px', color: '#333', textAlign: 'center', margin: '16px 0' }}>欢迎登录12306</div>
+      <div className="header-root" role="banner">
+        <div className="header-inner" style={{height: '80px', justifyContent: 'flex-start', padding: '0 0px'}}>
+          <div
+            className="logo-wrap"
+            role="button"
+            aria-label="返回首页"
+            tabIndex={0}
+            onClick={() => navigate('/')}
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') navigate('/') }}
+          >
+            <img src={logoImg} alt="12306 Logo" className="logo-img" style={{ height: 46 }} />
+          </div>
+          <div style={{ fontSize: '20px', color: '#333' }}>欢迎登录12306</div>
+        </div>
+      </div>
       <div className="login-panel">
         <div className="login-bg" />
         <div className="login-box">
