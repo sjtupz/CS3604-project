@@ -116,8 +116,40 @@ async function findTickets({ start_station, end_station, date }) {
 }
 
 async function listTickets(query) {
-  // Return empty for legacy calls for now, assuming new API usage covers needs
-  return [];
+  const { date, from, to, filterType, filterStationIn, filterStationOut, filterTimeStr } = query || {};
+  console.log('[DEBUG] listTickets query:', query);
+
+  let sql = 'SELECT * FROM train_tickets WHERE 1=1';
+  const params = [];
+
+  if (date) {
+    sql += ' AND date = ?';
+    params.push(date);
+  }
+  if (from) {
+    sql += ' AND start_station LIKE ?';
+    params.push(`%${from}%`);
+  }
+  if (to) {
+    sql += ' AND end_station LIKE ?';
+    params.push(`%${to}%`);
+  }
+
+  // [DEBUG] Log SQL and Params
+  console.log("Executing SQL:", sql);
+  console.log("SQL Params:", params);
+
+  // Add more filters if needed (filterType etc.)
+  // For now, supporting the basic "return all" if no params, or basic filtering.
+
+  try {
+    const rows = await all(sql, params);
+    console.log(`[DEBUG] listTickets found ${rows.length} rows`);
+    return rows;
+  } catch (err) {
+    console.error('[DEBUG] listTickets error:', err);
+    return [];
+  }
 }
 
 module.exports = { insertTrainTickets, findTickets, listTickets };

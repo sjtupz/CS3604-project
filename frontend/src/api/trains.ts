@@ -216,9 +216,12 @@ export async function getTrains(params: GetTrainsParams): Promise<TrainListRespo
   })
   
   console.log('API Response Data:', response.data);
-  // Support both legacy array format and new object format { outbound_tickets: [], return_tickets: [] }
+  // Support standard envelope { code, data: { items: [] } } as well as legacy formats
   let list: ApiTrainItem[] = [];
-  if (Array.isArray(response.data)) {
+  
+  if (response.data && response.data.data && Array.isArray(response.data.data.items)) {
+     list = response.data.data.items as ApiTrainItem[];
+  } else if (Array.isArray(response.data)) {
      list = response.data as ApiTrainItem[];
   } else if (response.data && Array.isArray((response.data as any).outbound_tickets)) {
      // For now, in search list, we just show outbound tickets
