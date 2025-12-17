@@ -126,16 +126,16 @@ export const TopNavigationBar: React.FC<TopNavigationBarProps> = ({
           }}
         >
           {/* Static Links */}
-          <span style={{ color: '#333', cursor: 'pointer' }}>无障碍</span>
-          <span style={{ color: '#333' }}>|</span>
-          <span style={{ color: '#333', cursor: 'pointer' }}>敬老版</span>
-          <span style={{ color: '#333' }}>|</span>
-          <span style={{ color: '#333', cursor: 'pointer' }}>English</span>
-          <span style={{ color: '#333', marginLeft: '5px' }}> </span>
-          <span style={{ color: '#333' }}>|</span>
+          <span style={{ color: '#5b98fc', cursor: 'pointer' }}>无障碍</span>
+          <span style={{ color: '#5b98fc' }}>|</span>
+          <span style={{ color: '#5b98fc', cursor: 'pointer' }}>敬老版</span>
+          <span style={{ color: '#5b98fc' }}>|</span>
+          <span style={{ color: '#5b98fc', cursor: 'pointer' }}>English</span>
+          <span style={{ color: '#5b98fc', marginLeft: '5px' }}> </span>
+          <span style={{ color: '#5b98fc' }}>|</span>
           
           <span 
-            style={{ color: '#333', cursor: 'pointer' }}
+            style={{ color: '#5b98fc', cursor: 'pointer' }}
             onClick={handleMy12306Click}
           >
             我的12306
@@ -163,16 +163,16 @@ export const TopNavigationBar: React.FC<TopNavigationBarProps> = ({
             ) : isLoggedIn ? (
               // 已登录：显示“您好，用户名 | 退出”
               <span style={{ display: 'flex', alignItems: 'center' }}>
-                <span style={{ color: '#333' }}>您好，</span>
+                <span style={{ color: '#333333' }}>您好，</span>
                 <span 
-                  style={{ color: '#333', cursor: 'pointer' }}
+                  style={{ color: '#5b98fc', cursor: 'pointer' }}
                   onClick={() => navigate('/profile')}
                 >
                   {currentUser?.realName || currentUser?.username || '用户'}
                 </span>
-                <span style={{ color: '#333', margin: '0 5px' }}> | </span>
+                <span style={{ color: '#333333', margin: '0 5px' }}> | </span>
                 <span 
-                  style={{ color: '#333', cursor: 'pointer' }}
+                  style={{ color: '#333333', cursor: 'pointer' }}
                   onClick={handleLogout}
                 >
                   退出

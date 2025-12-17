@@ -30,6 +30,15 @@ const findUserByUsername = async (username) => {
   }
 };
 
+const findUserById = async (id) => {
+  try {
+    const row = await get('SELECT * FROM users WHERE id = ?', [id]);
+    return mapUser(row);
+  } catch (err) {
+    throw err;
+  }
+};
+
 const findUserByIdentityNumber = async (identityNumber) => {
   try {
     const row = await get('SELECT * FROM users WHERE id_number = ?', [identityNumber]);
@@ -110,6 +119,7 @@ const updateUserPasswordByPhone = async (phoneNumber, hashedPassword) => {
 
 module.exports = {
   findUserByUsername,
+  findUserById,
   findUserByIdentityNumber,
   findUserByEmail,
   findUserByPhoneNumber,

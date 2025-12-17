@@ -24,9 +24,10 @@ const PassengerForm: React.FC<PassengerFormProps> = ({
   onCancel
 }) => {
   const [name, setName] = useState<string>(passenger?.name || '');
-  const [idType, setIdType] = useState<string>(passenger?.idType || '');
+  const [idType, setIdType] = useState<string>(passenger?.idType || '居民身份证');
   const [idNumber, setIdNumber] = useState<string>(passenger?.idNumber || '');
   const [phone, setPhone] = useState<string>(passenger?.phone || '');
+  const [phoneFocused, setPhoneFocused] = useState<boolean>(false);
   const [discountType, setDiscountType] = useState<string>(passenger?.discountType || '');
   const [expiryDate, setExpiryDate] = useState<string>(passenger?.expiryDate || '');
   const [birthDate, setBirthDate] = useState<string>(passenger?.birthDate || '');
@@ -98,10 +99,10 @@ const PassengerForm: React.FC<PassengerFormProps> = ({
 
     // 验证必填项
     if (!name) {
-      newErrors.name = '请输入姓名';
+      newErrors.name = '请输入您的姓名！'; // Requirement 5.1.10.6
     }
     if (!idNumber) {
-      newErrors.idNumber = '请输入证件号码';
+      newErrors.idNumber = '请输入证件号码！'; // Requirement 5.1.10.6
     }
 
     // 验证姓名格式
@@ -115,7 +116,7 @@ const PassengerForm: React.FC<PassengerFormProps> = ({
 
     // 验证证件号格式
     if (idNumber && idType && !validateIdNumber(idType, idNumber)) {
-      newErrors.idNumber = '请输入正确的证件号码！';
+      newErrors.idNumber = '请输入正确的证件号码！'; // Requirement 5.1.10.5
     }
 
     // 验证日期格式（如果需要）
@@ -134,6 +135,7 @@ const PassengerForm: React.FC<PassengerFormProps> = ({
     if (Object.keys(newErrors).length === 0) {
       setIsSubmitting(true);
       onSubmit?.({
+        passengerId: passenger?.passengerId, // Include passengerId when editing
         name,
         idType,
         idNumber,
@@ -146,6 +148,11 @@ const PassengerForm: React.FC<PassengerFormProps> = ({
     }
   };
 
+  const maskPhone = (p: string) => {
+    if (!p || p.length < 11) return p;
+    return p.replace(/(\d{3})\d{4}(\d{4})/, '$1****$2');
+  };
+
   const needsDate = ['外国人永久居留身份证'].includes(idType);
 
   return (
@@ -154,70 +161,145 @@ const PassengerForm: React.FC<PassengerFormProps> = ({
 
       {/* 基本信息部分 */}
       <div style={{ marginBottom: '20px' }}>
-        <h3>基本信息</h3>
-        <div style={{ marginBottom: '10px' }}>
-          <label htmlFor="idType">证件类型：</label>
-          <select
-            id="idType"
-            value={idType}
-            onChange={(e) => setIdType(e.target.value)}
-            style={{ marginLeft: '10px', padding: '5px' }}
-          >
-            <option value="">请选择</option>
-            <option value="居民身份证">居民身份证</option>
-            <option value="港澳居民来往大陆通行证">港澳居民来往大陆通行证</option>
-            <option value="中国护照">中国护照</option>
-            <option value="外国护照">外国护照</option>
-            <option value="外国人永久居留身份证">外国人永久居留身份证</option>
-          </select>
+        <h3 style={{ fontWeight: 'bold', textAlign: 'left', marginBottom: '10px' }}>基本信息</h3>
+        <div style={{ marginBottom: '10px', textAlign: passenger ? 'center' : 'left' }}>
+          <label htmlFor="idType" style={{ display: 'inline-block', width: '100px', textAlign: 'right' }}>
+            <span style={{ color: 'red' }}>*</span>证件类型：
+          </label>
+          {passenger ? (
+            <span>{idType}</span>
+          ) : (
+            <select
+              id="idType"
+              value={idType}
+              onChange={(e) => setIdType(e.target.value)}
+              style={{ marginLeft: '10px', padding: '5px' }}
+            >
+              <option value="">请选择</option>
+              <option value="居民身份证">居民身份证</option>
+              <option value="港澳居民来往大陆通行证">港澳居民来往大陆通行证</option>
+              <option value="中国护照">中国护照</option>
+              <option value="外国护照">外国护照</option>
+              <option value="外国人永久居留身份证">外国人永久居留身份证</option>
+            </select>
+          )}
         </div>
 
-        <div style={{ marginBottom: '10px' }}>
-          <label htmlFor="name">姓名：</label>
-          <input
-            id="name"
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            style={{ marginLeft: '10px', padding: '5px' }}
-          />
-          {errors.name && <div style={{ color: 'red', marginTop: '5px' }}>{errors.name}</div>}
+        <div style={{ marginBottom: '10px', textAlign: passenger ? 'center' : 'left' }}>
+          <label htmlFor="name" style={{ display: 'inline-block', width: '100px', textAlign: 'right' }}>
+            <span style={{ color: 'red' }}>*</span>姓名：
+          </label>
+          {passenger ? (
+            <span>{name}</span>
+          ) : (
+            <div style={{ display: 'inline-block' }}>
+              <input
+                id="name"
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="请输入姓名"
+                style={{ marginLeft: '10px', padding: '5px', color: name ? 'black' : '#ccc' }}
+              />
+              {errors.name && <div style={{ color: 'red', marginTop: '5px' }}>{errors.name}</div>}
+            </div>
+          )}
         </div>
 
-        <div style={{ marginBottom: '10px' }}>
-          <label htmlFor="idNumber">证件号码：</label>
-          <input
-            id="idNumber"
-            type="text"
-            value={idNumber}
-            onChange={(e) => setIdNumber(e.target.value)}
-            onBlur={handleIdNumberBlur}
-            style={{ marginLeft: '10px', padding: '5px' }}
-          />
-          {errors.idNumber && <div style={{ color: 'red', marginTop: '5px' }}>{errors.idNumber}</div>}
+        <div style={{ marginBottom: '10px', textAlign: passenger ? 'center' : 'left' }}>
+          <label htmlFor="idNumber" style={{ display: 'inline-block', width: '100px', textAlign: 'right' }}>
+            <span style={{ color: 'red' }}>*</span>证件号码：
+          </label>
+          {passenger ? (
+             <span>{idNumber}</span>
+          ) : (
+            <div style={{ display: 'inline-block' }}>
+              <input
+                id="idNumber"
+                type="text"
+                value={idNumber}
+                onChange={(e) => setIdNumber(e.target.value)}
+                onBlur={handleIdNumberBlur}
+                placeholder="请填写证件号码"
+                style={{ marginLeft: '10px', padding: '5px', color: idNumber ? 'black' : '#ccc' }}
+              />
+              {errors.idNumber && <div style={{ color: 'red', marginTop: '5px' }}>{errors.idNumber}</div>}
+            </div>
+          )}
         </div>
+        
+        {passenger && (
+           <>
+             <div style={{ marginBottom: '10px', textAlign: 'center' }}>
+               <label style={{ display: 'inline-block', width: '100px', textAlign: 'right' }}>
+                 <span style={{ color: 'red' }}>*</span>国家/地区：
+               </label>
+               <span>中国CN</span>
+             </div>
+             <div style={{ marginBottom: '10px', textAlign: 'center' }}>
+               <label style={{ display: 'inline-block', width: '100px', textAlign: 'right' }}>添加日期：</label>
+               <span>{passenger.passengerId === 'self' || passenger.passengerId?.startsWith('self') || !passenger.passengerId ? new Date().toISOString().split('T')[0] : '2023-01-01'}</span>
+             </div>
+             <div style={{ marginBottom: '10px', textAlign: 'center' }}>
+               <label style={{ display: 'inline-block', width: '100px', textAlign: 'right' }}>核验状态：</label>
+               <span style={{ color: '#1890ff' }}>已通过</span>
+             </div>
+           </>
+        )}
       </div>
 
       {/* 联系方式部分 */}
       <div style={{ marginBottom: '20px' }}>
-        <h3>联系方式</h3>
-        <div style={{ marginBottom: '10px' }}>
-          <label htmlFor="phone">有效电话号：</label>
-          <input
-            id="phone"
-            type="tel"
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-            style={{ marginLeft: '10px', padding: '5px' }}
-          />
+        <h3 style={{ fontWeight: 'bold', textAlign: 'left', marginBottom: '10px' }}>
+          联系方式
+          {passenger && <span style={{ fontSize: '12px', fontWeight: 'normal', marginLeft: '10px' }}>（请提供乘车人真实有效的联系方式）</span>}
+        </h3>
+        <div style={{ marginBottom: '10px', textAlign: passenger ? 'center' : 'left' }}>
+          <label htmlFor="phone" style={{ display: 'inline-block', width: '100px', textAlign: 'right' }}>
+             {/* Add Mode: "有效电话号" ? Requirement 5.1.10.2 says "有效电话号". Edit Mode 5.1.9.3 says "居中展示手机号". */}
+             {passenger ? '手机号：' : '有效电话号：'}
+          </label>
+          
+          {passenger ? (
+             <div style={{ display: 'inline-block' }}>
+               <select style={{ marginRight: '10px', padding: '5px' }}>
+                 <option value="+86">+86</option>
+                 <option value="+852">+852</option>
+                 <option value="+853">+853</option>
+                 <option value="+886">+886</option>
+               </select>
+               <input
+                 id="phone"
+                 type="tel"
+                 value={phoneFocused ? phone : maskPhone(phone)}
+                 onChange={(e) => setPhone(e.target.value)}
+                 onFocus={() => setPhoneFocused(true)}
+                 onBlur={() => setPhoneFocused(false)}
+                 style={{ padding: '5px', width: '150px' }}
+               />
+               {/* Note: Requirement 5.1.9.3 says "Right box is phone number, 4-7 masked... CAN BE MODIFIED HERE". 
+                   Implemented: Mask on blur, Reveal on focus. */}
+             </div>
+          ) : (
+             <input
+               id="phone"
+               type="tel"
+               value={phone}
+               onChange={(e) => setPhone(e.target.value)}
+               placeholder="请填写手机号码"
+               style={{ marginLeft: '10px', padding: '5px', color: phone ? 'black' : '#ccc' }}
+             />
+          )}
         </div>
       </div>
 
       {/* 附加信息部分 */}
       <div style={{ marginBottom: '20px' }}>
-        <h3>附加信息</h3>
-        <div style={{ marginBottom: '10px' }}>
-          <label htmlFor="discountType">优惠类型：</label>
+        <h3 style={{ fontWeight: 'bold', textAlign: 'left', marginBottom: '10px' }}>附加信息</h3>
+        <div style={{ marginBottom: '10px', textAlign: passenger ? 'center' : 'left' }}>
+          <label htmlFor="discountType" style={{ display: 'inline-block', width: '100px', textAlign: 'right' }}>
+            <span style={{ color: 'red' }}>*</span>优惠类型：
+          </label>
           <select
             id="discountType"
             value={discountType}
@@ -262,19 +344,33 @@ const PassengerForm: React.FC<PassengerFormProps> = ({
       </div>
 
       {/* 按钮 */}
-      <div style={{ marginTop: '20px' }}>
+      <div style={{ marginTop: '20px', display: 'flex', justifyContent: 'center', gap: '20px' }}>
+        <button
+          onClick={onCancel}
+          style={{ 
+            padding: '10px 30px', 
+            border: '1px solid #d9d9d9', 
+            borderRadius: '4px',
+            background: 'white',
+            cursor: 'pointer'
+          }}
+        >
+          取消
+        </button>
         <button
           onClick={handleSubmit}
           disabled={isSubmitting}
-          style={{ marginRight: '10px', padding: '10px 20px' }}
+          style={{ 
+            padding: '10px 30px',
+            border: 'none',
+            borderRadius: '4px',
+            background: '#ff9900',
+            color: 'white',
+            cursor: 'pointer',
+            opacity: isSubmitting ? 0.7 : 1
+          }}
         >
-          {isSubmitting ? '提交中...' : '提交'}
-        </button>
-        <button
-          onClick={onCancel}
-          style={{ padding: '10px 20px' }}
-        >
-          取消
+          {isSubmitting ? '保存中...' : '保存'}
         </button>
       </div>
     </div>

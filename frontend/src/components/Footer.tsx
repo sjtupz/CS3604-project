@@ -1,58 +1,132 @@
-import React from 'react'
-import './Footer.css'
+import React from 'react';
+import './Footer.css';
+
+// Import images
+import link05 from '../assets/footer/link05.png';
+import link02 from '../assets/footer/link02.png';
+import link03 from '../assets/footer/link03.png';
+import link04 from '../assets/footer/link04.png';
+import zgtlwb from '../assets/footer/zgtlwb.png';
+import zgtlwx from '../assets/footer/zgtlwx.png';
+import publicImg from '../assets/footer/public.png';
+import downloadImg from '../assets/footer/download.png';
+import gongan from '../assets/footer/gongan.png';
+import footerSlh from '../assets/footer/footer-slh.jpg';
 
 export const Footer: React.FC = () => {
   return (
-    <footer className="footer-container" data-testid="footer">
-      <div className="footer-top">
-        <div className="footer-content">
-          <div className="friend-links">
-            <h3 className="section-title">友情链接</h3>
-            <ul className="link-grid">
-              <li className="link-item" aria-label="中国国家铁路集团有限公司">
-                <img className="placeholder-logo" src="https://www.12306.cn/index/images/link01.png" referrerPolicy="no-referrer" alt="中国国家铁路集团有限公司" />
-              </li>
-              <li className="link-item" aria-label="中国铁路财产保险自保有限公司">
-                <img className="placeholder-logo" src="https://www.12306.cn/index/images/link02.png" referrerPolicy="no-referrer" alt="中国铁路财产保险自保有限公司" />
-              </li>
-              <li className="link-item" aria-label="中国铁路95306网">
-                <img className="placeholder-logo" src="https://www.12306.cn/index/images/link03.png" referrerPolicy="no-referrer" alt="中国铁路95306网" />
-              </li>
-              <li className="link-item" aria-label="中铁快运 CRE">
-                <img className="placeholder-logo" src="https://www.12306.cn/index/images/link04.png" referrerPolicy="no-referrer" alt="中铁快运 CRE" />
-              </li>
-            </ul>
-          </div>
-          <div className="qr-codes" aria-label="中国铁路官方媒体矩阵">
-            <div className="qr-item">
-              <img className="placeholder-qr" src="/assets/train_schedule/qr_wx.png" referrerPolicy="no-referrer" alt="中国铁路官方微信二维码" />
-              <p className="qr-caption">中国铁路官方微信</p>
+    <div className="footer" role="contentinfo">
+      <div className="footer-con wrapper">
+        <div className="foot-links" style={{ marginRight: '50px' }}>
+          <h2 className="foot-con-tit">友情链接</h2>
+          <ul className="foot-links-list" role="menubar">
+            <li role="menuitem">
+              <a
+                name="g_href"
+                data-href="http://www.china-railway.com.cn/"
+                data-redirect="N"
+                href="http://www.china-railway.com.cn/"
+                target="_blank"
+                rel="noopener noreferrer"
+                title="中国国家铁路集团有限公司"
+              >
+                <img src={link05} alt="中国国家铁路集团有限公司" />
+              </a>
+            </li>
+            <li role="menuitem">
+              <a
+                name="g_href"
+                data-href="http://www.china-ric.com/"
+                data-redirect="N"
+                href="http://www.china-ric.com/"
+                target="_blank"
+                rel="noopener noreferrer"
+                title="中国铁路财产保险自保有限公司"
+              >
+                <img
+                  src={link02}
+                  alt="中国铁路财产保险自保有限公司"
+                />
+              </a>
+            </li>
+            <li role="menuitem">
+              <a
+                name="g_href"
+                title="中国铁路95306网"
+                data-href="http://www.95306.cn/"
+                data-redirect="N"
+                href="http://www.95306.cn/"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <img src={link03} alt="中国铁路95306网" />
+              </a>
+            </li>
+            <li role="menuitem">
+              <a
+                name="g_href"
+                title="中铁快运股份有限公司"
+                data-href="http://www.95572.com/"
+                data-redirect="N"
+                href="http://www.95572.com/"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <img src={link04} alt="中铁快运股份有限公司" />
+              </a>
+            </li>
+          </ul>
+        </div>
+        <ul className="foot-code">
+          <li style={{ width: '140px' }}>
+            <h2 className="foot-con-tit">中国铁路官方微信</h2>
+            <div className="code-pic">
+              <img src={zgtlwb} alt="中国铁路官方微信" />
             </div>
-            <div className="qr-item">
-              <img className="placeholder-qr" src="/assets/train_schedule/qr_weibo.png" referrerPolicy="no-referrer" alt="中国铁路官方微博二维码" />
-              <p className="qr-caption">中国铁路官方微博</p>
+          </li>
+          <li style={{ width: '140px' }}>
+            <h2 className="foot-con-tit">中国铁路官方微博</h2>
+            <div className="code-pic">
+              <img src={zgtlwx} alt="中国铁路官方微博" />
             </div>
-            <div className="qr-item">
-              <img className="placeholder-qr" src="/assets/train_schedule/qr_public.png" referrerPolicy="no-referrer" alt="12306 公众号二维码" />
-              <p className="qr-caption">12306 公众号</p>
+          </li>
+          <li style={{ width: '110px' }}>
+            <h2 className="foot-con-tit">12306 公众号</h2>
+            <div className="code-pic">
+              <img src={publicImg} alt="12306 公众号" />
             </div>
-            <div className="qr-item">
-              <img className="placeholder-qr" src="/assets/train_schedule/qr_app.png" referrerPolicy="no-referrer" alt="铁路12306 APP 二维码" />
-              <p className="qr-caption">铁路12306</p>
+          </li>
+          <li style={{ width: '110px' }}>
+            <h2 className="foot-con-tit">铁路12306</h2>
+            <div className="code-pic">
+              <img src={downloadImg} alt="铁路12306" />
+              <div className="code-tips">
+                官方APP下载，目前铁路未授权其他网站或APP开展类似服务内容，敬请广大用户注意。
+              </div>
             </div>
-          </div>
-          <div className="app-tip" aria-label="官方APP下载提示">
-            <p className="app-tip-text">官方APP下载，目前铁路未授权其他网站或APP开展类似服务内容，敬请广大用户注意。</p>
-          </div>
+          </li>
+        </ul>
+      </div>
+      <div className="footer-txt" style={{ position: 'relative' }}>
+        <p>
+          <span className="mr">版权所有©2008-2025</span>
+          <span className="mr">中国铁道科学研究院集团有限公司</span>
+          <span>技术支持：铁旅科技有限公司</span>
+        </p>
+        <p>
+          <span className="mr">
+            <img src={gongan} alt="公安" style={{ width: '13px', verticalAlign: 'middle', marginRight: '5px' }} />
+            <a target="_blank" rel="noopener noreferrer" href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=11010802038392" style={{ color: '#c1c1c1' }}>京公网安备 11010802038392号</a>
+          </span>
+          <span className="mr">|</span>
+          <span className="mr">京ICP备05020493号-4</span>
+          <span className="mr">|</span>
+          <span>ICP证：京B2-20202537</span>
+        </p>
+        <div style={{ position: 'absolute', top: '17px', left: '50%', marginLeft: '465px' }}>
+          <img src={footerSlh} style={{ display: 'block', width: '130px', height: '46px' }} alt="适老化无障碍服务" />
         </div>
       </div>
-      <div className="footer-bottom">
-        <div className="footer-content bottom-content">
-          <p className="copyright">版权所有©2008-2025 中国铁道科学研究院集团有限公司 技术支持：铁旅科技有限公司</p>
-          <p className="licenses">京公网安备 11010802038392号 | 京ICP备05020493号-4 | ICP证：京B2-20202537</p>
-          <button className="accessible-button" aria-label="适老化无障碍服务">适老化无障碍服务</button>
-        </div>
-      </div>
-    </footer>
-  )
-}
+    </div>
+  );
+};

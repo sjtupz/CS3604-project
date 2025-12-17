@@ -2,13 +2,32 @@
 const express = require('express');
 const router = express.Router();
 const authService = require('../services/authService');
+const passengerDb = require('../db/passenger');
 const loginSendCodeService = require('../services/loginSendCode');
 const loginVerifyService = require('../services/loginVerify');
 
 // 对应 API-POST-Register
 router.post('/register', async (req, res) => {
   try {
-    await authService.registerUser(req.body);
+    const result = await authService.registerUser(req.body);
+    
+    // Create self passenger record automatically
+    try {
+      const { fullName, identityType, identityNumber, phoneNumber, passengerType } = req.body;
+      if (fullName && identityNumber) {
+        await passengerDb.createPassenger(result.id, {
+          name: fullName,
+          idType: identityType || '中国居民身份证',
+          idNumber: identityNumber,
+          phone: phoneNumber,
+          discountType: passengerType || '成人'
+        });
+      }
+    } catch (passErr) {
+      console.warn('Failed to auto-create passenger record:', passErr);
+      // Non-fatal error, continue
+    }
+
     res.status(201).json({ message: 'Registration successful, please proceed to login.' });
   } catch (error) {
     res.status(409).json({ error: error.message });

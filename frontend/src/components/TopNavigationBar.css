@@ -68,7 +68,7 @@
 .search-button:focus { outline: 2px solid rgba(92, 152, 245, 0.35); outline-offset: 2px; }
 
 .nav-main {
-  background-color: #4675dc;
+  background-color: #3b99fc;
 }
 
 @media (max-width: 992px) {

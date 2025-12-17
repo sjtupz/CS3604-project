@@ -1,150 +1,129 @@
-.footer-container {
+.footer {
+  background-color: #f8f8f8;
+  padding: 20px 0 30px;
+  border-top: 2px solid #dedede;
+  width: 100%;
+  min-width: 1190px;
+  font-size: 14px;
+}
+
+.footer-con {
+  display: flex;
+  justify-content: center;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #dedede;
   width: 100%;
 }
 
-.footer-top {
-  background-color: #ffffff;
-  padding: 30px 0;
-}
-
-.footer-content {
+.wrapper {
   width: 1190px;
   margin: 0 auto;
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
 }
 
-.friend-links {
-  flex: 1;
-}
-
-.section-title {
+.foot-con-tit {
   font-size: 14px;
-  color: #333333;
-  margin-bottom: 12px;
+  color: #666;
+  line-height: 30px;
+  margin-bottom: 10px;
+  font-weight: 400;
 }
 
-.link-grid {
+.foot-links {
+  width: 440px;
+  margin-right: 50px;
+  margin-left: 20px;
+}
+
+.foot-links-list {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  padding: 0;
+  margin: 0;
+}
+
+.foot-links-list li {
+  margin-right: 10px;
+  margin-bottom: 10px;
+}
+
+.foot-links-list img {
+  width: 200px;
+  height: 36px;
+  border: 1px solid #dedede;
+  display: block;
+}
+
+.foot-code {
+  flex: 1;
+  display: flex;
   list-style: none;
   padding: 0;
   margin: 0;
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  grid-auto-rows: minmax(60px, auto);
-  gap: 10px 16px;
 }
 
-.link-item {
-  display: flex;
-  align-items: center;
+.foot-code li {
+  text-align: center;
 }
 
-.placeholder-logo {
-  width: 180px;
-  height: auto;
-  background: none;
-  border: none;
-  display: block;
+.code-pic {
+  border: 1px solid #dedede;
+  background: #fff;
+  padding: 5px;
+  display: inline-block;
+  position: relative;
 }
 
-.qr-codes {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 24px;
-}
-
-.qr-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-}
-
-.placeholder-qr {
+.code-pic img {
   width: 80px;
   height: 80px;
-  background: none;
-  border: none;
   display: block;
-  object-fit: contain;
 }
 
-.qr-caption { font-size: 12px; color: #333333; text-align: center; }
-
-/* 强制清除所有图片边框和背景 - 文档要求 */
-.footer-container img,
-.footer-container .code-box div,
-.footer-container .link-box img,
-.placeholder-logo,
-.placeholder-qr {
-  border: none !important;
-  background-color: transparent !important;
-  box-shadow: none !important;
-  outline: none !important;
-}
-
-/* 确保图片加载失败时也不显示边框 */
-img[src=""] {
-  opacity: 0;
-}
-
-.app-tip {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  padding: 10px 12px;
-  max-width: 360px;
-  border: 1px solid #E0E0E0; /* 这里的边框是容器边框，不是图片边框，应保留 */
-  border-radius: 4px;
-}
-
-.app-tip-text {
-  font-size: 12px;
-  color: #666666;
-  line-height: 1.6;
-  margin-right: 12px;
-}
-
-.app-tip-logo {
-  flex-shrink: 0;
-  width: 40px;
-  height: 40px;
-}
-
-.footer-bottom {
-  background-color: #666666; /* 文档要求深灰底 */
-  padding: 15px 0;
-  color: #CCCCCC;
-}
-
-.bottom-content {
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  gap: 8px;
-}
-
-.copyright {
-  font-size: 12px;
-  margin: 0;
-}
-
-.licenses {
-  font-size: 12px;
-  margin: 0;
-}
-
-.accessible-button {
-  margin-top: 10px;
-  padding: 4px 12px;
+.code-tips {
+  position: absolute;
+  top: -75px;
+  left: -50px;
+  width: 180px;
+  padding: 8px 10px;
+  border: 1px solid #dedede;
   background: #fff;
-  border: none;
-  border-radius: 15px;
-  color: #333;
   font-size: 12px;
-  cursor: pointer;
+  color: #666;
+  line-height: 18px;
+  text-align: left;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  display: none;
+  z-index: 100;
+}
+
+.foot-code li .code-pic:hover .code-tips {
+  display: block;
+}
+
+.footer-txt {
+  text-align: center;
+  color: #666666;
+  font-size: 12px;
+  line-height: 24px;
+  padding-top: 20px;
+}
+
+.footer-txt p {
+  margin: 0;
+  margin-bottom: 5px;
+}
+
+.mr {
+  margin-right: 10px;
+}
+
+.footer-txt a {
+  color: #666666;
+  text-decoration: none;
+}
+
+.footer-txt a:hover {
+  color: #3b99fc;
+  text-decoration: underline;
 }

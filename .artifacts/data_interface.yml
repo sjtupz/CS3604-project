@@ -289,3 +289,50 @@
   changeLog:
     - date: "2025-12-07"
       description: "新增以满足数据库的更新与维护。"
+
+- type: Database
+  id: DB-FindPassengersByUserId
+  description: 查询指定用户的乘车人列表。
+  dependencies:
+    - none
+  acceptanceCriteria:
+    - 返回该userId下的所有乘车人。
+  changeLog:
+    - date: "2025-12-16"
+      description: "新增，用于乘车人列表。"
+
+- type: Database
+  id: DB-CreatePassenger
+  description: 创建乘车人。
+  dependencies:
+    - none
+  acceptanceCriteria:
+    - 校验唯一性（userId + idNumber）。
+    - 插入记录。
+  changeLog:
+    - date: "2025-12-16"
+      description: "新增，用于添加乘车人。"
+
+- type: Database
+  id: DB-UpdatePassenger
+  description: 更新乘车人信息。
+  dependencies:
+    - none
+  acceptanceCriteria:
+    - 更新指定ID的记录。
+  changeLog:
+    - date: "2025-12-16"
+      description: "新增，用于修改乘车人。"
+
+- type: Database
+  id: DB-DeletePassengers
+  description: 删除乘车人。
+  dependencies:
+    - none
+  acceptanceCriteria:
+    - 物理删除或逻辑删除（这里假设物理删除）。
+    - 只能删除指定userId下的记录。
+  changeLog:
+    - date: "2025-12-16"
+      description: "新增，用于删除乘车人。"
+

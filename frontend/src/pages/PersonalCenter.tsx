@@ -57,6 +57,17 @@ const PersonalCenter: React.FC<PersonalCenterProps> = () => {
   const [loading, setLoading] = useState(true);
   const [activeSection, setActiveSection] = useState('个人中心');
 
+  // Function to refresh passenger list
+  const refreshPassengers = async () => {
+    try {
+      const passengersData = await getPassengers();
+      setPassengers(passengersData.passengers || []);
+    } catch (error) {
+      console.error('Error refreshing passengers:', error);
+      setPassengers([]);
+    }
+  };
+
   useEffect(() => {
     // Check if user is logged in
     const token = localStorage.getItem('authToken');
@@ -233,6 +244,7 @@ const PersonalCenter: React.FC<PersonalCenterProps> = () => {
         onPrintInfo={handlePrintInfo}
         onNavigateToPhoneVerification={handleNavigateToPhoneVerification}
         onUpdateDiscountType={handleUpdateDiscountType}
+        onRefreshPassengers={refreshPassengers}
       />
     </div>
   );

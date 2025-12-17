@@ -46,6 +46,7 @@ app.use('/api/auth', require('./routes/auth'));
 app.use('/api/users', require('./routes/users'));
 app.use('/api/user', require('./routes/user'));
 app.use('/api/orders', require('./routes/orders'));
+app.use('/api/passengers', require('./routes/passengers'));
 app.use('/', require('./routes/trains'));
 
 // 404

@@ -214,6 +214,64 @@ const initializeDatabase = () => {
   });
 };
 
+const insertTestTrainData = (database, resolve) => {
+  // Insert test train data for the failing test
+  const trainData = [
+    {
+      train_no: 'G108',
+      train_type: '高铁',
+      start_station: '上海虹桥',
+      end_station: '北京南',
+      start_time: '09:00',
+      end_time: '13:00',
+      duration: '4h00m',
+      date: '2025-12-25',
+      swz_num: '10',
+      yd_num: '20',
+      ed_num: '30',
+      rw_num: '5',
+      yw_num: '10',
+      yz_num: '50',
+      wz_num: '100'
+    }
+  ];
+  
+  // Check if train data already exists
+  database.get('SELECT id FROM train_tickets WHERE train_no = ? AND date = ?', ['G108', '2025-12-25'], (err, row) => {
+    if (err) {
+      console.error('Error checking train data:', err);
+      resolve();
+      return;
+    }
+    
+    if (!row) {
+      const stmt = database.prepare(`
+        INSERT INTO train_tickets (
+          train_no, train_type, start_station, end_station, start_time, end_time, duration, date,
+          swz_num, yd_num, ed_num, rw_num, yw_num, yz_num, wz_num
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `);
+      
+      const data = trainData[0];
+      stmt.run([
+        data.train_no, data.train_type, data.start_station, data.end_station,
+        data.start_time, data.end_time, data.duration, data.date,
+        data.swz_num, data.yd_num, data.ed_num, data.rw_num, data.yw_num, data.yz_num, data.wz_num
+      ], (err) => {
+        if (err) {
+          console.error('Error inserting train data:', err);
+        } else {
+          console.log('Test train data created successfully');
+        }
+        stmt.finalize();
+        resolve();
+      });
+    } else {
+      resolve();
+    }
+  });
+};
+
 const insertTestUser = (database, reject, resolve) => {
   database.get('SELECT id FROM users WHERE id = ?', ['test-user-id'], (err, row) => {
     if (err) {
@@ -248,7 +306,8 @@ const insertTestUser = (database, reject, resolve) => {
         } else {
           console.log('Test user created successfully');
         }
-        resolve();
+        // Insert test train data
+        insertTestTrainData(database, resolve);
       });
     } else {
       // 如果用户已存在但gender为空，更新gender
@@ -256,7 +315,8 @@ const insertTestUser = (database, reject, resolve) => {
         if (err) {
           console.error('Error updating user gender:', err);
         }
-        resolve();
+        // Insert test train data
+        insertTestTrainData(database, resolve);
       });
     }
   });

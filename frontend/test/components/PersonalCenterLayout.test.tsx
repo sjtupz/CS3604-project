@@ -1,73 +1,44 @@
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import PersonalCenterLayout from '../../src/components/PersonalCenterLayout';
-import { vi, describe, it, expect } from 'vitest';
+import '@testing-library/jest-dom';
+import * as passengerApi from '../../src/api/passengers';
+import * as userApi from '../../src/api/personal_user'; // PassengerList also calls getUserInfo
+import { vi } from 'vitest';
 
-// Mock subcomponents
-vi.mock('../../src/components/PersonalCenterHome', () => ({
-  default: () => <div data-testid="personal-center-home">Personal Center Home</div>
-}));
-vi.mock('../../src/components/OrderTabs', () => ({
-  default: () => <div data-testid="order-tabs">Order Tabs</div>
-}));
-vi.mock('../../src/components/UncompletedOrders', () => ({
-  default: () => <div>Uncompleted Orders</div>
-}));
-vi.mock('../../src/components/UpcomingOrders', () => ({
-  default: () => <div>Upcoming Orders</div>
-}));
-vi.mock('../../src/components/HistoryOrders', () => ({
-  default: () => <div>History Orders</div>
-}));
-vi.mock('../../src/components/UserInfoView', () => ({
-  default: () => <div data-testid="user-info-view">User Info View</div>
-}));
-vi.mock('../../src/components/PassengerList', () => ({
-  default: () => <div data-testid="passenger-list">Passenger List</div>
-}));
+// Mock API modules
+vi.mock('../../src/api/passengers');
+vi.mock('../../src/api/personal_user');
 
-describe('PersonalCenterLayout', () => {
-  it('renders default content initially', () => {
-    render(<PersonalCenterLayout />);
-    expect(screen.getByTestId('personal-center-home')).toBeInTheDocument();
+describe('PersonalCenterLayout Passenger Integration', () => {
+  test('Clicking Add button switches to PassengerForm', async () => {
+    // Mock API responses
+    (passengerApi.getPassengers as any).mockResolvedValue([]);
+    (userApi.getUserInfo as any).mockResolvedValue({}); // Mock user info for PassengerList
     
-    // Check highlight via background color for Parent Item "个人中心"
-    // #e6f7ff is rgb(230, 247, 255)
-    const sidebarItem = screen.getByText('个人中心');
-    expect(sidebarItem.closest('div')).toHaveStyle({ backgroundColor: 'rgb(230, 247, 255)' });
-  });
+    render(<PersonalCenterLayout activeSection="乘车人" />);
 
-  it('switches content and highlight when implemented section is clicked', () => {
-    render(<PersonalCenterLayout />);
-    
-    // Click "火车票订单" (Subsection)
-    fireEvent.click(screen.getByText('火车票订单'));
-    
-    expect(screen.getByTestId('order-tabs')).toBeInTheDocument();
-    // Check highlight via color for Subsection
-    // #1890ff is rgb(24, 144, 255)
-    expect(screen.getByText('火车票订单').closest('div')).toHaveStyle({ color: 'rgb(24, 144, 255)' });
-  });
+    // 1. Verify List is shown initially
+    // "Add" button should be visible
+    const addBtn = await screen.findByText('+ 添加');
+    expect(addBtn).toBeInTheDocument();
 
-  it('keeps content but changes highlight when unimplemented section is clicked', () => {
-    render(<PersonalCenterLayout />);
+    // 2. Click Add -> Switch to Form
+    fireEvent.click(addBtn);
+
+    // Verify Form is shown
+    // PassengerForm renders <h2>添加乘车人</h2> when adding
+    const formTitle = await screen.findByText('添加乘车人');
+    expect(formTitle).toBeInTheDocument();
     
-    // First go to "火车票订单"
-    fireEvent.click(screen.getByText('火车票订单'));
-    expect(screen.getByTestId('order-tabs')).toBeInTheDocument();
+    // Verify List (Add button) is GONE
+    expect(screen.queryByText('+ 添加')).not.toBeInTheDocument();
     
-    // Then click "会员中心" (Unimplemented Parent Item)
-    fireEvent.click(screen.getByText('会员中心'));
+    // 3. Click Cancel -> Switch back to List
+    const cancelBtn = screen.getByText('取消');
+    fireEvent.click(cancelBtn);
     
-    // Highlight should change to "会员中心" (Parent Item -> Background Color)
-    expect(screen.getByText('会员中心').closest('div')).toHaveStyle({ backgroundColor: 'rgb(230, 247, 255)' });
-    
-    // "火车票订单" should no longer be highlighted (Subsection -> Color #666)
-    // #666 is rgb(102, 102, 102)
-    expect(screen.getByText('火车票订单').closest('div')).toHaveStyle({ color: 'rgb(102, 102, 102)' });
-    
-    // Content should stay "Order Tabs" (NOT Personal Center Home)
-    expect(screen.getByTestId('order-tabs')).toBeInTheDocument();
-    expect(screen.queryByTestId('personal-center-home')).not.toBeInTheDocument();
+    // Verify List is back
+    expect(await screen.findByText('+ 添加')).toBeInTheDocument();
   });
 });

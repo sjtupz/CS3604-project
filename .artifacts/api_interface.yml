@@ -516,3 +516,156 @@
   changeLog:
     - date: "2025-12-07"
       description: "新增以满足双程查询场景。"
+
+- type: Backend
+  id: API-GET-Passengers
+  route: GET /api/passengers
+  description: 获取当前用户的乘车人列表。
+  version: v1
+  auth: JWT
+  input:
+    type: QueryParams
+    params:
+      name: string (optional, fuzzy search)
+      page: number (optional, default: 1)
+      pageSize: number (optional, default: 20)
+  output:
+    success:
+      statusCode: 200
+      body:
+        code: 200
+        data:
+          items:
+            - id: "uuid"
+              name: "张三"
+              idType: "居民身份证"
+              idNumber: "110101199001011234"
+              phone: "13800138000"
+              type: "成人"
+              isSelf: true
+          pagination:
+            total: 1
+            currentPage: 1
+            perPage: 20
+            totalPages: 1
+    error:
+      - statusCode: 401
+        body: { code: 40100, message: "未授权" }
+      - statusCode: 500
+        body: { code: 50006, message: "获取乘车人列表失败" }
+  dependencies:
+    - DB-FindPassengersByUserId
+  acceptanceCriteria:
+    - 必须验证JWT Token。
+    - 返回当前用户关联的所有乘车人。
+    - 支持按姓名模糊搜索。
+    - "本人"（isSelf=true）应在列表中（或由前端排序）。
+  changeLog:
+    - date: "2025-12-16"
+      description: "新增，用于乘车人管理列表展示。"
+
+- type: Backend
+  id: API-POST-Passenger
+  route: POST /api/passengers
+  description: 添加新的乘车人。
+  version: v1
+  auth: JWT
+  input:
+    type: JSON
+    body:
+      name: string
+      idType: string
+      idNumber: string
+      phone: string
+      type: string (成人/儿童/学生/残疾军人)
+  output:
+    success:
+      statusCode: 201
+      body:
+        code: 201
+        message: "添加成功"
+        data:
+          id: "uuid"
+    error:
+      - statusCode: 400
+        body: { code: 40004, message: "参数不合法" }
+      - statusCode: 409
+        body: { code: 40901, message: "乘车人已存在" }
+      - statusCode: 500
+        body: { code: 50007, message: "添加乘车人失败" }
+  dependencies:
+    - DB-CreatePassenger
+  acceptanceCriteria:
+    - 验证必填字段。
+    - 校验身份证格式（如果类型是身份证）。
+    - 同一用户下不能重复添加相同证件号的乘车人。
+  changeLog:
+    - date: "2025-12-16"
+      description: "新增，用于添加乘车人。"
+
+- type: Backend
+  id: API-PUT-Passenger
+  route: PUT /api/passengers/{id}
+  description: 修改乘车人信息。
+  version: v1
+  auth: JWT
+  input:
+    type: PathAndJSON
+    params:
+      id: string (path)
+    body:
+      name: string
+      idType: string
+      idNumber: string
+      phone: string
+      type: string
+  output:
+    success:
+      statusCode: 200
+      body:
+        code: 200
+        message: "修改成功"
+    error:
+      - statusCode: 403
+        body: { code: 40301, message: "无权修改该乘车人" }
+      - statusCode: 404
+        body: { code: 40402, message: "乘车人不存在" }
+  dependencies:
+    - DB-UpdatePassenger
+  acceptanceCriteria:
+    - 只能修改属于当前用户的乘车人。
+    - "本人"信息的核心字段（证件号）可能不可修改（视业务规则，这里假设可以或受限）。
+  changeLog:
+    - date: "2025-12-16"
+      description: "新增，用于修改乘车人信息。"
+
+- type: Backend
+  id: API-DELETE-Passengers
+  route: DELETE /api/passengers
+  description: 批量删除乘车人。
+  version: v1
+  auth: JWT
+  input:
+    type: JSON
+    body:
+      ids: array<string>
+  output:
+    success:
+      statusCode: 200
+      body:
+        code: 200
+        message: "删除成功"
+    error:
+      - statusCode: 400
+        body: { code: 40005, message: "无法删除本人" }
+      - statusCode: 500
+        body: { code: 50008, message: "删除失败" }
+  dependencies:
+    - DB-DeletePassengers
+  acceptanceCriteria:
+    - 只能删除属于当前用户的乘车人。
+    - 如果列表中包含"本人"（isSelf=true），则操作失败或仅删除非本人（这里定义为操作失败）。
+  changeLog:
+    - date: "2025-12-16"
+      description: "新增，用于批量删除乘车人。"
+

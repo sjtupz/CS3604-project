@@ -8,7 +8,6 @@ import { DatePicker } from '../components/DatePicker'
 import { getTrains } from '../api/trains'
 import './TrainListPage.css'
 import { TopNavigationBar } from '../components/TopNavigationBar'
-import { Footer } from '../components/Footer'
 
 interface TrainListPageProps {
   isLoading?: boolean
@@ -303,9 +302,6 @@ export const TrainListPage: React.FC<TrainListPageProps> = ({ isLoading, error }
           )}
         </div>
       </section>
-
-      
-      <Footer />
     </div>
   )
 }

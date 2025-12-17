@@ -7,6 +7,8 @@ import UpcomingOrders from './UpcomingOrders';
 import HistoryOrders from './HistoryOrders';
 import UserInfoView from './UserInfoView';
 import PassengerList from './PassengerList';
+import PassengerForm from './PassengerForm';
+import { createPassenger, updatePassenger, getPassengerById } from '../api/passengers';
 
 interface UserInfo {
   username?: string;
@@ -64,6 +66,7 @@ interface PersonalCenterLayoutProps {
   onPrintInfo?: (orderId: string) => void;
   onNavigateToPhoneVerification?: () => void;
   onUpdateDiscountType?: (discountType: string, studentQualification?: { school?: string; studentId?: string }) => Promise<boolean>;
+  onRefreshPassengers?: () => void;
 }
 
 const PersonalCenterLayout: React.FC<PersonalCenterLayoutProps> = ({
@@ -78,11 +81,51 @@ const PersonalCenterLayout: React.FC<PersonalCenterLayoutProps> = ({
   onModify,
   onPrintInfo,
   onNavigateToPhoneVerification,
-  onUpdateDiscountType
+  onUpdateDiscountType,
+  onRefreshPassengers,
+  passengers,
+  orders
 }) => {
   const [internalSection, setInternalSection] = useState<string>('个人中心');
   const currentSection = activeSection !== undefined ? activeSection : internalSection;
   const [orderTab, setOrderTab] = useState<string>('未完成订单'); // For OrderTabs internal state
+  const [passengerView, setPassengerView] = useState<'list' | 'form'>('list');
+  const [editingPassenger, setEditingPassenger] = useState<Passenger | undefined>(undefined);
+
+  const handleAddPassenger = () => {
+    setEditingPassenger(undefined);
+    setPassengerView('form');
+  };
+
+  const handleEditPassenger = async (id: string) => {
+    try {
+      const p = await getPassengerById(id);
+      if (p) {
+        setEditingPassenger(p as unknown as Passenger);
+        setPassengerView('form');
+      }
+    } catch (error) {
+      console.error('Failed to load passenger:', error);
+    }
+  };
+
+  const handlePassengerSubmit = async (data: any) => {
+    try {
+      if (data.passengerId && !data.passengerId.startsWith('new_')) {
+        await updatePassenger(data.passengerId, data);
+      } else {
+        await createPassenger(data);
+      }
+      // Refresh passenger list after successful save
+      if (onRefreshPassengers) {
+        await onRefreshPassengers();
+      }
+      setPassengerView('list');
+    } catch (error) {
+      console.error('Failed to save passenger:', error);
+      alert('保存失败，请重试');
+    }
+  };
 
   const implementedSections = useMemo(() => ['个人中心', '火车票订单', '查看个人信息', '乘车人'], []);
   const [contentSection, setContentSection] = useState<string>(
@@ -168,7 +211,22 @@ const PersonalCenterLayout: React.FC<PersonalCenterLayoutProps> = ({
           />
         );
       case '乘车人':
-        return <PassengerList passengers={[]} />; // TODO: Pass actual passengers
+        if (passengerView === 'form') {
+          return (
+            <PassengerForm 
+              passenger={editingPassenger as any} 
+              onSubmit={handlePassengerSubmit}
+              onCancel={() => setPassengerView('list')}
+            />
+          );
+        }
+        return (
+          <PassengerList 
+            passengers={passengers} 
+            onAdd={handleAddPassenger} 
+            onEdit={handleEditPassenger} 
+          />
+        );
       default:
         return <PersonalCenterHome userInfo={currentUser} />;
     }

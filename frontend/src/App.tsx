@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Routes, Route, Outlet, useLocation } from 'react-router-dom';
 import { TopNavigationBar } from './components/TopNavigationBar';
+import { Footer } from './components/Footer';
 import { getUserInfo } from './api/personal_user';
 import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
@@ -66,6 +67,7 @@ const AppLayout = () => {
         <TopNavigationBar isLoggedIn={isLoggedIn} currentUser={currentUser} />
       )}
       <Outlet />
+      {location.pathname !== '/login' && <Footer />}
     </>
   );
 };
