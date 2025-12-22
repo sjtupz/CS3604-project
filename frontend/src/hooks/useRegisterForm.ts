@@ -208,20 +208,43 @@ export const useRegisterForm = (onRegisterSuccess: () => void) => {
       errors.agreeToTerms = ERROR_MESSAGES.AGREE_TO_TERMS;
     if (!state.phoneNumber)
       errors.phoneNumber = ERROR_MESSAGES.PHONE_NUMBER_REQUIRED;
-    const usernameError = validateUsername(state.username);
-    if (usernameError) errors.username = usernameError;
-    const passwordError = validatePassword(state.password);
-    if (passwordError) errors.password = passwordError;
-    const confirmError = validateConfirmPassword(state.password, state.confirmPassword);
-    if (confirmError) errors.confirmPassword = confirmError;
-    const fullNameError = validateFullName(state.fullName);
-    if (fullNameError) errors.fullName = fullNameError;
-    const idNumberError = validateIdentityNumber(state.identityNumber);
-    if (idNumberError) errors.identityNumber = idNumberError;
-    const passengerTypeError = validatePassengerType(state.passengerType);
-    if (passengerTypeError) errors.passengerType = passengerTypeError;
-    const identityTypeError = validateIdentityType(state.identityType);
-    if (identityTypeError) errors.identityType = identityTypeError;
+    const canValidateDetailFields = !!state.phoneNumber && !!state.agreeToTerms;
+    if (canValidateDetailFields) {
+      if (!state.username) {
+        errors.username = ERROR_MESSAGES.USERNAME_REQUIRED;
+      } else {
+        const usernameError = validateUsername(state.username);
+        if (usernameError) errors.username = usernameError;
+      }
+      if (!state.password) {
+        errors.password = ERROR_MESSAGES.PASSWORD_REQUIRED;
+      } else {
+        const passwordError = validatePassword(state.password);
+        if (passwordError) errors.password = passwordError;
+      }
+      if (!state.confirmPassword) {
+        errors.confirmPassword = ERROR_MESSAGES.CONFIRM_PASSWORD_REQUIRED;
+      } else {
+        const confirmError = validateConfirmPassword(state.password, state.confirmPassword);
+        if (confirmError) errors.confirmPassword = confirmError;
+      }
+      if (!state.fullName) {
+        errors.fullName = ERROR_MESSAGES.FULL_NAME_INVALID;
+      } else {
+        const fullNameError = validateFullName(state.fullName);
+        if (fullNameError) errors.fullName = fullNameError;
+      }
+      if (!state.identityNumber) {
+        errors.identityNumber = ERROR_MESSAGES.ID_NUMBER_REQUIRED;
+      } else {
+        const idNumberError = validateIdentityNumber(state.identityNumber);
+        if (idNumberError) errors.identityNumber = idNumberError;
+      }
+      const passengerTypeError = validatePassengerType(state.passengerType);
+      if (passengerTypeError) errors.passengerType = passengerTypeError;
+      const identityTypeError = validateIdentityType(state.identityType);
+      if (identityTypeError) errors.identityType = identityTypeError;
+    }
     return errors;
   };
 
@@ -250,21 +273,6 @@ export const useRegisterForm = (onRegisterSuccess: () => void) => {
         email: state.email,
         phoneNumber: state.phoneNumber,
       });
-      if (typeof window !== 'undefined') {
-        const payload = {
-          username: state.username,
-          password: state.password,
-          identityType: state.identityType,
-          fullName: state.fullName,
-          identityNumber: state.identityNumber,
-          passengerType: state.passengerType,
-          email: state.email,
-          phoneNumber: state.phoneNumber,
-        };
-        try {
-          window.localStorage.setItem('register_payload', JSON.stringify(payload));
-        } catch {}
-      }
       onRegisterSuccess();
     } catch (error) {
       const err = error as { response?: { status?: number; data?: { error?: string } } };

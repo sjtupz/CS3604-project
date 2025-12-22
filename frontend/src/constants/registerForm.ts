@@ -41,6 +41,10 @@ export const ERROR_MESSAGES = {
   ID_NUMBER_TAKEN: '证件号码已被注册',
   EMAIL_TAKEN: '电子邮箱已被注册',
   PHONE_NUMBER_TAKEN: '手机号码已被注册',
+  USERNAME_REQUIRED: '❌请输入用户名！',
+  PASSWORD_REQUIRED: '❌请输入登录密码！',
+  CONFIRM_PASSWORD_REQUIRED: '❌请输入确认密码！',
+  ID_NUMBER_REQUIRED: '❌请输入证件号码！',
 };
 
 export const USERNAME_RULE_HINT = '6-30位字母、数字或"_"，字母开头';

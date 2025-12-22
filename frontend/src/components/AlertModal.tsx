@@ -1,6 +1,7 @@
 import React from 'react';
 import { MODAL_MESSAGES } from '../constants/registerForm';
 import { normalizeCJKSpaces } from '../utils/text';
+import './AlertModal.css';
 
 type Props = {
   visible: boolean;
@@ -17,38 +18,21 @@ export const AlertModal: React.FC<Props> = ({ visible, message, onClose }) => {
     return message;
   })();
   const displayMessage = normalizeCJKSpaces(exactMessage);
-  const overlayStyle: React.CSSProperties = {
-    position: 'fixed',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(0,0,0,0.4)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 1000,
-  };
-  const contentStyle: React.CSSProperties = {
-    backgroundColor: '#fff',
-    borderRadius: 8,
-    padding: '24px',
-    maxWidth: '560px',
-    width: '90%',
-    boxShadow: '0 8px 24px rgba(0,0,0,0.2)',
-    lineHeight: 1.6,
-  };
-  const actionsStyle: React.CSSProperties = {
-    marginTop: '16px',
-    display: 'flex',
-    justifyContent: 'flex-end',
-  };
   return (
-    <div style={overlayStyle}>
-      <div role="dialog" aria-modal="true" style={contentStyle}>
-        <span>{displayMessage}</span>
-        <div style={actionsStyle}>
-          <button onClick={onClose}>关闭</button>
+    <div className="alert-overlay">
+      <div role="dialog" aria-modal="true" className="alert-modal">
+        <div className="alert-header">
+          <div className="alert-title">提示</div>
+          <button className="alert-close" aria-label="关闭" onClick={onClose}>×</button>
+        </div>
+        <div className="alert-body">
+          <div className="alert-icon" aria-hidden="true">
+            <span className="alert-exclam">!</span>
+          </div>
+          <div className="alert-message">{displayMessage}</div>
+        </div>
+        <div className="alert-actions">
+          <button className="alert-confirm" onClick={onClose}>确定</button>
         </div>
       </div>
     </div>

@@ -38,6 +38,22 @@ const CITY_MAP = {
   大连: { stations: ['大连', '大连北'] },
   佛山: { stations: ['佛山', '佛山西'] },
   深圳: { stations: ['深圳', '深圳北'] },
+  老挝: { stations: ['万象', '万荣'] },
+  安庆: { stations: ['安庆', '安化', '安康'] },
+  恩施: { stations: ['恩施'] },
+  峨眉山: { stations: ['峨眉山'] },
+  梅州: { stations: ['梅州'] },
+  绵阳: { stations: ['绵阳'] },
+  牡丹江: { stations: ['牡丹江'] },
+  攀枝花: { stations: ['攀枝花'] },
+  平顶山: { stations: ['平顶山'] },
+  盘锦: { stations: ['盘锦'] },
+  日照: { stations: ['日照'] },
+  汝州: { stations: ['汝州'] },
+  仁寿: { stations: ['仁寿'] },
+  扬州: { stations: ['扬州'] },
+  烟台: { stations: ['烟台'] },
+  宜宾: { stations: ['宜宾'] },
 };
 
 const TOP_CITIES = ['北京','上海','广州','深圳','杭州','南京','成都','重庆','武汉','西安'];
@@ -192,4 +208,3 @@ function generateMockData(days = 14) {
 }
 
 module.exports = { CITY_MAP, generateMockData };
-

@@ -55,10 +55,7 @@ const HOT_CITY_NAMES = [
 // Removed letter mapping as we are removing letter tabs
 // const TAB_MAPPING: Record<string, string[]> = { ... };
 
-const TABS = [
-  // Removed 'Province' and letter tabs as per UI requirements
-  { key: 'hot', label: '热门' }
-];
+// tabs removed; using filter bar per requirements
 
 export const StationDropdown: React.FC<StationDropdownProps> = ({
   value,
@@ -73,16 +70,17 @@ export const StationDropdown: React.FC<StationDropdownProps> = ({
 }) => {
   const [inputValue, setInputValue] = useState(value);
   const [isVisible, setIsVisible] = useState(import.meta.env.MODE === 'test');
-  const [activeTab, setActiveTab] = useState('hot');
-  const [tabClicked, setTabClicked] = useState(false);
+  // legacy tab state removed; using filterKey exclusively
   const [loading, setLoading] = useState(false);
   const [cities, setCities] = useState<CityItem[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [region, setRegion] = useState<'domestic' | 'international'>('domestic');
+  const [filterKey, setFilterKey] = useState<'hot' | 'ABCDE' | 'FGHIJ' | 'KLMNO' | 'PQRST' | 'UVWXYZ' | 'LAOS'>('hot');
   
   // Two-level selection state
   const [view, setView] = useState<'province' | 'city' | 'station'>('city');
   const [selectedCity, setSelectedCity] = useState<CityItem | null>(null);
-  const [activeProvince, setActiveProvince] = useState<ProvinceItem | null>(null);
+  // province view removed in optimized UI
 
   const containerRef = useRef<HTMLDivElement>(null);
   const selectingRef = useRef(false);
@@ -112,7 +110,6 @@ export const StationDropdown: React.FC<StationDropdownProps> = ({
         }));
         provs.forEach((p) => p.cities.forEach((c) => flatCities.push(c)));
         setCities(flatCities);
-        setProvinces(provs);
         setError(null);
       } catch (err) {
         setError("加载失败，请重试");
@@ -152,34 +149,25 @@ export const StationDropdown: React.FC<StationDropdownProps> = ({
   }, [id]);
 
   // Search Logic
-  const [provinces, setProvinces] = useState<ProvinceItem[]>([]);
   const [remoteResults, setRemoteResults] = useState<SearchResult[]>([]);
+  const [hasTyped, setHasTyped] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const run = async () => {
       const term = inputValue.trim();
-      if (!term) { setRemoteResults([]); return; }
+      if (!term) {
+        setRemoteResults([]);
+        return;
+      }
       try {
         const list = await getStations(term);
-        const lower = term.toLowerCase();
-        const shaped: SearchResult[] = list
-          .filter((s) => {
-            const name = (s.name || '').toLowerCase();
-            const py = (s.pinyin || '').toLowerCase();
-            return (
-              name.includes(lower) ||
-              py.includes(lower) ||
-              lower.includes(name) ||
-              (py && lower.includes(py))
-            );
-          })
-          .map((s) => ({
-            name: s.name,
-            pinyin: s.pinyin || '',
-            type: 'station',
-            cityName: s.city,
-            stationData: { name: s.name, code: s.code || '' }
-          }));
+        const shaped: SearchResult[] = list.map((s) => ({
+          name: s.name,
+          pinyin: s.pinyin || '',
+          type: 'station',
+          cityName: s.city,
+          stationData: { name: s.name, code: s.code || '' }
+        }));
         setRemoteResults(shaped);
       } catch {
         setRemoteResults([]);
@@ -189,10 +177,10 @@ export const StationDropdown: React.FC<StationDropdownProps> = ({
   }, [inputValue]);
   const searchResults = useMemo(() => {
     if (!inputValue) return [];
-    console.log('First item:', cities[0]);
     const term = (inputValue || '').toLowerCase();
     const abbr = (s: string) => s.replace(/(sh|ch|zh)/g, (m) => m[0]).split(/[^a-zA-Z]+/).map((w) => w[0] || '').join('').toLowerCase();
     const results: SearchResult[] = [];
+    // 本地城市/车站匹配
     cities.forEach((city) => {
       const hitCity = city.name.includes(term) || (city.pinyin || '').toLowerCase().includes(term) || (city.initial || '').toLowerCase().includes(term) || abbr(city.pinyin).includes(term);
       if (hitCity) {
@@ -204,7 +192,12 @@ export const StationDropdown: React.FC<StationDropdownProps> = ({
         }
       });
     });
-    const merged = [...results, ...remoteResults];
+    // 远端结果过滤策略：英文/拼音输入时严格过滤，中文输入时不过滤
+    const isLatin = /[a-z]/i.test(term);
+    const remote = isLatin
+      ? remoteResults.filter((r) => (r.name || '').toLowerCase().includes(term) || (r.pinyin || '').toLowerCase().includes(term))
+      : remoteResults;
+    const merged = [...results, ...remote];
     const unique = new Map<string, SearchResult>();
     merged.forEach((item) => { if (!unique.has(item.name)) unique.set(item.name, item); });
     return Array.from(unique.values()).slice(0, 20);
@@ -213,6 +206,7 @@ export const StationDropdown: React.FC<StationDropdownProps> = ({
   const handleInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
     setInputValue(val);
+    setHasTyped(true);
     onInputChange?.(val);
     setIsVisible(true);
     setView('city'); // Reset to city view when searching
@@ -222,8 +216,7 @@ export const StationDropdown: React.FC<StationDropdownProps> = ({
   const handleSelectCity = (city: CityItem) => {
     if (selectingRef.current) return;
     selectingRef.current = true;
-    console.log('Select city:', city.name);
-    console.log('Select city path:', { selectCityAsFinal, stations: city.stations.length, hasRail: !!city.hasRail, nearest: !!city.nearestStation });
+    
     
     if (!city.hasRail && city.nearestStation) {
       handleSelectStation({ name: city.nearestStation.name, code: city.nearestStation.code });
@@ -231,7 +224,7 @@ export const StationDropdown: React.FC<StationDropdownProps> = ({
     }
 
     // Task 2 Fix: If 'hot' tab is active, force selection and close modal
-    const isHotTab = activeTab === 'hot';
+    const isHotTab = filterKey === 'hot';
     
     if (city.stations.length === 1 || selectCityAsFinal || isHotTab) {
       setInputValue(city.name);
@@ -244,23 +237,17 @@ export const StationDropdown: React.FC<StationDropdownProps> = ({
       // Otherwise, if multiple stations and not hot tab/final mode, show stations
       setSelectedCity(city);
       setView('station');
-      console.log('Switch to station view for city:', city.name);
+      
     }
     setTimeout(() => { selectingRef.current = false }, 0);
   };
 
-  const handleSelectProvince = (prov: ProvinceItem) => {
-    if (selectingRef.current) return;
-    selectingRef.current = true;
-    setActiveProvince(prov);
-    setView('city');
-    setTimeout(() => { selectingRef.current = false }, 0);
-  };
+  // province selection removed in optimized UI
 
   const handleSelectStation = (station: StationItem) => {
     if (selectingRef.current) return;
     selectingRef.current = true;
-    console.log('Select station:', station.name, station.code);
+    
     setInputValue(station.name);
     onSelectStation(station.name);
     onInputChange?.(station.name);
@@ -279,12 +266,27 @@ export const StationDropdown: React.FC<StationDropdownProps> = ({
   };
 
   const getTabContent = () => {
-    // Only support 'hot' tab now
-    if (activeTab === 'hot') {
-      return HOT_CITY_NAMES.map(name => {
-        const city = cities.find(c => c.name === name);
-        return city || null;
-      }).filter(Boolean) as CityItem[];
+    if (region === 'international') {
+      if (filterKey === 'LAOS') {
+        const fromBackend = cities.filter((c) => c.name === '老挝' || (c.pinyin || '').toLowerCase() === 'laowo');
+        if (fromBackend.length > 0) return fromBackend;
+        return [{ name: '老挝', pinyin: 'laowo', initial: 'l', stations: [] } as CityItem];
+      }
+      return [];
+    }
+    if (filterKey === 'hot') {
+      return HOT_CITY_NAMES.map((name) => {
+        const city = cities.find((c) => c.name === name);
+        if (city) return city;
+        return {
+          name,
+          pinyin: '',
+          initial: '',
+          stations: [{ name, code: name.slice(0, 2).toUpperCase() }],
+          hasRail: true,
+          nearestStation: null,
+        } as CityItem;
+      });
     }
     return [];
   };
@@ -306,7 +308,8 @@ export const StationDropdown: React.FC<StationDropdownProps> = ({
       position: 'absolute',
       top: '100%',
       left: 0,
-      width: '400px',
+      width: '560px',
+      height: '265px',
       backgroundColor: '#fff',
       border: '1px solid #d9d9d9',
       boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
@@ -315,6 +318,7 @@ export const StationDropdown: React.FC<StationDropdownProps> = ({
       borderRadius: '4px',
       display: isVisible ? 'block' : 'none',
       fontSize: '12px',
+      overflow: 'hidden',
     },
     header: {
       padding: '8px 12px',
@@ -330,8 +334,8 @@ export const StationDropdown: React.FC<StationDropdownProps> = ({
       fontWeight: 'bold'
     },
     stationList: {
-      padding: '8px',
-      maxHeight: '300px',
+      padding: '6px',
+      maxHeight: '200px',
       overflowY: 'auto'
     },
     stationItem: {
@@ -339,18 +343,34 @@ export const StationDropdown: React.FC<StationDropdownProps> = ({
       cursor: 'pointer',
       display: 'flex',
       justifyContent: 'space-between',
-      borderBottom: '1px solid #f0f0f0'
+      borderBottom: '1px solid #f0f0f0',
+      color: '#666'
     },
     tabBar: { display: 'flex', borderBottom: '1px solid #e8e8e8', backgroundColor: '#f5f5f5' },
     tabItem: { padding: '8px 12px', cursor: 'pointer', borderRight: '1px solid #e8e8e8', color: '#666' },
     activeTab: { backgroundColor: '#fff', color: '#437ff7', fontWeight: 'bold', borderBottom: '2px solid #437ff7', marginBottom: '-1px' },
-    content: { padding: '12px', maxHeight: '300px', overflowY: 'auto' },
-    cityGrid: { display: 'flex', flexWrap: 'wrap', gap: '8px' },
-    cityItem: { padding: '4px 8px', cursor: 'pointer', borderRadius: '2px', minWidth: '60px', textAlign: 'center' as const },
+    content: { padding: '8px', flex: 1, overflowY: 'auto' },
+    cityGrid: { display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', columnGap: '16px', rowGap: '6px' },
+    cityItem: { padding: '3px 6px', cursor: 'pointer', borderRadius: '2px', minWidth: '52px', textAlign: 'center' as const, color: '#666' },
     cityItemHover: { color: '#437ff7', backgroundColor: '#f0f7ff' },
     searchList: { maxHeight: '300px', overflowY: 'auto' },
-    searchItem: { padding: '8px 12px', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #f0f0f0' }
+    searchItem: { padding: '8px 12px', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #f0f0f0' },
+    layout: { display: 'flex', height: '100%' },
+    sidebar: { width: '88px', borderRight: '1px solid #eee', padding: '8px 6px', backgroundColor: '#f7f7f7', height: '100%' },
+    sideBtn: { display: 'block', padding: '8px 10px', marginBottom: '8px', borderRadius: '4px', backgroundColor: '#f0f0f0', color: '#000', cursor: 'pointer', textAlign: 'center' as const },
+    sideBtnActive: { backgroundColor: '#437ff7', color: '#fff' },
+    rightPane: { flex: 1, display: 'flex', flexDirection: 'column', height: '100%' },
+    hintBar: { padding: '6px 10px', color: '#8c8c8c', borderBottom: '1px solid #eee' },
+    filterBar: { display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', alignItems: 'stretch', justifyItems: 'stretch', borderBottom: '1px solid #e8e8e8', backgroundColor: '#f5f5f5', height: '28px' },
+    filterBtn: { cursor: 'pointer', color: '#666', textAlign: 'center' as const, width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: 'inset -1px 0 0 #e8e8e8' },
+    filterBtnActive: { backgroundColor: 'transparent', color: '#437ff7', fontWeight: 'bold', boxShadow: 'inset 0 -2px 0 #437ff7, inset -1px 0 0 #e8e8e8' },
+    letterRow: { display: 'flex', alignItems: 'flex-start', gap: '8px', padding: '4px 0', borderBottom: '1px solid #f0f0f0' },
+    letterCell: { width: '16px', fontWeight: 700, color: '#333' },
+    letterList: { display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', columnGap: '16px', rowGap: '6px', flex: 1 },
   };
+
+  const isLetterRangeActive = region === 'domestic' && ['ABCDE','FGHIJ','KLMNO','PQRST','UVWXYZ'].includes(filterKey);
+  const popupStyle: React.CSSProperties = { ...styles.popup, height: isLetterRangeActive ? '318px' : '265px' };
 
   return (
     <div ref={containerRef} style={styles.container}>
@@ -368,6 +388,7 @@ export const StationDropdown: React.FC<StationDropdownProps> = ({
             onInputChange?.('')
           }
           setIsVisible(false)
+          setHasTyped(false)
         }}
         onFocus={() => {
           if (!disabled) {
@@ -382,12 +403,12 @@ export const StationDropdown: React.FC<StationDropdownProps> = ({
       />
       
       {isVisible && (
-        <div style={styles.popup}>
+        <div style={popupStyle}>
           {loading ? (
              <div style={{padding: '20px', textAlign: 'center', color: '#999'}}>
                加载中...
              </div>
-          ) : inputValue ? (
+          ) : hasTyped ? (
             searchResults.length > 0 ? (
               // Search Results Mode
               <div style={styles.searchList}>
@@ -399,7 +420,7 @@ export const StationDropdown: React.FC<StationDropdownProps> = ({
                     className="hover-bg-blue"
                   >
                     <span>
-                      <span style={{color: item.type === 'city' ? '#333' : '#666'}}>
+                      <span style={{color: '#666'}}>
                         {item.name}
                       </span>
                       {item.type === 'station' && <span style={{fontSize: '12px', color: '#999', marginLeft: '4px'}}>({item.cityName})</span>}
@@ -484,77 +505,137 @@ export const StationDropdown: React.FC<StationDropdownProps> = ({
                {error} <button onClick={() => window.location.reload()} style={{marginLeft: 8}}>重试</button>
              </div>
           ) : (
-            // City Tab Mode
-            <>
-              <div style={styles.tabBar}>
-                {TABS.map(tab => (
-                  <div
-                    key={tab.key}
-                    style={{...styles.tabItem, ...(activeTab === tab.key ? styles.activeTab : {})}}
-                    onMouseDown={() => {
-                      setActiveTab(tab.key);
-                      setTabClicked(true);
-                      if (tab.key === 'PROV') { setView('province'); } else { setView('city'); setActiveProvince(null); }
-                      try {
-                        const el = contentRef.current;
-                        if (el) {
-                          if ('scrollTo' in el && typeof el.scrollTo === 'function') {
-                            el.scrollTo({ top: 0 });
-                          } else {
-                            el.scrollTop = 0;
-                          }
-                        }
-                      } catch { /* noop */ }
-                    }}
-                    onClick={() => {
-                      setActiveTab(tab.key);
-                      setTabClicked(true);
-                      if (tab.key === 'PROV') { setView('province'); } else { setView('city'); setActiveProvince(null); }
-                      try {
-                        const el = contentRef.current;
-                        if (el) {
-                          if ('scrollTo' in el && typeof el.scrollTo === 'function') {
-                            el.scrollTo({ top: 0 });
-                          } else {
-                            el.scrollTop = 0;
-                          }
-                        }
-                      } catch { /* noop */ }
-                    }}
-                  >
-                    {tab.label}
-                  </div>
-                ))}
+            <div style={styles.layout}>
+              <div style={styles.sidebar}>
+                <div
+                  style={{ ...styles.sideBtn, ...(region === 'domestic' ? styles.sideBtnActive : {}) }}
+                  onMouseDown={() => { selectingRef.current = true; setRegion('domestic'); setFilterKey('hot'); setView('city'); setSelectedCity(null); setTimeout(() => { selectingRef.current = false }, 0); }}
+                  onClick={() => { selectingRef.current = true; setRegion('domestic'); setFilterKey('hot'); setView('city'); setSelectedCity(null); setTimeout(() => { selectingRef.current = false }, 0); }}
+                >
+                  国内站点
+                </div>
+                <div
+                  style={{ ...styles.sideBtn, ...(region === 'international' ? styles.sideBtnActive : {}) }}
+                  onMouseDown={() => { selectingRef.current = true; setRegion('international'); setFilterKey('LAOS'); setView('city'); setSelectedCity(null); setTimeout(() => { selectingRef.current = false }, 0); }}
+                  onClick={() => { selectingRef.current = true; setRegion('international'); setFilterKey('LAOS'); setView('city'); setSelectedCity(null); setTimeout(() => { selectingRef.current = false }, 0); }}
+                >
+                  国际站点
+                </div>
               </div>
-              <div style={styles.content} ref={contentRef} data-scroll-container>
-                {view === 'province' ? (
-                  <div style={styles.cityGrid}>
-                    {provinces.map((p) => (
-                      <div key={p.name} style={styles.cityItem} onMouseDown={() => handleSelectProvince(p)} onClick={() => handleSelectProvince(p)} className="hover-text-blue">{p.name}</div>
-                    ))}
-                  </div>
-                ) : (
-                  <div style={styles.cityGrid}>
-                    {(activeProvince ? activeProvince.cities : getTabContent()).map(city => (
-                      <div
-                        key={city.name}
-                        style={styles.cityItem}
-                        onMouseDown={() => handleSelectCity(city)}
-                        onClick={() => handleSelectCity(city)}
-                        className="hover-text-blue"
-                      >
-                        {city.name}
+              <div style={styles.rightPane}>
+                <div style={styles.hintBar}>拼音支持首字母输入</div>
+                <div style={styles.filterBar}>
+                  {region === 'domestic' ? (
+                    <>
+                      {(['热门', 'ABCDE', 'FGHIJ', 'KLMNO', 'PQRST', 'UVWXYZ'] as const).map((label) => (
+                        <div
+                          key={label}
+                          style={{
+                            ...styles.filterBtn,
+                            ...(filterKey === (label === '热门' ? 'hot' : label) ? styles.filterBtnActive : {}),
+                          }}
+                          onMouseDown={() => { selectingRef.current = true; setFilterKey(label === '热门' ? 'hot' : label); setTimeout(() => { selectingRef.current = false }, 0); }}
+                          onClick={() => { selectingRef.current = true; setFilterKey(label === '热门' ? 'hot' : label); setTimeout(() => { selectingRef.current = false }, 0); }}
+                        >
+                          {label}
+                        </div>
+                      ))}
+                    </>
+                  ) : (
+                    <div
+                      style={{
+                        ...styles.filterBtn,
+                        ...(filterKey === 'LAOS' ? styles.filterBtnActive : {}),
+                      }}
+                      onMouseDown={() => { selectingRef.current = true; setFilterKey('LAOS'); setTimeout(() => { selectingRef.current = false }, 0); }}
+                      onClick={() => { selectingRef.current = true; setFilterKey('LAOS'); setTimeout(() => { selectingRef.current = false }, 0); }}
+                    >
+                      老挝
+                    </div>
+                  )}
+                </div>
+                <div style={styles.content} ref={contentRef} data-scroll-container>
+                  {region === 'domestic' ? (
+                    filterKey === 'hot' ? (
+                      <div style={styles.cityGrid}>
+                        {getTabContent().map((city) => (
+                          <div
+                            key={city.name}
+                            style={styles.cityItem}
+                            onMouseDown={() => handleSelectCity(city)}
+                            onClick={() => handleSelectCity(city)}
+                            className="hover-text-blue"
+                          >
+                            {city.name}
+                          </div>
+                        ))}
                       </div>
-                    ))}
-                    {(activeProvince ? activeProvince.cities : getTabContent()).length === 0 && (
-                      <div style={{color: '#999', width: '100%', textAlign: 'center', padding: '20px'}}>
-                        暂无城市数据
+                    ) : (
+                      <div>
+                        {(() => {
+                          const ranges: Record<'ABCDE' | 'FGHIJ' | 'KLMNO' | 'PQRST' | 'UVWXYZ', string[]> = {
+                            ABCDE: ['A', 'B', 'C', 'D', 'E'],
+                            FGHIJ: ['F', 'G', 'H', 'J'], // 跳过 I
+                            KLMNO: ['K', 'L', 'M', 'N'],   // 跳过 O
+                            PQRST: ['P', 'Q', 'R', 'S', 'T'],
+                            UVWXYZ: ['W', 'X', 'Y', 'Z'],  // 跳过 U、V
+                          };
+                          const letters = ranges[filterKey as 'ABCDE' | 'FGHIJ' | 'KLMNO' | 'PQRST' | 'UVWXYZ'] || [];
+                          const allStations = cities.flatMap((c) => c.stations);
+                          return letters.map((L) => {
+                            const list = allStations
+                              .filter((s) => String(s.code || '').charAt(0).toUpperCase() === L)
+                              .sort((a, b) => (a.name.localeCompare(b.name)));
+                            return (
+                              <div key={L} style={styles.letterRow}>
+                                <div style={styles.letterCell}>{L}</div>
+                                <div style={styles.letterList}>
+                                  {list.map((station) => (
+                                    <div
+                                      key={`${L}-${station.name}`}
+                                      style={styles.cityItem}
+                                      onMouseDown={() => handleSelectStation(station)}
+                                      onClick={() => handleSelectStation(station)}
+                                      className="hover-text-blue"
+                                    >
+                                      {station.name}
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            );
+                          });
+                        })()}
                       </div>
-                    )}
-                  </div>
-                )}
+                    )
+                  ) : (
+                    <div>
+                      {getTabContent().length === 0 ? (
+                        <div style={{ color: '#999', width: '100%', textAlign: 'center', padding: '20px' }}>暂无数据</div>
+                      ) : (
+                    getTabContent().map((city) => (
+                          <div key={city.name}>
+                            <div style={styles.stationList}>
+                              {city.stations.map((st) => (
+                                <div
+                                  key={st.name}
+                                  style={styles.stationItem}
+                                  onMouseDown={() => handleSelectStation(st)}
+                                  onClick={() => handleSelectStation(st)}
+                                >
+                                  <span style={{ color: '#666' }}>{st.name}</span>
+                                  <span style={{ backgroundColor: '#e6f7ff', color: '#1890ff', padding: '2px 6px', borderRadius: '4px', fontSize: '12px' }}>{st.code}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
-            </>
+            </div>
           )}
         </div>
       )}

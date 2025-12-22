@@ -67,7 +67,7 @@ const AppLayout = () => {
         <TopNavigationBar isLoggedIn={isLoggedIn} currentUser={currentUser} />
       )}
       <Outlet />
-      {location.pathname !== '/login' && <Footer />}
+      <Footer />
     </>
   );
 };

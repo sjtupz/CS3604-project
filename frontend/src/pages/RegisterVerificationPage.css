@@ -1,0 +1,103 @@
+.verify-form {
+  width: 960px;
+  margin: 32px auto;
+  padding: 0 24px 20px;
+  border: 1px solid #2588C9;
+  border-radius: 6px;
+  background-color: #ffffff;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  box-sizing: border-box;
+  overflow: hidden;
+  display: grid;
+  grid-auto-rows: minmax(40px, auto);
+  row-gap: 10px;
+  font-family: "PingFang SC", "Microsoft YaHei", "Segoe UI", Arial, sans-serif;
+}
+
+.form-header {
+  height: 36px;
+  background: #2588C9;
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  margin: 0 -24px 12px;
+  border-top-left-radius: 6px;
+  border-top-right-radius: 6px;
+}
+
+.form-header-title {
+  color: #ffffff;
+  font-family: SimSun, '宋体', 'Songti SC', serif;
+  font-size: 14px;
+  margin-left: 6px;
+}
+
+.verify-row {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  column-gap: 12px;
+  align-items: center;
+ }
+
+.verify-row label {
+  font-size: 12px;
+  color: #333333;
+  line-height: 1;
+  text-align: right;
+ }
+
+.verify-input {
+  grid-column: 2;
+  justify-self: center;
+  height: 24px;
+  padding: 4px 8px;
+  border: 1px solid #c9c9c9;
+  border-radius: 0;
+  background-color: #fff;
+  font-size: 12px;
+  color: #333;
+ }
+
+ .verify-input::placeholder { color: #9aa0a6; }
+ .verify-input:hover { border-color: #bfbfbf; }
+ .verify-input:focus { outline: none; border-color: #ff8200; box-shadow: 0 0 0 2px rgba(255,130,0,0.15); }
+
+ .verify-actions { display: flex; align-items: center; gap: 12px; }
+ .verify-hint { font-size: 12px; color: #666; }
+ .verify-msg { font-size: 12px; color: #2aa44f; }
+ .verify-err { font-size: 12px; color: #e53935; }
+
+ .verify-resend {
+  padding: 8px 12px;
+  border: 1px solid #c9c9c9;
+  border-radius: 0;
+  background: #f6f6f6;
+  color: #333;
+  justify-self: start;
+ }
+ .verify-resend:disabled { background: #eee; color: #999; cursor: not-allowed; }
+
+.verify-submit {
+  justify-self: center;
+  width: 120px;
+  height: 28px;
+  line-height: 8px;
+  padding: 0;
+  box-sizing: border-box;
+  background-color: #ff7f27;
+  color: #ffffff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+ }
+ .verify-submit:hover { background-color: #ff8f40; }
+ .verify-submit:active { background-color: #e86f1f; }
+
+  .success-inline { width: 900px; margin: 32px auto; font-size: 18px; color: #ff8c00; text-align: center; }
+
+  .verify-info {
+    grid-column: 2;
+    font-size: 12px;
+    margin-top: -4px;
+  }

@@ -2,20 +2,23 @@ const request = require('supertest');
 const app = require('../../src/app');
 
 describe('API-GET-Stations-Groups', () => {
-  test('Given 请求站点分组 When 调用API Then 返回200与热门/字母分组', async () => {
-    const response = await request(app)
-      .get('/api/stations/groups')
-      .set('Authorization', 'Bearer test-token');
-    expect(response.status).toBe(200);
-    expect(response.body).toHaveProperty('code', 200);
-    expect(response.body.data).toHaveProperty('hot');
-    expect(response.body.data).toHaveProperty('byLetter');
-  });
-
-  test('Given 缓存验证 When 多次请求 Then 响应头包含缓存标记', async () => {
-    // 这是一个示意性测试，实际需根据实现检查ETag或自定义头
+  test('Given 请求站点分组 When 调用API Then 返回200且groups包含热门与字母分组', async () => {
     const response = await request(app)
       .get('/api/stations/groups');
     expect(response.status).toBe(200);
+    expect(Array.isArray(response.body.groups)).toBe(true);
+    const names = (response.body.groups || []).map((g) => g.name);
+    expect(names.includes('热门')).toBe(true);
+    expect(names.some((n) => ['ABCDE', 'FGHIJ', 'KLMNO', 'PQRST', 'UVWXYZ'].includes(n))).toBe(true);
+  });
+
+  test('Given 返回分组数据 When 检查结构 Then 每个分组含stations数组字段', async () => {
+    const response = await request(app)
+      .get('/api/stations/groups');
+    expect(response.status).toBe(200);
+    const groups = response.body.groups || [];
+    groups.forEach((g) => {
+      expect(Array.isArray(g.stations)).toBe(true);
+    });
   });
 });

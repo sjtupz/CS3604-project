@@ -44,6 +44,9 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onRegisterSuccess })
 
   return (
     <form onSubmit={handleSubmitWithModal} className="register-form" aria-label="注册表单">
+      <div className="form-header">
+        <span className="form-header-title">账户信息</span>
+      </div>
       {submitted && inRouter && (
         <Navigate
           to={`/register/verify?phone=${encodeURIComponent(state.phoneNumber)}&username=${encodeURIComponent(state.username)}&password=${encodeURIComponent(state.password)}&identityType=${encodeURIComponent(state.identityType)}&fullName=${encodeURIComponent(state.fullName)}&identityNumber=${encodeURIComponent(state.identityNumber)}&passengerType=${encodeURIComponent(state.passengerType)}&email=${encodeURIComponent(state.email || '')}`}

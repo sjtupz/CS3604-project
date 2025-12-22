@@ -37,6 +37,24 @@ function toPinyin(name) {
     青岛: 'qingdao', 青岛北: 'qingdaobei',
     大连: 'dalian', 大连北: 'dalianbei',
     佛山: 'foshan', 佛山西: 'foshanxi',
+    老挝: 'laowo',
+    万象: 'wanxiang',
+    万荣: 'wanrong',
+    安庆: 'anqing', 安化: 'anhua', 安康: 'ankang',
+    恩施: 'enshi',
+    峨眉山: 'emeishan',
+    梅州: 'meizhou',
+    绵阳: 'mianyang',
+    牡丹江: 'mudanjiang',
+    攀枝花: 'panzhihua',
+    平顶山: 'pingdingshan',
+    盘锦: 'panjin',
+    日照: 'rizhao',
+    汝州: 'ruzhou',
+    仁寿: 'renshou',
+    扬州: 'yangzhou',
+    烟台: 'yantai',
+    宜宾: 'yibin',
   };
   return dict[name] || '';
 }
@@ -51,7 +69,7 @@ function buildStations() {
   Object.entries(CITY_MAP).forEach(([city, info]) => {
     info.stations.forEach((name) => {
       const pinyin = toPinyin(name);
-      out.push({ name, code: codeFor(pinyin), pinyin });
+      out.push({ name, code: codeFor(pinyin), pinyin, city });
     });
   });
   return out;
@@ -84,7 +102,10 @@ router.get('/stations/cities', (req, res) => {
         province: '全国',
         cities: Object.entries(CITY_MAP).map(([city, info]) => ({
           city,
-          stations: info.stations.map((name) => ({ name })),
+          pinyin: toPinyin(city),
+          hasRail: true,
+          nearestStation: null,
+          stations: info.stations.map((name) => ({ name, code: codeFor(toPinyin(name)) })),
         })),
       },
     ];
@@ -98,16 +119,26 @@ router.get('/stations/cities', (req, res) => {
 router.get('/stations/groups', (req, res) => {
   try {
     const all = buildStations();
-    const byLetter = {};
-    all.forEach((s) => {
-      const letter = (s.pinyin[0] || s.name[0] || '#').toUpperCase();
-      if (!byLetter[letter]) byLetter[letter] = [];
-      byLetter[letter].push(s);
-    });
-    const hot = all.filter((s) => ['北京', '上海', '广州', '深圳'].includes(s.name)).slice(0, 10);
-    res.status(200).json({ code: 200, data: { hot, byLetter } });
+    const toName = (list) => Array.from(new Set(list.map((s) => s.name)));
+    const hot = toName(
+      all.filter((s) => ['北京', '上海', '广州', '深圳', '南京', '武汉'].some((n) => s.name.includes(n)))
+    ).slice(0, 12);
+
+    const first = (s) => String(s.pinyin || s.name || '').charAt(0).toUpperCase();
+    const bucket = (letters) => toName(all.filter((s) => letters.includes(first(s))));
+
+    const groups = [
+      { name: '热门', stations: hot },
+      { name: 'ABCDE', stations: bucket(['A', 'B', 'C', 'D', 'E']) },
+      { name: 'FGHIJ', stations: bucket(['F', 'G', 'H', 'I', 'J']) },
+      { name: 'KLMNO', stations: bucket(['K', 'L', 'M', 'N', 'O']) },
+      { name: 'PQRST', stations: bucket(['P', 'Q', 'R', 'S', 'T']) },
+      { name: 'UVWXYZ', stations: bucket(['U', 'V', 'W', 'X', 'Y', 'Z']) },
+    ];
+
+    res.status(200).json({ groups });
   } catch (err) {
-    res.status(500).json({ code: 500, message: 'Internal Server Error' });
+    res.status(500).json({ error: 'Internal Server Error' });
   }
 });
 

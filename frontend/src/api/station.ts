@@ -1,7 +1,7 @@
 import apiClient from './client';
 import { Station } from '../types/station';
 
-const CACHE_KEY = 'stations_cache_v1';
+const CACHE_KEY = 'stations_cache_v2';
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24小时缓存
 
 export interface CityGroup {
@@ -46,7 +46,7 @@ export const getAllCityStations = async (): Promise<CityGroup[]> => {
       },
     ]
   }
-  const CACHE_KEY_CITIES = 'stations_cities_cache_v1';
+  const CACHE_KEY_CITIES = 'stations_cities_cache_v2';
   try {
     const raw = sessionStorage.getItem(CACHE_KEY_CITIES);
     if (raw) {

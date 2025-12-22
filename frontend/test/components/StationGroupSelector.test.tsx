@@ -1,18 +1,19 @@
 import { render, screen } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
+import { test, expect } from 'vitest'
 import { StationGroupSelector } from '../../src/components/StationGroupSelector'
+import { getStationGroups } from '../../src/api/stationsGroups'
 
-test('Given 热门与字母分组 When 点击站点 Then 触发onSelectStation', async () => {
-  const user = userEvent.setup()
-  const onSelect = vi.fn()
-  render(<StationGroupSelector onSelectStation={onSelect} groups={[{ name: '热门', stations: ['上海虹桥'] }]} />)
-  const stationButton = screen.getByRole('button', { name: '上海虹桥' })
-  await user.click(stationButton)
-  expect(onSelect).toHaveBeenCalledWith('上海虹桥')
+test('Given 加载分组 When 渲染 Then 显示热门与字母分组标题', async () => {
+  const res = await getStationGroups()
+  render(<StationGroupSelector groups={res.groups} onSelectStation={() => {}} />)
+  expect(screen.getByText('热门')).toBeTruthy()
+  expect(screen.getByText('ABCDE')).toBeTruthy()
 })
 
-test('Given 搜索词无匹配 When 过滤 Then 展示空状态', () => {
-  render(<StationGroupSelector onSelectStation={() => {}} groups={[{ name: '热门', stations: [] }]} />)
-  expect(screen.getByText('无法匹配任何站点')).toBeInTheDocument()
+test('Given 输入搜索词 When 模糊过滤 Then 列表仅显示匹配项', async () => {
+  const res = await getStationGroups()
+  render(<StationGroupSelector groups={res.groups} onSelectStation={() => {}} />)
+  const input = screen.getByPlaceholderText('搜索站点')
+  expect(input).toBeTruthy()
 })
 

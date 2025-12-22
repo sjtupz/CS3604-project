@@ -1,0 +1,87 @@
+ .alert-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0,0,0,0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+ }
+
+ .alert-modal {
+  width: 560px;
+  max-width: 90%;
+  background: #ffffff;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+  border-radius: 4px;
+  overflow: hidden;
+  font-family: "PingFang SC", "Microsoft YaHei", Arial;
+ }
+
+.alert-header {
+  height: 36px;
+  background: #2588C9;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+}
+
+ .alert-title { font-size: 16px; }
+
+ .alert-close {
+  border: none;
+  background: transparent;
+  color: #ffffff;
+  font-size: 20px;
+  cursor: pointer;
+  line-height: 1;
+ }
+
+ .alert-body {
+  padding: 32px 24px 0 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+ }
+
+ .alert-icon {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: #ff8c00;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  font-size: 40px;
+  box-shadow: 0 10px 12px rgba(0,0,0,0.08);
+ }
+
+ .alert-exclam { transform: translateY(-2px); }
+
+ .alert-message {
+  margin-top: 20px;
+  font-size: 16px;
+  color: #333333;
+ }
+
+ .alert-actions {
+  padding: 24px;
+  display: flex;
+  justify-content: center;
+ }
+
+ .alert-confirm {
+  padding: 10px 22px;
+  background-color: #ff8c00;
+  color: #ffffff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+ }
+ .alert-confirm:hover { background-color: #ff9a1f; }
+ .alert-confirm:active { background-color: #e57f00; }
