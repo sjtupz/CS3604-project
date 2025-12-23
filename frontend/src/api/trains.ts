@@ -218,14 +218,20 @@ export async function getTrains(params: GetTrainsParams): Promise<TrainListRespo
   console.log('API Response Data:', response.data);
   // Support standard envelope { code, data: { items: [] } } as well as legacy formats
   let list: ApiTrainItem[] = [];
+
+  const hasOutboundTickets = (v: unknown): v is { outbound_tickets: ApiTrainItem[] } => {
+    if (!v || typeof v !== 'object') return false
+    const ot = (v as Record<string, unknown>).outbound_tickets
+    return Array.isArray(ot)
+  }
   
   if (response.data && response.data.data && Array.isArray(response.data.data.items)) {
      list = response.data.data.items as ApiTrainItem[];
   } else if (Array.isArray(response.data)) {
      list = response.data as ApiTrainItem[];
-  } else if (response.data && Array.isArray((response.data as any).outbound_tickets)) {
+  } else if (hasOutboundTickets(response.data)) {
      // For now, in search list, we just show outbound tickets
-     list = (response.data as any).outbound_tickets as ApiTrainItem[];
+     list = response.data.outbound_tickets;
   }
   
   console.log("Total received tickets:", list.length);

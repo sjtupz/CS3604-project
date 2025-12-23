@@ -25,7 +25,7 @@ const mockInitialPassengers = [
 
 describe('Passenger Save Flow Integration Test', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    vi.resetAllMocks();
   });
 
   test('Complete passenger save flow: add new passenger and display in list', async () => {
@@ -109,14 +109,13 @@ describe('Passenger Save Flow Integration Test', () => {
     // 8. Verify new passenger appears in the list
     await waitFor(() => {
       expect(screen.getByText('张三')).toBeInTheDocument();
-      expect(screen.getByText('3201************5678')).toBeInTheDocument(); // Masked ID format
+      expect(screen.getByText('3201**********5678')).toBeInTheDocument(); // Masked ID format
     });
 
     // 9. Verify the passenger list now has 2 passengers
-    const passengerRows = screen.getAllByRole('row').filter(row => 
-      row.textContent?.includes('本人') || row.textContent?.includes('张三')
-    );
-    expect(passengerRows.length).toBe(2);
+    expect(screen.getByTestId('row-1-checkbox')).toBeInTheDocument();
+    expect(screen.getByTestId('row-2-checkbox')).toBeInTheDocument();
+    expect(screen.queryByTestId('row-3-checkbox')).toBeNull();
   });
 
   test('Passenger list displays all passengers in rows', async () => {
@@ -155,9 +154,9 @@ describe('Passenger Save Flow Integration Test', () => {
     });
 
     // Verify each passenger has their details displayed (accounting for masking)
-    expect(screen.getByText('1101************1234')).toBeInTheDocument(); // 本人证件号 (masked)
-    expect(screen.getByText('3301************3333')).toBeInTheDocument(); // 李四证件号 (masked)
-    expect(screen.getByText('3401************4444')).toBeInTheDocument(); // 王五证件号 (masked)
+    expect(screen.getByText('1101**********1234')).toBeInTheDocument(); // 本人证件号 (masked)
+    expect(screen.getByText('3301**********3333')).toBeInTheDocument(); // 李四证件号 (masked)
+    expect(screen.getByText('3401**********4444')).toBeInTheDocument(); // 王五证件号 (masked)
   });
 
   test('Edit passenger and save changes', async () => {

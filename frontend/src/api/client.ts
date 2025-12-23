@@ -34,11 +34,12 @@ apiClient.interceptors.response.use(
     const cfg: (AxiosRequestConfig & { __retryCount?: number }) = error.config || {};
     const shouldRetry = (cfg.__retryCount || 0) < 3 && typeof cfg?.url === 'string' && cfg.url.startsWith('/api');
     if (shouldRetry && isNetworkError) {
-      cfg.__retryCount = (cfg.__retryCount || 0) + 1;
+      const retryCount = (cfg.__retryCount || 0) + 1;
+      cfg.__retryCount = retryCount;
       const fallbackBase = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
       const newCfg: AxiosRequestConfig & { __retryCount?: number } = { ...cfg, baseURL: fallbackBase };
       console.warn(`Retrying request (${cfg.__retryCount}/3)...`);
-      return new Promise(resolve => setTimeout(() => resolve(axios.request(newCfg)), 1000 * cfg.__retryCount));
+      return new Promise(resolve => setTimeout(() => resolve(axios.request(newCfg)), 1000 * retryCount));
     }
     return Promise.reject(error);
   }

@@ -18,10 +18,17 @@ function getDB() {
   if (!db) {
     const env = process.env.NODE_ENV || 'development';
     if (BetterSqlite3 && env !== 'test') {
-      db = new BetterSqlite3(getDbPath());
-      db.pragma('journal_mode = WAL');
-      db.pragma('synchronous = NORMAL');
-    } else {
+      try {
+        db = new BetterSqlite3(getDbPath());
+        db.pragma('journal_mode = WAL');
+        db.pragma('synchronous = NORMAL');
+      } catch (err) {
+        console.warn('Failed to initialize BetterSqlite3, falling back to stub:', err.message);
+        db = null;
+      }
+    }
+    
+    if (!db) {
       // Lightweight stub for test/dev environments when native bindings are unavailable
       const stubRow = { c: 0 };
       db = {

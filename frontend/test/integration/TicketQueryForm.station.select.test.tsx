@@ -1,9 +1,14 @@
 import { render, screen, fireEvent } from '@testing-library/react'
 import { test, expect } from 'vitest'
+import { MemoryRouter } from 'react-router-dom'
 import { TicketQueryForm } from '../../src/components/TicketQueryForm'
 
 test('Given 站点下拉 When 点击城市 Then 输入框填入城市名并关闭弹窗', async () => {
-  render(<TicketQueryForm />)
+  render(
+    <MemoryRouter>
+      <TicketQueryForm />
+    </MemoryRouter>
+  )
   const fromInput = screen.getByLabelText('出发地')
 
   // 聚焦打开下拉（触发城市列表显示）
@@ -18,7 +23,11 @@ test('Given 站点下拉 When 点击城市 Then 输入框填入城市名并关�
 })
 
 test('Given 两个输入框 When 在到达地下拉选择站点 Then 到达地填入且出发地保持不变并关闭弹窗', async () => {
-  render(<TicketQueryForm />)
+  render(
+    <MemoryRouter>
+      <TicketQueryForm />
+    </MemoryRouter>
+  )
   const fromInput = screen.getByLabelText('出发地') as HTMLInputElement
   const toInput = screen.getByLabelText('到达地') as HTMLInputElement
 
@@ -40,7 +49,11 @@ test('Given 两个输入框 When 在到达地下拉选择站点 Then 到达地�
 })
 
 test('Given 点击输入框 When 打开下拉 Then 显示热门与字母分组ABCDE', async () => {
-  render(<TicketQueryForm />)
+  render(
+    <MemoryRouter>
+      <TicketQueryForm />
+    </MemoryRouter>
+  )
   const fromInput = screen.getByLabelText('出发地')
   fireEvent.focus(fromInput)
   expect(await screen.findByText('热门')).toBeTruthy()

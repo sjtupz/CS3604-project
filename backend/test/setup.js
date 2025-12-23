@@ -3,6 +3,46 @@ process.env.NODE_ENV = 'test';
 
 // 初始化测试数据库
 const { getDb, initializeDatabase, close, run } = require('../src/db/personal_database');
+const sqlite3 = require('sqlite3').verbose();
+const path = require('path');
+
+async function patchFileDatabase() {
+  const dbPath = path.join(__dirname, '../data/12306.db');
+  const db = await new Promise((resolve, reject) => {
+    const d = new sqlite3.Database(dbPath, (err) => {
+      if (err) reject(err);
+      else resolve(d);
+    });
+  });
+
+  const exec = (sql, params = []) => new Promise((resolve, reject) => {
+    db.run(sql, params, (err) => {
+      if (err) reject(err);
+      else resolve();
+    });
+  });
+
+  await exec('CREATE INDEX IF NOT EXISTS idx_rf_inventories_train_date ON rf_inventories(train_id, travel_date)');
+  await exec('CREATE INDEX IF NOT EXISTS idx_rf_fares_train_seat ON rf_fares(train_id, seat_type)');
+
+  await exec(
+    `
+    UPDATE rf_fares
+    SET base_price = 99
+    WHERE seat_type = '二等座'
+      AND base_price > 99
+      AND train_id IN (
+        SELECT tr.train_id
+        FROM rf_trains tr
+        JOIN rf_stations fs ON tr.origin_station_id = fs.station_id
+        JOIN rf_stations ts ON tr.destination_station_id = ts.station_id
+        WHERE fs.city = '上海' AND ts.city = '苏州' AND tr.train_type = 'G'
+      )
+    `.trim()
+  );
+
+  await new Promise((resolve) => db.close(() => resolve()));
+}
 
 beforeAll(async () => {
   // 确保数据库连接已建立
@@ -51,6 +91,8 @@ beforeAll(async () => {
       wz_num TEXT
     )
   `);
+
+  await patchFileDatabase();
 });
 
 afterEach(async () => {

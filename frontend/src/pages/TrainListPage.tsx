@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useLocation } from 'react-router-dom'
 import { TrainList } from '../components/TrainList'
 import type { TrainListItem } from '../api/trains'
@@ -14,6 +14,9 @@ interface TrainListPageProps {
   error?: string
 }
 
+const ALL_TRAIN_TYPES = ['GC', 'D', 'Z', 'KT', 'Other'] as const
+const ALL_SEAT_TYPES = ['商务座', '一等座', '二等座', '软卧', '硬卧', '硬座', '无座', '其他'] as const
+
 export const TrainListPage: React.FC<TrainListPageProps> = ({ isLoading, error }) => {
   const location = useLocation()
   const todayStr = useMemo(() => {
@@ -28,9 +31,7 @@ export const TrainListPage: React.FC<TrainListPageProps> = ({ isLoading, error }
   const [date, setDate] = useState(todayStr)
   const [returnDate, setReturnDate] = useState(todayStr)
   const [timeRange, setTimeRange] = useState('')
-  const ALL_TRAIN_TYPES = ['GC', 'D', 'Z', 'KT', 'Other']
-  const ALL_SEAT_TYPES = ['商务座', '一等座', '二等座', '软卧', '硬卧', '硬座', '无座', '其他']
-  const [trainTypes, setTrainTypes] = useState<string[]>(ALL_TRAIN_TYPES)
+  const [trainTypes, setTrainTypes] = useState<string[]>([...ALL_TRAIN_TYPES])
   const [isRoundTrip, setIsRoundTrip] = useState(false)
   const [passengerCategory, setPassengerCategory] = useState<'normal' | 'student'>('normal')
   const [currentPage, setCurrentPage] = useState(1)
@@ -39,10 +40,54 @@ export const TrainListPage: React.FC<TrainListPageProps> = ({ isLoading, error }
   const [sortOrder, setSortOrder] = useState<'asc'|'desc'>('asc')
   const [loading, setLoading] = useState(false)
   const [errMsg, setErrMsg] = useState<string | undefined>(undefined)
-  const [seatTypes, setSeatTypes] = useState<string[]>(ALL_SEAT_TYPES)
+  const [seatTypes, setSeatTypes] = useState<string[]>([...ALL_SEAT_TYPES])
+  const [selectedFromStations, setSelectedFromStations] = useState<string[] | undefined>(undefined)
+  const [selectedToStations, setSelectedToStations] = useState<string[] | undefined>(undefined)
+
   const [isSwapping, setIsSwapping] = useState(false)
   const [hasInteracted, setHasInteracted] = useState(false)
   const [lastTrigger, setLastTrigger] = useState<'filter' | 'button' | undefined>(undefined)
+
+  const queryDisabled = !from || !to || !date
+
+  const [depStart, depEnd] = (timeRange || '').split('-')
+
+  const handleQuery = useCallback(async (opts?: { force?: boolean; source?: 'button' | 'filter'; params?: Partial<import('../api/trains').GetTrainsParams> }) => {
+    if (!opts?.force && queryDisabled) return
+    setLastTrigger(opts?.source ?? 'button')
+    setLoading(true)
+    setErrMsg(undefined)
+    try {
+      const qFrom = opts?.params?.from ?? from
+      const qTo = opts?.params?.to ?? to
+      const qDate = opts?.params?.date ?? date
+
+      if (qFrom === qTo) {
+        setErrMsg('出发地与目的地不能相同')
+        return
+      }
+
+      const res = await getTrains({
+        from: qFrom,
+        to: qTo,
+        date: qDate,
+        seatTypes: opts?.params?.seatTypes ?? seatTypes.join(','),
+        passengerCategory: opts?.params?.passengerCategory ?? passengerCategory,
+        departureTimeStart: opts?.params?.departureTimeStart ?? depStart,
+        departureTimeEnd: opts?.params?.departureTimeEnd ?? depEnd,
+        sortBy: opts?.params?.sortBy ?? sortBy,
+        sortOrder: opts?.params?.sortOrder ?? sortOrder,
+        page: currentPage,
+        pageSize: 100,
+      })
+      console.log('TrainListPage getTrains response:', res)
+      setItems(res.data.items || [])
+    } catch (e) {
+      console.error('TrainListPage getTrains error:', e)
+    } finally {
+      setLoading(false)
+    }
+  }, [currentPage, date, depEnd, depStart, from, passengerCategory, queryDisabled, seatTypes, sortBy, sortOrder, to])
 
   useEffect(() => {
     // Initialize from URL params if present
@@ -73,15 +118,17 @@ export const TrainListPage: React.FC<TrainListPageProps> = ({ isLoading, error }
          }
        });
     }
-  }, [location.search]);
+  }, [handleQuery, location.search]);
+
+  useEffect(() => {
+    setSelectedFromStations(undefined)
+  }, [from])
+
+  useEffect(() => {
+    setSelectedToStations(undefined)
+  }, [to])
 
   const filteredTrainList = useMemo(() => {
-    // [DEBUG] Log raw items before filtering
-    console.log('[DEBUG] Filtering items:', items.length);
-
-    // [DEBUG] TEMPORARY: Return all items to check if data exists
-    // return items; 
-
     return items.filter(item => {
       // 1. Train Type Filter
       const trainCode = item.trainNumber || ''
@@ -104,31 +151,38 @@ export const TrainListPage: React.FC<TrainListPageProps> = ({ isLoading, error }
       }
 
       // 2. Seat Type Filter
-      // If all seat types are selected, return true (show all)
-      if (seatTypes.length === ALL_SEAT_TYPES.length) return true
+      // If all seat types are selected, skip seat filter check
+      if (seatTypes.length !== ALL_SEAT_TYPES.length) {
+        const hasSelectedSeat = seatTypes.some(type => {
+          if (type === '商务座') {
+            // Check Business OR Special
+            const swz = item.seatAvailability?.['商务座']
+            const tz = item.seatAvailability?.['特等座']
+            const hasSwz = swz && swz.hasSeatType !== false && swz.remaining !== null && (swz.remaining > 0 || swz.backupOnly)
+            const hasTz = tz && tz.hasSeatType !== false && tz.remaining !== null && (tz.remaining > 0 || tz.backupOnly)
+            return hasSwz || hasTz
+          }
+          
+          const info = item.seatAvailability?.[type]
+          // Check if valid AND not displayed as "-"
+          return info && info.hasSeatType !== false && info.remaining !== null && (info.remaining > 0 || info.backupOnly)
+        })
 
-      const hasSelectedSeat = seatTypes.some(type => {
-        if (type === '商务座') {
-          // Check Business OR Special
-          const swz = item.seatAvailability?.['商务座']
-          const tz = item.seatAvailability?.['特等座']
-          const hasSwz = swz && swz.hasSeatType !== false && swz.remaining !== null && (swz.remaining > 0 || swz.backupOnly)
-          const hasTz = tz && tz.hasSeatType !== false && tz.remaining !== null && (tz.remaining > 0 || tz.backupOnly)
-          return hasSwz || hasTz
-        }
-        
-        const info = item.seatAvailability?.[type]
-        // Check if valid AND not displayed as "-"
-        return info && info.hasSeatType !== false && info.remaining !== null && (info.remaining > 0 || info.backupOnly)
-      })
+        if (!hasSelectedSeat) return false
+      }
 
-      return hasSelectedSeat
+      // 3. Station Filter
+      if (selectedFromStations !== undefined) {
+        if (!selectedFromStations.includes(item.departureStation)) return false
+      }
+      
+      if (selectedToStations !== undefined) {
+        if (!selectedToStations.includes(item.arrivalStation)) return false
+      }
+
+      return true
     })
-  }, [items, trainTypes, seatTypes])
-
-  const queryDisabled = !from || !to || !date
-
-  const [depStart, depEnd] = (timeRange || '').split('-')
+  }, [items, trainTypes, seatTypes, selectedFromStations, selectedToStations])
 
   const handleSwap = () => {
     if (isSwapping) return
@@ -139,41 +193,6 @@ export const TrainListPage: React.FC<TrainListPageProps> = ({ isLoading, error }
     setHasInteracted(true)
     setTimeout(() => setIsSwapping(false), 300)
   }
-
-  const handleQuery = async (opts?: { force?: boolean; source?: 'button' | 'filter'; params?: Partial<import('../api/trains').GetTrainsParams> }) => {
-    if (!opts?.force && queryDisabled) return
-    setLastTrigger(opts?.source ?? 'button')
-    setLoading(true)
-    setErrMsg(undefined)
-    try {
-      if (from === to) {
-        setErrMsg('出发地与目的地不能相同')
-        return
-      }
-      const res = await getTrains({
-        from: opts?.params?.from ?? from,
-        to: opts?.params?.to ?? to,
-        date: opts?.params?.date ?? date,
-        // trainTypes: opts?.params?.trainTypes ?? trainTypes, // Disabled for client-side filtering
-        seatTypes: opts?.params?.seatTypes ?? seatTypes,
-        passengerCategory: opts?.params?.passengerCategory ?? passengerCategory,
-        departureTimeStart: opts?.params?.departureTimeStart ?? depStart,
-        departureTimeEnd: opts?.params?.departureTimeEnd ?? depEnd,
-        sortBy: opts?.params?.sortBy ?? sortBy,
-        sortOrder: opts?.params?.sortOrder ?? sortOrder,
-        page: currentPage,
-        pageSize: 100,
-      })
-      console.log('TrainListPage getTrains response:', res)
-      setItems(res.data.items || [])
-    } catch (e) {
-      console.error('TrainListPage getTrains error:', e)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  
 
   return (
     <div data-testid="train-list-page" className="train-list-page responsive-container" data-external-error={error || ''}>
@@ -274,8 +293,10 @@ export const TrainListPage: React.FC<TrainListPageProps> = ({ isLoading, error }
             onSeatTypesChange={(v) => { setSeatTypes(v) }}
             fromStation={from}
             toStation={to}
-            onFromStationChange={(name) => { if (name) { setFrom(name); setCurrentPage(1); void handleQuery({ force: true, source: 'filter', params: { from: name } }) } }}
-            onToStationChange={(name) => { if (name) { setTo(name); setCurrentPage(1); void handleQuery({ force: true, source: 'filter', params: { to: name } }) } }}
+            selectedFromStations={selectedFromStations}
+            selectedToStations={selectedToStations}
+            onFromStationsChange={setSelectedFromStations}
+            onToStationsChange={setSelectedToStations}
           />
         </div>
       </section>

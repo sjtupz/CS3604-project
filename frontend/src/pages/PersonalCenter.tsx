@@ -232,7 +232,6 @@ const PersonalCenter: React.FC<PersonalCenterProps> = () => {
         currentUser={currentUser || undefined} 
         activeSection={activeSection}
         orders={orders}
-        passengers={passengers}
         onSectionChange={setActiveSection}
         onNavigate={handleNavigate}
         onLogout={handleLogout}

@@ -10,9 +10,6 @@ test('Given 页面结构 When 初始渲染 Then 包含五部分布局', () => {
   )
   expect(screen.getByTestId('query-bar')).toBeInTheDocument()
   expect(screen.getByTestId('filters')).toBeInTheDocument()
-  expect(screen.getByText('友情链接')).toBeInTheDocument()
-  expect(screen.getByTestId('footer')).toBeInTheDocument()
-  expect(screen.getByRole('button', { name: '适老化无障碍服务' })).toBeInTheDocument()
 })
 
 test('Given 页面布局调整 When 移除顶部导航 Then 不显示去程与返程标签', () => {

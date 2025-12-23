@@ -48,12 +48,24 @@ describe('E2E Scenario: Cross-Page Booking Flow (Red Stage)', () => {
     // Mock station data
     (stationApi.getAllCityStations as any).mockResolvedValue([
       {
-        initial: 'S',
-        stations: [{ name: '上海', code: 'SHH', pinyin: 'shanghai' }]
+        province: '上海',
+        cities: [
+          {
+            city: '上海',
+            pinyin: 'shanghai',
+            stations: [{ name: '上海', code: 'SHH', type: 'highspeed', isHot: true }]
+          }
+        ]
       },
       {
-        initial: 'B',
-        stations: [{ name: '北京', code: 'BJP', pinyin: 'beijing' }]
+        province: '北京',
+        cities: [
+          {
+            city: '北京',
+            pinyin: 'beijing',
+            stations: [{ name: '北京', code: 'BJP', type: 'highspeed', isHot: true }]
+          }
+        ]
       }
     ]);
     (personalUserApi.getUserInfo as any).mockResolvedValue({});
@@ -76,32 +88,46 @@ describe('E2E Scenario: Cross-Page Booking Flow (Red Stage)', () => {
     return within(homePage).getByRole('button', { name: /查询/i });
   };
 
+  const selectStation = async (labelRegex: RegExp, stationName: string) => {
+    const input = screen.getByLabelText(labelRegex);
+    fireEvent.focus(input);
+    // Use getAllByText because multiple elements might match (e.g. hot city + search result)
+    // Filter to find the one that is likely the dropdown item (e.g. visible)
+    // For simplicity in this test environment, findByText usually works if only one is visible or first one is fine.
+    // However, StationDropdown renders '上海' in Hot list.
+    const option = await screen.findByText(stationName);
+    fireEvent.click(option);
+  };
+
+  const getFutureDate = (daysToAdd: number = 1) => {
+    const date = new Date();
+    date.setDate(date.getDate() + daysToAdd);
+    return date.toISOString().split('T')[0];
+  };
+
   it('Step 1: One-way Trip Search -> Navigate to Ticket List', async () => {
     renderApp();
 
     // 1. Fill inputs
-    const fromInput = screen.getByLabelText(/出发地/i);
-    fireEvent.change(fromInput, { target: { value: '上海' } });
-    
-    const toInput = screen.getByLabelText(/到达地/i);
-    fireEvent.change(toInput, { target: { value: '北京' } });
+    await selectStation(/出发地/i, '上海');
+    await selectStation(/到达地/i, '北京');
 
     const dateInput = screen.getByLabelText(/出发日期/i);
     // Ensure we pick a future date to avoid validation error
-    fireEvent.change(dateInput, { target: { value: '2025-12-14' } });
+    const futureDate = getFutureDate(2);
+    fireEvent.change(dateInput, { target: { value: futureDate } });
 
     // 2. Click Query
     const queryBtn = getQueryButton();
     fireEvent.click(queryBtn);
 
     // 3. Expect Navigation
-    // This assertion MUST FAIL because navigation is not implemented yet
     await waitFor(() => {
       const locationText = screen.getByTestId('location-display').textContent;
       expect(locationText).toContain('/tickets');
       expect(locationText).toContain('from=上海');
       expect(locationText).toContain('to=北京');
-      expect(locationText).toContain('date=2025-12-14');
+      expect(locationText).toContain(`date=${futureDate}`);
     });
   });
 
@@ -113,47 +139,42 @@ describe('E2E Scenario: Cross-Page Booking Flow (Red Stage)', () => {
     fireEvent.click(roundTripRadio);
 
     // 2. Fill inputs
-    const fromInput = screen.getByLabelText(/出发地/i);
-    fireEvent.change(fromInput, { target: { value: '上海' } });
-    
-    const toInput = screen.getByLabelText(/到达地/i);
-    fireEvent.change(toInput, { target: { value: '北京' } });
+    await selectStation(/出发地/i, '上海');
+    await selectStation(/到达地/i, '北京');
+
+    const startDate = getFutureDate(2);
+    const returnDate = getFutureDate(5);
 
     const dateInput = screen.getByLabelText(/出发日期/i);
-    fireEvent.change(dateInput, { target: { value: '2025-12-14' } });
+    fireEvent.change(dateInput, { target: { value: startDate } });
 
     const returnDateInput = screen.getByLabelText(/返程日期/i);
-    fireEvent.change(returnDateInput, { target: { value: '2025-12-20' } });
+    fireEvent.change(returnDateInput, { target: { value: returnDate } });
 
     // 3. Click Query
     const queryBtn = getQueryButton();
     fireEvent.click(queryBtn);
 
     // 4. Expect Navigation
-    // This assertion MUST FAIL
     await waitFor(() => {
       const locationText = screen.getByTestId('location-display').textContent;
       expect(locationText).toContain('/tickets');
       expect(locationText).toContain('from=上海');
       expect(locationText).toContain('to=北京');
-      expect(locationText).toContain('date=2025-12-14');
-      expect(locationText).toContain('returnDate=2025-12-20');
+      expect(locationText).toContain(`date=${startDate}`);
+      expect(locationText).toContain(`returnDate=${returnDate}`);
     });
   });
 
   it('Step 3: Data Consistency (Implicit Check)', async () => {
     // This test verifies that IF we navigate, the target page renders components that reflect the search.
-    // Since we don't have the implementation, we can just check if we are on the page.
-    // A better check would be to see if the API was called with correct params if the page loaded.
-    // But since navigation fails, this test will also fail.
     
     renderApp();
-    const fromInput = screen.getByLabelText(/出发地/i);
-    fireEvent.change(fromInput, { target: { value: '上海' } });
-    const toInput = screen.getByLabelText(/到达地/i);
-    fireEvent.change(toInput, { target: { value: '北京' } });
+    await selectStation(/出发地/i, '上海');
+    await selectStation(/到达地/i, '北京');
     const dateInput = screen.getByLabelText(/出发日期/i);
-    fireEvent.change(dateInput, { target: { value: '2025-12-14' } });
+    const futureDate = getFutureDate(2);
+    fireEvent.change(dateInput, { target: { value: futureDate } });
     
     const queryBtn = getQueryButton();
     fireEvent.click(queryBtn);
@@ -165,35 +186,16 @@ describe('E2E Scenario: Cross-Page Booking Flow (Red Stage)', () => {
 
   it('Step 4: Boundary Conditions - Same Station', async () => {
     renderApp();
-    const fromInput = screen.getByLabelText(/出发地/i);
-    fireEvent.change(fromInput, { target: { value: '上海' } });
-    
-    const toInput = screen.getByLabelText(/到达地/i);
-    fireEvent.change(toInput, { target: { value: '上海' } }); // Same station
+    await selectStation(/出发地/i, '上海');
+    await selectStation(/到达地/i, '上海'); // Same station
 
     const dateInput = screen.getByLabelText(/出发日期/i);
-    fireEvent.change(dateInput, { target: { value: '2025-12-14' } });
+    const futureDate = getFutureDate(2);
+    fireEvent.change(dateInput, { target: { value: futureDate } });
 
     const queryBtn = getQueryButton();
     fireEvent.click(queryBtn);
 
-    // Expect alert or NO navigation
-    // Currently implementation might do nothing or navigate?
-    // User requirement: "System should show 'Source and destination cannot be same' hint"
-    // Since this logic is "not implemented", we expect this test to fail if we assert the presence of the hint.
-    // Or if we assume the current implementation DOES navigate (it shouldn't), we assert it stays on page.
-    
-    // Let's assert that an error message is displayed (Red state: it won't be displayed).
-    // Or we can check if window.alert was called if that's the intended UI. 
-    // The requirement says "Show hint". TicketQueryForm has some validation logic but maybe not this one.
-    
-    // I'll check if the form validation logic already covers this.
-    // TicketQueryForm.tsx only checks if fields are empty. It does NOT check if they are equal.
-    // So current code will proceed to (attempt) query.
-    
-    // I will assert that we do NOT navigate, OR that an error message is shown.
-    // Since I want a failing test for TDD, I will assert that an error message "出发地和目的地不能相同" is visible.
-    
     await waitFor(() => {
        expect(screen.queryByText(/出发地和目的地不能相同/i)).toBeInTheDocument();
     });
@@ -201,10 +203,8 @@ describe('E2E Scenario: Cross-Page Booking Flow (Red Stage)', () => {
   
   it('Step 4: Boundary Conditions - Past Date', async () => {
       renderApp();
-      const fromInput = screen.getByLabelText(/出发地/i);
-      fireEvent.change(fromInput, { target: { value: '上海' } });
-      const toInput = screen.getByLabelText(/到达地/i);
-      fireEvent.change(toInput, { target: { value: '北京' } });
+      await selectStation(/出发地/i, '上海');
+      await selectStation(/到达地/i, '北京');
       
       const dateInput = screen.getByLabelText(/出发日期/i);
       fireEvent.change(dateInput, { target: { value: '2020-01-01' } }); // Past date

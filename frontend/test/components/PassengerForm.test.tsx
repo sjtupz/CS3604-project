@@ -62,6 +62,13 @@ describe('PassengerForm Component', () => {
     expect(screen.getByText('（请提供乘车人真实有效的联系方式）')).toBeInTheDocument();
 
     // Check phone input exists (editable)
-    expect(screen.getByDisplayValue('13800138000')).toBeInTheDocument();
+    const phoneInput = screen.getByLabelText('手机号：') as HTMLInputElement;
+    expect(phoneInput).toHaveValue('138****8000');
+
+    fireEvent.focus(phoneInput);
+    expect(phoneInput).toHaveValue('13800138000');
+
+    fireEvent.blur(phoneInput);
+    expect(phoneInput).toHaveValue('138****8000');
   });
 });

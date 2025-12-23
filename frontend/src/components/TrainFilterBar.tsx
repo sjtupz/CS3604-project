@@ -3,8 +3,8 @@ import { getStations } from '../api/station'
 import { DepartureTimeFilter } from './DepartureTimeFilter'
 
 const cityStationMap: Record<string, string[]> = {
-  上海: ['上海虹桥', '上海南', '上海', '上海西', '金山北'],
-  北京: ['北京南', '北京', '北京西', '北京北', '北京朝阳'],
+  上海: ['上海虹桥', '上海南', '上海', '上海西', '金山北', '上海松江'],
+  北京: ['北京南', '北京', '北京西', '北京北', '北京朝阳', '北京丰台'],
   杭州: ['杭州东', '杭州', '杭州南', '杭州西'],
   广州: ['广州南', '广州', '广州东', '广州白云'],
   深圳: ['深圳北', '深圳', '福田'],
@@ -21,21 +21,31 @@ type Props = {
   onSeatTypesChange?: (v: string[]) => void
   fromStation?: string
   toStation?: string
-  onFromStationChange?: (name: string) => void
-  onToStationChange?: (name: string) => void
+  selectedFromStations?: string[]
+  selectedToStations?: string[]
+  onFromStationsChange?: (stations: string[]) => void
+  onToStationsChange?: (stations: string[]) => void
 }
 
-export const TrainFilterBar: React.FC<Props> = ({ selectedDate, timeRange, onDateChange, onTimeRangeChange, selectedTrainTypes = [], onTrainTypesChange, selectedSeatTypes = [], onSeatTypesChange, fromStation, toStation, onFromStationChange, onToStationChange }) => {
+export const TrainFilterBar: React.FC<Props> = ({ 
+  selectedDate, 
+  timeRange, 
+  onDateChange, 
+  onTimeRangeChange, 
+  selectedTrainTypes = [], 
+  onTrainTypesChange, 
+  selectedSeatTypes = [], 
+  onSeatTypesChange, 
+  fromStation, 
+  toStation, 
+  selectedFromStations, 
+  selectedToStations, 
+  onFromStationsChange, 
+  onToStationsChange 
+}) => {
 
   const ALL_TRAIN_TYPES = ['GC', 'D', 'Z', 'KT', 'Other']
   const ALL_SEAT_TYPES = ['商务座', '一等座', '二等座', '软卧', '硬卧', '硬座', '无座', '其他']
-
-  const getCityName = useCallback((stationName: string) => {
-    if (!stationName) return ''
-    if (cityStationMap[stationName]) return stationName
-    const city = Object.keys(cityStationMap).find((c) => (cityStationMap[c] || []).includes(stationName))
-    return city || stationName
-  }, [])
 
   const findStationsFor = useCallback((place?: string): string[] => {
     const name = (place || '').trim()
@@ -127,6 +137,43 @@ export const TrainFilterBar: React.FC<Props> = ({ selectedDate, timeRange, onDat
   const [depError, setDepError] = useState<string | null>(null)
   const [arrError, setArrError] = useState<string | null>(null)
 
+  const toggleFromStation = (name: string) => {
+    const current = selectedFromStations === undefined ? depStations : selectedFromStations
+    if (current.includes(name)) {
+      onFromStationsChange?.(current.filter(s => s !== name))
+    } else {
+      onFromStationsChange?.([...current, name])
+    }
+  }
+
+  const toggleToStation = (name: string) => {
+    const current = selectedToStations === undefined ? arrStations : selectedToStations
+    if (current.includes(name)) {
+      onToStationsChange?.(current.filter(s => s !== name))
+    } else {
+      onToStationsChange?.([...current, name])
+    }
+  }
+
+  const isAllFromSelected = depStations.length > 0 && (selectedFromStations === undefined || depStations.every(s => selectedFromStations.includes(s)))
+  const isAllToSelected = arrStations.length > 0 && (selectedToStations === undefined || arrStations.every(s => selectedToStations.includes(s)))
+
+  const handleToggleAllFrom = () => {
+    if (isAllFromSelected) {
+      onFromStationsChange?.([])
+    } else {
+      onFromStationsChange?.(depStations) // Or undefined? explicit is better for "Select All" button usually
+    }
+  }
+
+  const handleToggleAllTo = () => {
+    if (isAllToSelected) {
+      onToStationsChange?.([])
+    } else {
+      onToStationsChange?.(arrStations)
+    }
+  }
+
   useEffect(() => {
     let mounted = true
     const load = async () => {
@@ -182,6 +229,17 @@ export const TrainFilterBar: React.FC<Props> = ({ selectedDate, timeRange, onDat
     return () => { mounted = false }
   }, [toStation, resolveStations])
 
+  useEffect(() => {
+    if (fromStation && !selectedFromStations && onFromStationsChange) {
+      resolveStations(fromStation).then((list) => {
+        // console.log('Auto-select resolveStations result:', list)
+        if (list.length > 0) {
+            onFromStationsChange(list)
+        }
+      })
+    }
+  }, [fromStation, selectedFromStations, onFromStationsChange, resolveStations])
+
   return (
     <div className="filter-bar quick-search-box-lg" role="group" aria-label="筛选" data-time-range={timeRange} data-has-time-change={!!onTimeRangeChange}>
       <div className="date-range" aria-label="日期选择" data-range-start={todayStr} data-range-end={endStr}>
@@ -220,7 +278,7 @@ export const TrainFilterBar: React.FC<Props> = ({ selectedDate, timeRange, onDat
         </div>
         <div className="switch-row">
           <div className="row-label">出发车站</div>
-          <button type="button" className={`btn-all${fromStation === getCityName(fromStation || '') ? ' active' : ''}`} onClick={() => onFromStationChange?.(getCityName(fromStation || ''))}>全部</button>
+          <button type="button" className={`btn-all${isAllFromSelected ? ' active' : ''}`} onClick={handleToggleAllFrom}>全部</button>
           <div className="row-options">
             {loadingDep ? (
               <span style={{fontSize: 12, color: '#999'}}>加载中...</span>
@@ -234,7 +292,7 @@ export const TrainFilterBar: React.FC<Props> = ({ selectedDate, timeRange, onDat
             ) : (
               depStations.map((name) => (
                 <label key={`from-${name}`} className="checkbox-item">
-                  <input type="checkbox" checked={fromStation === name} onChange={(e) => { if (e.target.checked) onFromStationChange?.(name) }} />{name}
+                  <input type="checkbox" checked={selectedFromStations === undefined || selectedFromStations.includes(name)} onChange={() => toggleFromStation(name)} />{name}
                 </label>
               ))
             )}
@@ -242,7 +300,7 @@ export const TrainFilterBar: React.FC<Props> = ({ selectedDate, timeRange, onDat
         </div>
         <div className="switch-row">
           <div className="row-label">到达车站</div>
-          <button type="button" className={`btn-all${toStation === getCityName(toStation || '') ? ' active' : ''}`} onClick={() => onToStationChange?.(getCityName(toStation || ''))}>全部</button>
+          <button type="button" className={`btn-all${isAllToSelected ? ' active' : ''}`} onClick={handleToggleAllTo}>全部</button>
           <div className="row-options">
             {loadingArr ? (
               <span style={{fontSize: 12, color: '#999'}}>加载中...</span>
@@ -256,7 +314,7 @@ export const TrainFilterBar: React.FC<Props> = ({ selectedDate, timeRange, onDat
             ) : (
               arrStations.map((name) => (
                 <label key={`to-${name}`} className="checkbox-item">
-                  <input type="checkbox" checked={toStation === name} onChange={(e) => { if (e.target.checked) onToStationChange?.(name) }} />{name}
+                  <input type="checkbox" checked={selectedToStations === undefined || selectedToStations.includes(name)} onChange={() => toggleToStation(name)} />{name}
                 </label>
               ))
             )}

@@ -21,10 +21,11 @@ async function findTrainsInDb(params) {
          JOIN rf_stations ds ON ds.station_id = tr.destination_station_id
          LEFT JOIN rf_timetables dep ON dep.train_id = tr.train_id AND dep.station_id = tr.origin_station_id AND dep.stop_order = 1
          LEFT JOIN rf_timetables arr ON arr.train_id = tr.train_id AND arr.station_id = tr.destination_station_id AND arr.stop_order = tr.stop_count
-         WHERE os.city LIKE '%' || ? || '%' AND ds.city LIKE '%' || ? || '%' 
+         WHERE (os.name = ? OR os.city LIKE '%' || ? || '%') 
+           AND (ds.name = ? OR ds.city LIKE '%' || ? || '%')
            AND EXISTS (SELECT 1 FROM rf_inventories inv WHERE inv.train_id = tr.train_id AND inv.travel_date = ?)
         `,
-        [String(from || ''), String(to || ''), String(date || '')]
+        [String(from || ''), String(from || ''), String(to || ''), String(to || ''), String(date || '')]
       );
 
       let typeSet = new Set();
@@ -201,10 +202,10 @@ async function findTrainsInDb(params) {
         JOIN trains t ON tk.train_id = t.id
         JOIN stations fs ON tk.from_station_id = fs.id
         JOIN stations ts ON tk.to_station_id = ts.id
-        WHERE fs.name = ? AND ts.name = ? AND tk.date = ?
+        WHERE (fs.name = ? OR fs.city = ?) AND (ts.name = ? OR ts.city = ?) AND tk.date = ?
       `;
       
-      const rows = await query(sql, [from, to, date]);
+      const rows = await query(sql, [from, from, to, to, date]);
       
       if (rows.length > 0) {
         return rows.map(r => ({

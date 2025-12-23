@@ -3,6 +3,7 @@ const path = require('path');
 
 const DB_PATH = path.resolve(__dirname, '../data/12306.db');
 const db = new sqlite3.Database(DB_PATH);
+const SEED_TAG = 'bulk_seed_v1';
 
 function pad(num) {
   return num.toString().padStart(2, '0');
@@ -26,16 +27,17 @@ const verify = async () => {
   const endDateStr = formatDate(endDate);
 
   console.log(`Expected Date Range: ${startDateStr} to ${endDateStr}`);
+  console.log(`Seed Tag: ${SEED_TAG}`);
 
   db.serialize(() => {
     // Check Total Count
-    db.get("SELECT COUNT(*) as count FROM train_tickets", (err, row) => {
+    db.get("SELECT COUNT(*) as count FROM train_tickets WHERE seed_tag = ?", [SEED_TAG], (err, row) => {
       if (err) console.error(err);
       console.log(`Total Records: ${row.count}`);
     });
 
     // Check Date Range
-    db.all("SELECT DISTINCT date FROM train_tickets ORDER BY date", (err, rows) => {
+    db.all("SELECT DISTINCT date FROM train_tickets WHERE seed_tag = ? ORDER BY date", [SEED_TAG], (err, rows) => {
       if (err) console.error(err);
       console.log(`Date Coverage (${rows.length} days):`);
       if (rows.length > 0) {
@@ -60,7 +62,7 @@ const verify = async () => {
     });
 
     // Check Station Coverage Sample
-    db.all("SELECT start_station, COUNT(*) as count FROM train_tickets GROUP BY start_station", (err, rows) => {
+    db.all("SELECT start_station, COUNT(*) as count FROM train_tickets WHERE seed_tag = ? GROUP BY start_station", [SEED_TAG], (err, rows) => {
       if (err) console.error(err);
       console.log(`Station Coverage (${rows.length} stations):`);
       const lowCoverage = rows.filter(r => r.count < 10);
@@ -82,13 +84,22 @@ const verify = async () => {
         END as slot,
         COUNT(*) as count
       FROM train_tickets
-      WHERE date = ?
+      WHERE seed_tag = ? AND date = ?
       GROUP BY slot
-    `, [startDateStr], (err, rows) => {
+    `, [SEED_TAG, startDateStr], (err, rows) => {
       if (err) console.error(err);
       console.log(`Time Slot Distribution for ${startDateStr}:`);
       rows.forEach(r => console.log(`${r.slot}: ${r.count}`));
     });
+
+    db.get(
+      "SELECT COUNT(*) as c FROM train_tickets WHERE seed_tag = ? AND date = ? AND start_station LIKE ? AND end_station LIKE ?",
+      [SEED_TAG, startDateStr, '%上海%', '%北京%'],
+      (err, row) => {
+        if (err) console.error(err);
+        console.log(`Sample Route Count (上海 -> 北京) on ${startDateStr}: ${row.c}`);
+      }
+    );
   });
 };
 

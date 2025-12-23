@@ -4,6 +4,13 @@
   "private": true,
   "type": "commonjs",
   "main": "server.js",
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "bcrypt",
+      "better-sqlite3",
+      "sqlite3"
+    ]
+  },
   "scripts": {
     "start": "node server.js",
     "dev": "node server.js",

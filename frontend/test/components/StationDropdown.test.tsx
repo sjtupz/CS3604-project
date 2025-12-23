@@ -205,9 +205,10 @@ test('Given 用户点击站点详细列表中的某个站点 When 选择 Then �
     { id: 2, name: '万荣', pinyin: 'wanrong' },
   ] as any);
   const onSelectStation = vi.fn();
-  render(<StationDropdown id="fromStation" value="上" onSelectStation={onSelectStation} placeholder="出发地" />);
+  render(<StationDropdown id="fromStation" value="" onSelectStation={onSelectStation} placeholder="出发地" />);
   const inputFrom = screen.getByPlaceholderText('出发地') as HTMLInputElement;
   await user.click(inputFrom);
+  await user.type(inputFrom, '万');
   const item = await screen.findByText('万象');
   await user.click(item);
   expect(inputFrom.value).toBe('万象');

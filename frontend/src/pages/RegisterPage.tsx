@@ -10,18 +10,7 @@ export const RegisterPage: React.FC = () => {
 
   return (
     <div data-testid="register-page">
-      <h1
-        style={{
-          position: 'absolute',
-          width: 1,
-          height: 1,
-          margin: -1,
-          padding: 0,
-          border: 0,
-          clip: 'rect(0 0 0 0)',
-          overflow: 'hidden'
-        }}
-      >
+      <h1 style={{ textAlign: 'center' }}>
         用户注册
       </h1>
       <RegisterForm onRegisterSuccess={handleRegisterSuccess} />

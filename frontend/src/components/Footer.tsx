@@ -15,14 +15,14 @@ import footerSlh from '../assets/footer/footer-slh.jpg';
 
 export const Footer: React.FC = () => {
   return (
-    <div className="footer" role="contentinfo">
+    <div className="footer" role="contentinfo" data-testid="footer">
       <div className="footer-con wrapper">
         <div className="foot-links" style={{ marginRight: '50px' }}>
           <h2 className="foot-con-tit">友情链接</h2>
           <ul className="foot-links-list" role="menubar">
             <li role="menuitem">
               <a
-                name="g_href"
+                data-name="g_href"
                 data-href="http://www.china-railway.com.cn/"
                 data-redirect="N"
                 href="http://www.china-railway.com.cn/"
@@ -35,7 +35,7 @@ export const Footer: React.FC = () => {
             </li>
             <li role="menuitem">
               <a
-                name="g_href"
+                data-name="g_href"
                 data-href="http://www.china-ric.com/"
                 data-redirect="N"
                 href="http://www.china-ric.com/"
@@ -51,7 +51,7 @@ export const Footer: React.FC = () => {
             </li>
             <li role="menuitem">
               <a
-                name="g_href"
+                data-name="g_href"
                 title="中国铁路95306网"
                 data-href="http://www.95306.cn/"
                 data-redirect="N"
@@ -64,7 +64,7 @@ export const Footer: React.FC = () => {
             </li>
             <li role="menuitem">
               <a
-                name="g_href"
+                data-name="g_href"
                 title="中铁快运股份有限公司"
                 data-href="http://www.95572.com/"
                 data-redirect="N"

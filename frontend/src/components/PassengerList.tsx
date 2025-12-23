@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect } from 'react'
+import React, { useMemo, useState, useEffect, useCallback } from 'react'
 import { getPassengers, deletePassenger, deletePassengers } from '../api/passengers';
 import { getUserInfo } from '../api/personal_user';
 import type { Passenger } from '../api/passengers';
@@ -16,7 +16,7 @@ export default function PassengerList({ onAdd, onEdit }: Props) {
   const [searchName, setSearchName] = useState<string>('')
   const [loading, setLoading] = useState(false)
 
-  const fetchPassengers = async () => {
+  const fetchPassengers = useCallback(async () => {
     setLoading(true)
     try {
       // Parallel fetch user info and passengers
@@ -63,11 +63,11 @@ export default function PassengerList({ onAdd, onEdit }: Props) {
     } finally {
       setLoading(false)
     }
-  };
+  }, [searchName]);
 
   useEffect(() => {
     void fetchPassengers();
-  }, [searchName]);
+  }, [fetchPassengers]);
 
   const rows = useMemo(() => {
     const list = internalPassengers
