@@ -10,7 +10,7 @@ const apiClient = axios.create({
 apiClient.interceptors.request.use(
   (config) => {
     // 添加认证token
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('authToken') || localStorage.getItem('token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }

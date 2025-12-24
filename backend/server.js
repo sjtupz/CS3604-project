@@ -1,7 +1,11 @@
 require('dotenv').config({ path: './backend/.env' });
 const app = require('./src/app');
+const { clearSessions } = require('./src/utils/sessionStore');
 
 const PORT = process.env.PORT || 3000;
+
+// Clear sessions on startup
+clearSessions();
 
 process.on('uncaughtException', (err) => {
   console.error('[uncaughtException]', err && err.stack ? err.stack : err);

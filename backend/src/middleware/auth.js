@@ -1,4 +1,4 @@
-const jwt = require('jsonwebtoken');
+const { getSession } = require('../utils/sessionStore');
 
 function authMiddleware(req, res, next) {
   const header = req.headers['authorization'];
@@ -6,12 +6,12 @@ function authMiddleware(req, res, next) {
     return res.status(401).json({ code: 401, message: 'Unauthorized' });
   }
   const token = header.replace(/^Bearer\s+/i, '');
-  try {
-    const secret = process.env.JWT_SECRET || 'dev-secret';
-    const payload = jwt.verify(token, secret);
-    req.user = payload;
+  
+  const user = getSession(token);
+  if (user) {
+    req.user = user;
     next();
-  } catch (err) {
+  } else {
     return res.status(401).json({ code: 401, message: 'Invalid token' });
   }
 }

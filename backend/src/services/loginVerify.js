@@ -2,7 +2,8 @@ const { findLoginCodeRecord } = require('../db/findLoginCodeRecord');
 const { invalidateLoginCodeRecord } = require('../db/invalidateLoginCodeRecord');
 const { resolveUserByIdentifier } = require('./loginSendCode');
 const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken');
+const { v4: uuidv4 } = require('uuid');
+const { setSession } = require('../utils/sessionStore');
 
 const handleVerify = async (payload) => {
   const { identifier, code, password } = payload || {};
@@ -49,12 +50,10 @@ const handleVerify = async (payload) => {
 
   await invalidateLoginCodeRecord({ identifier });
   
-  const secret = process.env.JWT_SECRET || 'super_secret_jwt_key_123456';
-  const token = jwt.sign(
-    { id: user.id, username: user.username }, 
-    secret, 
-    { expiresIn: '24h' }
-  );
+  // Generate simple session token (UUID) instead of JWT
+  const token = uuidv4();
+  // Store user in session
+  setSession(token, { id: user.id, username: user.username });
   
   return { userId: user.id, token };
 };
