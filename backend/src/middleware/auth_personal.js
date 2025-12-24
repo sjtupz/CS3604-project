@@ -1,4 +1,4 @@
-const jwt = require('jsonwebtoken');
+const { getSession } = require('../utils/sessionStore');
 
 const auth = (req, res, next) => {
   const authHeader = req.headers.authorization;
@@ -19,13 +19,13 @@ const auth = (req, res, next) => {
     return next();
   }
 
-  try {
-    const secret = process.env.JWT_SECRET || 'super_secret_jwt_key_123456';
-    const decoded = jwt.verify(token, secret);
-    req.user = decoded;
+  // Simple session check
+  const user = getSession(token);
+  if (user) {
+    req.user = user;
     next();
-  } catch (err) {
-    return res.status(401).json({ error: 'Unauthorized. Invalid token.' });
+  } else {
+    return res.status(401).json({ error: 'Unauthorized. Invalid token or session expired.' });
   }
 };
 
