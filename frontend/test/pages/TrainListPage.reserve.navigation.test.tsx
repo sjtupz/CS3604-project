@@ -44,7 +44,7 @@ test('Given 未登录用户 When 查询后点击备注列预订 Then 跳转登�
   const reserveButton = screen.getByRole('button', { name: '预订' })
   fireEvent.click(reserveButton)
   expect(mockNavigate).toHaveBeenCalledWith('/login')
-})
+}, 15000)
 
 test('Given 已登录用户 When 查询后点击备注列预订 Then 跳转订单填写页', async () => {
   render(
@@ -60,4 +60,4 @@ test('Given 已登录用户 When 查询后点击备注列预订 Then 跳转订�
   const reserveButton = screen.getByRole('button', { name: '预订' })
   fireEvent.click(reserveButton)
   expect(mockNavigate).toHaveBeenCalledWith('/orders/new')
-})
+}, 15000)

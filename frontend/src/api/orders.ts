@@ -13,7 +13,7 @@ export interface CreateOrderParams {
     idNumber: string;
     ticketType: string;
   }>;
-  trainInfo: any;
+  trainInfo: unknown;
 }
 
 export const createOrder = async (data: CreateOrderParams) => {

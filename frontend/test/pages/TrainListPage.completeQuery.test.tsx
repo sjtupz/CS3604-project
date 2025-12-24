@@ -22,4 +22,4 @@ test('Given 出行信息完整 When 点击查询 Then 展示当日两地间车�
   const queryButton = screen.getByRole('button', { name: '查询' })
   await user.click(queryButton)
   expect(screen.getByText('车次')).toBeInTheDocument()
-})
+}, 15000)

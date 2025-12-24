@@ -1,6 +1,5 @@
 import React from 'react'
 import type { TrainListItem as TrainItem } from '../api/trains'
-import { useNavigate } from 'react-router-dom'
 
 type Props = {
   items: TrainItem[]
@@ -12,7 +11,6 @@ type Props = {
 
 export const TrainList: React.FC<Props> = ({ items, onSortChange, onReserve, sortBy, sortOrder }) => {
   const isMobile = typeof window !== 'undefined' && window.innerWidth <= 576
-  const getNavigate = useNavigate
 
   const renderSeatStatus = (seatAvailability: Record<string, { remaining: number | null; backupOnly?: boolean; hasSeatType?: boolean }> | undefined) => {
     const entries = Object.entries(seatAvailability || {})

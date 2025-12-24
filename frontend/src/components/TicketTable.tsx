@@ -1,7 +1,15 @@
 import React from 'react';
 
+type TicketRow = {
+  ticketType: string;
+  seatType: string;
+  name: string;
+  idType: string;
+  idNumber: string;
+};
+
 interface TicketTableProps {
-  rows: any[];
+  rows: TicketRow[];
   onSeatTypeChange?: (index: number, seatType: string) => void;
 }
 

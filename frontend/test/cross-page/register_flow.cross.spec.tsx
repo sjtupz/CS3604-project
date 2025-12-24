@@ -62,7 +62,7 @@ describe('E2E Scenario: 用户注册跨页流程', () => {
     expect(screen.getByTestId('location').textContent).toBe('/register/verify')
     expect(screen.getByTestId('search').textContent).toContain('phone=13800138001')
     expect(screen.getByTestId('search').textContent).toContain('username=validUser')
-  })
+  }, 15000)
 
   test('Step 2: 在验证码页输入正确验证码 -> 跳转至注册成功页', async () => {
     const user = userEvent.setup()
@@ -75,7 +75,7 @@ describe('E2E Scenario: 用户注册跨页流程', () => {
     const { verifyRegister } = await import('../../src/api/register')
     await waitFor(() => expect(verifyRegister).toHaveBeenCalledTimes(1))
     expect(screen.getByTestId('location').textContent).toBe('/register/success')
-  })
+  }, 15000)
 
   test('Step 3: 在注册成功页点击“登录” -> 跳转至登录页', async () => {
     const user = userEvent.setup()

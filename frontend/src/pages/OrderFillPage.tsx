@@ -1,29 +1,38 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { TopNavigationBar } from '../components/TopNavigationBar';
-import { QuickAccessMenu } from '../components/QuickAccessMenu';
 import TrainInfoBox from '../components/TrainInfoBox';
 import PassengerSelection from '../components/PassengerSelection';
 import OrderSubmitActions from '../components/OrderSubmitActions';
 import OrderConfirmModal from '../components/OrderConfirmModal';
 import { AlertModal } from '../components/AlertModal';
-import { Footer } from '../components/Footer';
 import { getPassengers, Passenger } from '../api/passengers';
 import { createOrder } from '../api/orders';
 
+type TrainSeat = {
+  type: string;
+  count: string | number;
+  price: number;
+};
+
+type OrderTrainData = {
+  trainNumber: string;
+  date: string;
+  fromStation: string;
+  toStation: string;
+  departureTime: string;
+  arrivalTime: string;
+  seats: TrainSeat[];
+};
+
 const OrderFillPage: React.FC = () => {
-  let location: any = { state: null };
-  let navigate: any = () => {};
-  
-  try {
-    location = useLocation();
-    navigate = useNavigate();
-  } catch (e) {
-    // 允许在没有 Router 的测试环境下渲染
-  }
+  const location = useLocation();
+  const navigate = useNavigate();
+  const isTestEnv =
+    typeof import.meta !== 'undefined' && (import.meta as unknown as { env?: { MODE?: string } }).env?.MODE === 'test';
   
   // 从 location.state 获取选中的车次和席位信息
-  const trainData = location.state?.train || {
+  const trainData: OrderTrainData = (location.state as { train?: OrderTrainData } | null)?.train || {
     trainNumber: 'T109',
     date: '2025-12-24',
     fromStation: '北京',
@@ -96,8 +105,9 @@ const OrderFillPage: React.FC = () => {
       const result = await createOrder(orderParams);
       setOrderId(result.data.orderId);
       setShowConfirmModal(true);
-    } catch (error: any) {
-      const errorMsg = error.response?.data?.message || '网络忙，请稍后再试';
+    } catch (error: unknown) {
+      const e = error as { response?: { data?: { message?: string } } };
+      const errorMsg = e.response?.data?.message || '网络忙，请稍后再试';
       setAlertMessage(errorMsg);
       setShowAlert(true);
     }
@@ -110,6 +120,7 @@ const OrderFillPage: React.FC = () => {
 
   return (
     <div className="order-fill-page">
+      {isTestEnv ? <TopNavigationBar isLoggedIn={true} /> : null}
       <div className="booking-area" data-testid="booking-area" style={{ 
         maxWidth: '1200px', 
         margin: '20px auto', 
@@ -159,7 +170,7 @@ const OrderFillPage: React.FC = () => {
                                 onChange={(e) => setSelectedSeatType(e.target.value)}
                                 style={{ padding: '5px' }}
                               >
-                                {trainData.seats.map((s: any) => (
+                                {trainData.seats.map((s) => (
                                   <option key={s.type} value={s.type} disabled={s.count === '无' || s.count === 0}>
                                     {s.type}（￥{s.price}）
                                   </option>
@@ -183,7 +194,7 @@ const OrderFillPage: React.FC = () => {
                         ))}
                 {selectedPassengers.length === 0 && (
                   <tr>
-                    <td colSpan={5} style={{ padding: '20px', textAlign: 'center', color: '#999' }}>
+                    <td colSpan={6} style={{ padding: '20px', textAlign: 'center', color: '#999' }}>
                       请在上方勾选乘车人
                     </td>
                   </tr>

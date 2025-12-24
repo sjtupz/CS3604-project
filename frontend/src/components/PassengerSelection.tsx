@@ -1,11 +1,5 @@
 import React from 'react';
-
-interface Passenger {
-  passengerId: string;
-  name: string;
-  idType: string;
-  idNumber: string;
-}
+import type { Passenger } from '../api/passengers';
 
 interface PassengerSelectionProps {
   passengers: Passenger[];
@@ -18,11 +12,6 @@ const PassengerSelection: React.FC<PassengerSelectionProps> = ({
   selectedPassengerIds,
   onToggle 
 }) => {
-  const maskIdNumber = (idNumber: string) => {
-    if (idNumber.length <= 7) return idNumber;
-    return idNumber.substring(0, 4) + '*'.repeat(idNumber.length - 7) + idNumber.substring(idNumber.length - 3);
-  };
-
   return (
     <div className="passenger-selection" style={{ border: '1px solid #ddd', marginBottom: '20px' }}>
       <div style={{ 

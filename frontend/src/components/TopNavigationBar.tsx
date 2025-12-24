@@ -70,6 +70,10 @@ export const TopNavigationBar: React.FC<TopNavigationBarProps> = ({
     );
   }
 
+  const hideQuickAccess =
+    location.pathname === '/login' ||
+    location.pathname.startsWith('/orders')
+
   return (
     <div className="header-root" role="banner">
       <div className="header-top">
@@ -201,7 +205,7 @@ export const TopNavigationBar: React.FC<TopNavigationBarProps> = ({
       </div>
 
       {/* Blue Main Navigation Bar */}
-      {location.pathname !== '/login' && (
+      {!hideQuickAccess && (
         <div className="nav-main">
           <QuickAccessMenu />
         </div>

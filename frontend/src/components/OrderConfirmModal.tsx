@@ -7,8 +7,31 @@ interface OrderConfirmModalProps {
   onSuccess: () => void;
 }
 
+type OrderPassengerInfo = {
+  name: string;
+  idType: string;
+  idNumber: string;
+  ticketType: string;
+};
+
+type OrderTrainInfo = {
+  date?: string;
+  trainNumber?: string;
+  fromStation?: string;
+  toStation?: string;
+  departureTime?: string;
+  arrivalTime?: string;
+  seatType?: string;
+};
+
+type OrderDetails = {
+  trainInfo?: OrderTrainInfo;
+  passengerInfo?: OrderPassengerInfo[];
+  price?: number;
+};
+
 const OrderConfirmModal: React.FC<OrderConfirmModalProps> = ({ orderId, onClose, onSuccess }) => {
-  const [order, setOrder] = useState<any>(null);
+  const [order, setOrder] = useState<OrderDetails | null>(null);
   const [timeLeft, setTimeLeft] = useState(1200); // 20 minutes in seconds
   const [loading, setLoading] = useState(true);
 
@@ -119,15 +142,17 @@ const OrderConfirmModal: React.FC<OrderConfirmModalProps> = ({ orderId, onClose,
                 </tr>
               </thead>
               <tbody>
-                {order?.passengerInfo?.map((p: any, index: number) => (
+                {order?.passengerInfo?.map((p, index) => (
                   <tr key={index} style={{ textAlign: 'center' }}>
                     <td style={{ border: '1px solid #ddd', padding: '8px' }}>{index + 1}</td>
                     <td style={{ border: '1px solid #ddd', padding: '8px' }}>{p.name}</td>
                     <td style={{ border: '1px solid #ddd', padding: '8px' }}>{p.idType}</td>
                     <td style={{ border: '1px solid #ddd', padding: '8px' }}>{p.idNumber}</td>
                     <td style={{ border: '1px solid #ddd', padding: '8px' }}>{p.ticketType}</td>
-                    <td style={{ border: '1px solid #ddd', padding: '8px' }}>{order.trainInfo.seatType}</td>
-                    <td style={{ border: '1px solid #ddd', padding: '8px', color: '#f60' }}>￥{order.price / order.passengerInfo.length}</td>
+                    <td style={{ border: '1px solid #ddd', padding: '8px' }}>{order?.trainInfo?.seatType}</td>
+                    <td style={{ border: '1px solid #ddd', padding: '8px', color: '#f60' }}>
+                      ￥{(order?.price ?? 0) / (order?.passengerInfo?.length ?? 1)}
+                    </td>
                   </tr>
                 ))}
               </tbody>

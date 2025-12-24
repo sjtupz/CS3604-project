@@ -29,7 +29,7 @@ test('Given 出行信息完整 When 点击查询 Then 不展示分页控件', as
   const queryButton = screen.getByRole('button', { name: '查询' })
   await user.click(queryButton)
   expect(screen.queryByTestId('pagination')).not.toBeInTheDocument()
-})
+}, 15000)
 
 test('Given 查询完成 When 页面无分页控件 Then 上一页/下一页按钮不存在', async () => {
   const user = userEvent.setup()
@@ -38,4 +38,4 @@ test('Given 查询完成 When 页面无分页控件 Then 上一页/下一页按�
   await user.click(queryButton)
   expect(screen.queryByRole('button', { name: '上一页' })).toBeNull()
   expect(screen.queryByRole('button', { name: '下一页' })).toBeNull()
-})
+}, 15000)

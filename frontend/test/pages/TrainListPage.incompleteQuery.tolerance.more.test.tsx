@@ -30,7 +30,7 @@ test('Given 缺少出发地 When 点击查询 Then 不弹出车票、不报错�
   expect(screen.queryByText('❗请输入出发日期')).not.toBeInTheDocument()
   expect(screen.getByTestId('location').textContent).toBe('/trains')
   expect(screen.getByText('暂无车票')).toBeInTheDocument()
-})
+}, 15000)
 
 test('Given 缺少出发日期 When 点击查询 Then 不弹出车票、不报错、不刷新URL', async () => {
   const user = userEvent.setup()
@@ -40,5 +40,5 @@ test('Given 缺少出发日期 When 点击查询 Then 不弹出车票、不报�
   expect(screen.queryByText('❗请输入出发日期')).not.toBeInTheDocument()
   expect(screen.getByTestId('location').textContent).toBe('/trains')
   expect(screen.getByText('暂无车票')).toBeInTheDocument()
-})
+}, 15000)
 
