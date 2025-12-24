@@ -13,6 +13,7 @@ import { RegisterSuccessPage } from './pages/RegisterSuccessPage';
 import { TermsPage } from './pages/TermsPage';
 import { PrivacyPolicyPage } from './pages/PrivacyPolicyPage';
 import { TrainListPage } from './pages/TrainListPage';
+import OrderFillPage from './pages/OrderFillPage';
 import DataPreviewPage from './pages/DataPreviewPage';
 import LogoExportPage from './pages/LogoExportPage';
 
@@ -79,6 +80,7 @@ function App() {
       <Route path="/" element={<AppLayout />}>
         <Route index element={<HomePage />} />
         <Route path="tickets" element={<TrainListPage />} />
+        <Route path="orders/new" element={<OrderFillPage />} />
         <Route path="preview-data" element={<DataPreviewPage />} />
         <Route path="login" element={<LoginPage />} />
         <Route path="register" element={<RegisterPage />} />

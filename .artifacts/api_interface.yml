@@ -626,46 +626,148 @@
         code: 200
         message: "修改成功"
     error:
-      - statusCode: 403
-        body: { code: 40301, message: "无权修改该乘车人" }
+      - statusCode: 401
+        body: { code: 40100, message: "未授权" }
       - statusCode: 404
         body: { code: 40402, message: "乘车人不存在" }
+      - statusCode: 500
+        body: { code: 50008, message: "修改乘车人失败" }
   dependencies:
     - DB-UpdatePassenger
-  acceptanceCriteria:
-    - 只能修改属于当前用户的乘车人。
-    - "本人"信息的核心字段（证件号）可能不可修改（视业务规则，这里假设可以或受限）。
   changeLog:
     - date: "2025-12-16"
-      description: "新增，用于修改乘车人信息。"
+      description: "新增，用于修改乘车人。"
 
 - type: Backend
-  id: API-DELETE-Passengers
-  route: DELETE /api/passengers
-  description: 批量删除乘车人。
+  id: API-POST-Orders
+  route: POST /api/orders
+  description: 提交订单请求，锁定席位并创建订单记录。
   version: v1
   auth: JWT
   input:
     type: JSON
     body:
-      ids: array<string>
+      trainId: string
+      fromStationId: string
+      toStationId: string
+      date: string
+      passengers:
+        - passengerId: string
+          seatType: string
+          ticketType: string (成人票/儿童票/学生票)
   output:
     success:
+      statusCode: 201
+      body:
+        code: 201
+        data: { orderId: "uuid" }
+    error:
+      - statusCode: 400
+        body: { code: 40005, message: "请选择乘车人！" }
+      - statusCode: 409
+        body: { code: 40902, message: "该车次该席别车票已售罄！" }
+      - statusCode: 500
+        body: { code: 50009, message: "网络忙，请稍后再试" }
+  dependencies:
+    - DB-LockSeats
+    - DB-CreateOrder
+  acceptanceCriteria:
+    - 必须验证JWT Token。
+    - 验证passengers列表不为空，否则返回40005。
+    - 尝试锁定席位，若余票不足返回40902。
+    - 锁定成功后创建订单，状态初始化为“待确认”，设置20分钟过期时间。
+  changeLog:
+    - date: "2025-12-24"
+      description: "依据订单填写页需求新增。"
+
+- type: Backend
+  id: API-GET-Order-Details
+  route: GET /api/orders/{id}
+  description: 获取订单详细信息，用于订单确认页展示。
+  version: v1
+  auth: JWT
+  input:
+    type: Path
+    params:
+      id: string (orderId)
+  output:
+    success: 
       statusCode: 200
       body:
         code: 200
-        message: "删除成功"
+        data:
+          orderId: "uuid"
+          trainNumber: "T109"
+          departureStation: "北京站"
+          arrivalStation: "上海站"
+          departureTime: "2025-12-24T20:03:00"
+          arrivalTime: "2025-12-25T11:02:00"
+          status: "待确认"
+          expireAt: "2025-12-24T20:23:00"
+          passengers:
+            - name: "张三"
+              idType: "身份证"
+              idNumber: "110***********1234"
+              ticketType: "成人票"
+              seatType: "二等座"
+              seatNo: "05车06A"
+              price: 100.0
+          totalAmount: 100.0
     error:
-      - statusCode: 400
-        body: { code: 40005, message: "无法删除本人" }
-      - statusCode: 500
-        body: { code: 50008, message: "删除失败" }
+      - statusCode: 404
+        body: { code: 40403, message: "订单不存在" }
   dependencies:
-    - DB-DeletePassengers
+    - DB-GetOrderDetails
   acceptanceCriteria:
-    - 只能删除属于当前用户的乘车人。
-    - 如果列表中包含"本人"（isSelf=true），则操作失败或仅删除非本人（这里定义为操作失败）。
+    - 返回订单完整信息，包含倒计时所需的 expireAt。
+    - 证件号码应脱敏处理（显示前4后3）。
   changeLog:
-    - date: "2025-12-16"
-      description: "新增，用于批量删除乘车人。"
+    - date: "2025-12-24"
+      description: "依据订单确认页需求新增。"
+
+- type: Backend
+  id: API-POST-Order-Confirm
+  route: POST /api/orders/{id}/confirm
+  description: 确认订单并进入支付流程。
+  version: v1
+  auth: JWT
+  input:
+    type: Path
+    params:
+      id: string (orderId)
+  output:
+    success:
+      statusCode: 200
+      body: { code: 200, message: "订单已确认，请尽快支付" }
+  dependencies:
+    - DB-UpdateOrderStatus
+  acceptanceCriteria:
+    - 将订单状态由“待确认”更新为“待支付”。
+  changeLog:
+    - date: "2025-12-24"
+      description: "依据订单确认交互需求新增。"
+
+- type: Backend
+  id: API-POST-Order-Cancel
+  route: POST /api/orders/{id}/cancel
+  description: 取消订单并释放席位。
+  version: v1
+  auth: JWT
+  input:
+    type: Path
+    params:
+      id: string (orderId)
+  output: 
+    success:
+      statusCode: 200
+      body: { code: 200, message: "订单已取消" }
+  dependencies:
+    - DB-UpdateOrderStatus
+    - DB-ReleaseSeats
+  acceptanceCriteria:
+    - 将订单状态更新为“已取消”。
+    - 调用 DB-ReleaseSeats 释放占用的席位。
+  changeLog:
+    - date: "2025-12-24"
+      description: "依据订单取消交互需求新增。"
 

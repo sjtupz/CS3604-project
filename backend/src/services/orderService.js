@@ -1,104 +1,123 @@
-// 实现订单服务层
-const {
-  getOrdersByStatus,
-  getOrdersByDateRange,
-  updateOrderStatus,
-  createRefundRecord,
-  getOrderById
-} = require('../db/order');
+// 订单服务层骨架
 
-class OrderService {
-  // 获取订单列表（支持日期范围和状态筛选）
-  async getOrders(userId, queryParams) {
-    try {
-      const { status, queryType, startDate, endDate, orderNumber, trainNumber, passengerName } = queryParams;
-      
-      // 如果只指定了状态，使用getOrdersByStatus
-      if (status && !startDate && !endDate && !orderNumber && !trainNumber && !passengerName) {
-        return await getOrdersByStatus(userId, status);
-      }
-      
-      // 否则使用getOrdersByDateRange
-      const queryOptions = {
-        status: status || null,
-        queryType: queryType || '按订票日期',
-        startDate,
-        endDate,
-        orderNumber,
-        trainNumber,
-        passengerName
-      };
-      
-      return await getOrdersByDateRange(userId, queryOptions);
-    } catch (error) {
-      console.error('Error in getOrders:', error);
+const dbOrders = require('../db/orders');
+
+/**
+ * 创建订单
+ */
+async function createOrder(userId, orderData) {
+  const { trainId, fromStationId, toStationId, date, passengers } = orderData;
+  
+  // 1. 校验乘客信息
+  if (!passengers || passengers.length === 0) {
+    const error = new Error('请选择乘车人！');
+    error.code = 40005;
+    throw error;
+  }
+
+  // 2. 统计各席别需要的座位数并尝试锁定
+  const seatCounts = {};
+  passengers.forEach(p => {
+    seatCounts[p.seatType] = (seatCounts[p.seatType] || 0) + 1;
+  });
+
+  for (const [seatType, count] of Object.entries(seatCounts)) {
+    const locked = await dbOrders.dbLockSeats(trainId, date, fromStationId, toStationId, seatType, count);
+    if (!locked) {
+      const error = new Error(`该车次${seatType}车票已售罄！`);
+      error.code = 40902;
       throw error;
     }
   }
 
-  // 根据状态获取订单
-  async getOrdersByStatus(userId, status) {
-    try {
-      return await getOrdersByStatus(userId, status);
-    } catch (error) {
-      console.error('Error in getOrdersByStatus:', error);
-      throw error;
-    }
-  }
+  // 3. 计算总金额 (这里简化，实际应根据车次和席别查询价格)
+  // 假设从 orderData 中传来了价格信息，或者在这里查询
+  const totalAmount = passengers.reduce((sum, p) => sum + (p.price || 0), 0);
 
-  // 根据日期范围和查询条件获取订单
-  async getOrdersByDateRange(userId, queryParams) {
-    try {
-      return await getOrdersByDateRange(userId, queryParams);
-    } catch (error) {
-      console.error('Error in getOrdersByDateRange:', error);
-      throw error;
-    }
-  }
+  // 4. 创建订单记录
+  const orderInfo = {
+    userId,
+    trainId,
+    fromStationId,
+    toStationId,
+    travelDate: date,
+    passengers,
+    totalAmount,
+    status: '待确认'
+  };
 
-  // 更新订单状态
-  async updateOrderStatus(orderId, newStatus) {
-    try {
-      return await updateOrderStatus(orderId, newStatus);
-    } catch (error) {
-      console.error('Error in updateOrderStatus:', error);
-      throw error;
-    }
-  }
-
-  // 处理退票申请
-  async processRefund(orderId, refundData = {}) {
-    try {
-      // 检查订单是否存在且可以退票
-      const order = await getOrderById(orderId);
-      if (!order) {
-        throw new Error('Order not found');
-      }
-
-      if (order.status !== '未出行') {
-        throw new Error('Order cannot be refunded');
-      }
-
-      // 创建退票记录
-      await createRefundRecord(orderId, refundData);
-
-      // 返回退票后的订单信息
-      return await getOrderById(orderId);
-    } catch (error) {
-      console.error('Error in processRefund:', error);
-      throw error;
-    }
-  }
-
-  // 根据订单ID获取订单信息（服务层方法，调用数据库层）
-  async getOrderByIdService(orderId) {
-    try {
-      return await getOrderById(orderId);
-    } catch (error) {
-      console.error('Error in getOrderByIdService:', error);
-      throw error;
-    }
-  }
+  const result = await dbOrders.dbCreateOrder(orderInfo);
+  return result;
 }
 
-module.exports = new OrderService();
+/**
+ * 获取订单详情
+ */
+async function getOrderDetails(orderId) {
+  const order = await dbOrders.dbGetOrderDetails(orderId);
+  if (!order) {
+    const error = new Error('订单不存在');
+    error.code = 404;
+    throw error;
+  }
+  return order;
+}
+
+/**
+ * 确认订单
+ */
+async function confirmOrder(orderId) {
+  const order = await dbOrders.dbGetOrderDetails(orderId);
+  if (!order) {
+    throw new Error('订单不存在');
+  }
+  
+  if (order.status !== '待确认') {
+    throw new Error('订单状态不正确，无法确认');
+  }
+
+  const success = await dbOrders.dbUpdateOrderStatus(orderId, '待支付');
+  return success;
+}
+
+/**
+ * 取消订单
+ */
+async function cancelOrder(orderId) {
+  const order = await dbOrders.dbGetOrderDetails(orderId);
+  if (!order) {
+    throw new Error('订单不存在');
+  }
+
+  // 只有待确认和待支付状态可以取消
+  if (order.status !== '待确认' && order.status !== '待支付') {
+    throw new Error('当前订单状态无法取消');
+  }
+
+  // 1. 更新状态
+  const success = await dbOrders.dbUpdateOrderStatus(orderId, '已取消');
+  
+  if (success) {
+    // 2. 释放席位
+    const { trainNumber, trainInfo, passengerInfo } = order;
+    const { fromStationId, toStationId, travelDate } = trainInfo;
+    
+    const seatCounts = {};
+    passengerInfo.forEach(p => {
+      seatCounts[p.seatType] = (seatCounts[p.seatType] || 0) + 1;
+    });
+
+    for (const [seatType, count] of Object.entries(seatCounts)) {
+      await dbOrders.dbReleaseSeats(trainNumber, travelDate, fromStationId, toStationId, seatType, count);
+    }
+  }
+
+  return success;
+}
+
+module.exports = {
+  createOrder,
+  getOrderDetails,
+  confirmOrder,
+  cancelOrder
+};

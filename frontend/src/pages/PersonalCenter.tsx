@@ -143,8 +143,7 @@ const PersonalCenter: React.FC<PersonalCenterProps> = () => {
     if (section === 'home' || section === '查询页') {
       navigate('/');
     } else if (section === 'ticket' || section === '车次列表页') {
-      // Assuming ticket query is on home page or a specific ticket page
-      navigate('/'); 
+      navigate('/tickets'); 
     } else if (section === '登录页') {
       navigate('/login');
     } else if (section === '个人中心') {
@@ -154,7 +153,9 @@ const PersonalCenter: React.FC<PersonalCenterProps> = () => {
 
   const handleNavigateToService = (service: string) => {
     console.log('Navigate to service:', service);
-    if (service === '车票服务' || service === '会员服务') {
+    if (service === '车票服务') {
+      navigate('/tickets');
+    } else if (service === '会员服务') {
       navigate('/');
     }
   };
@@ -165,7 +166,7 @@ const PersonalCenter: React.FC<PersonalCenterProps> = () => {
   };
 
   const handleNavigateToBooking = () => {
-    navigate('/');
+    navigate('/tickets');
   };
 
   const handleRefund = (orderId: string) => {

@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
-import { useLocation } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { TrainList } from '../components/TrainList'
 import type { TrainListItem } from '../api/trains'
 import { TrainFilterBar } from '../components/TrainFilterBar'
@@ -19,6 +19,7 @@ const ALL_SEAT_TYPES = ['商务座', '一等座', '二等座', '软卧', '硬卧
 
 export const TrainListPage: React.FC<TrainListPageProps> = ({ isLoading, error }) => {
   const location = useLocation()
+  const navigate = useNavigate()
   const todayStr = useMemo(() => {
     const t = new Date()
     const y = t.getFullYear()
@@ -127,6 +128,47 @@ export const TrainListPage: React.FC<TrainListPageProps> = ({ isLoading, error }
   useEffect(() => {
     setSelectedToStations(undefined)
   }, [to])
+
+  const handleReserve = useCallback((item: TrainListItem) => {
+    const token = localStorage.getItem('token') || localStorage.getItem('authToken')
+    if (!token) {
+      navigate('/login')
+      return
+    }
+
+    // Map TrainListItem to OrderFillPage's expected format
+    const seats = Object.entries(item.seatAvailability || {}).map(([type, info]) => {
+      // Mock prices based on seat type
+      let price = 100
+      if (type === '商务座') price = 500
+      if (type === '一等座') price = 300
+      if (type === '二等座') price = 150
+      if (type === '软卧') price = 400
+      if (type === '硬卧') price = 250
+      if (type === '硬座') price = 80
+      if (type === '无座') price = 80
+
+      return {
+        type,
+        count: info.remaining === null ? '有' : String(info.remaining),
+        price: price
+      }
+    }).filter(s => s.count !== '0' && s.count !== '—' && s.count !== 'null' && (item.seatAvailability?.[s.type]?.hasSeatType !== false))
+
+    navigate('/orders/new', {
+      state: {
+        train: {
+          trainNumber: item.trainNumber,
+          date: date,
+          fromStation: item.departureStation,
+          toStation: item.arrivalStation,
+          departureTime: item.departureTime,
+          arrivalTime: item.arrivalTime,
+          seats: seats
+        }
+      }
+    })
+  }, [date, navigate])
 
   const filteredTrainList = useMemo(() => {
     return items.filter(item => {
@@ -313,7 +355,7 @@ export const TrainListPage: React.FC<TrainListPageProps> = ({ isLoading, error }
             <div style={{ padding: 24, textAlign: 'center', color: '#666' }}>暂无车票</div>
           ) : (
             <>
-              <TrainList items={filteredTrainList} sortBy={sortBy} sortOrder={sortOrder} onSortChange={(key) => {
+              <TrainList items={filteredTrainList} sortBy={sortBy} sortOrder={sortOrder} onReserve={handleReserve} onSortChange={(key) => {
             const newOrder = sortBy === key && sortOrder === 'asc' ? 'desc' : 'asc'
             setSortBy(key)
             setSortOrder(newOrder)

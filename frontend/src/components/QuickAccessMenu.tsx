@@ -16,7 +16,7 @@ const QuickAccessMenu = () => {
   ];
 
   return (
-    <div className="quick-access-menu">
+    <div className="quick-access-menu" data-testid="quick-access">
       {menuItems.map((item, index) => (
         <button
           key={index}

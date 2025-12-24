@@ -5,11 +5,12 @@ import { useNavigate } from 'react-router-dom'
 type Props = {
   items: TrainItem[]
   onSortChange?: (key: 'trainNumber' | 'departureTime' | 'arrivalTime' | 'duration') => void
+  onReserve?: (item: TrainItem) => void
   sortBy?: 'trainNumber' | 'departureTime' | 'arrivalTime' | 'duration'
   sortOrder?: 'asc' | 'desc'
 }
 
-export const TrainList: React.FC<Props> = ({ items, onSortChange, sortBy, sortOrder }) => {
+export const TrainList: React.FC<Props> = ({ items, onSortChange, onReserve, sortBy, sortOrder }) => {
   const isMobile = typeof window !== 'undefined' && window.innerWidth <= 576
   const getNavigate = useNavigate
 
@@ -182,15 +183,7 @@ export const TrainList: React.FC<Props> = ({ items, onSortChange, sortBy, sortOr
             ))}
             {!isMobile && (
               <div className="cell cell-remark col-action">
-                <button className="reserve-btn" aria-label="预订" onClick={() => {
-                  try {
-                    const navigate = getNavigate()
-                    navigate('/login')
-                    navigate('/orders/new')
-                  } catch (e) {
-                    
-                  }
-                }}>预订</button>
+                <button className="reserve-btn" aria-label="预订" onClick={() => onReserve?.(item)}>预订</button>
               </div>
             )}
           </div>

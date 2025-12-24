@@ -1,103 +1,47 @@
 const orderService = require('../../src/services/orderService');
-const { run, waitForInit } = require('../../src/db/personal_database');
-
-beforeAll(async () => {
-  await waitForInit();
-});
+const { initializeDatabase, run } = require('../../src/db/personal_database');
 
 describe('Order Service', () => {
-  beforeEach(async () => {
-    // 清理测试订单
-    try {
-      await run('DELETE FROM orders WHERE id IN (?, ?)', ['test-order-id', 'test-order-id-2']);
-    } catch (err) {
-      // 忽略错误
-    }
-    
-    // 插入测试订单（未出行状态，可以退票）
-    await run(`
-      INSERT INTO orders (id, user_id, order_number, train_number, passenger_name, 
-                         booking_date, travel_date, price, status)
-      VALUES ('test-order-id', 'test-user-id', 'TEST123', 'G108', '张三',
-              '2025-01-01', '2025-01-15', 100.0, '未出行')
-    `);
+  beforeAll(async () => {
+    await initializeDatabase();
+    await run("INSERT OR REPLACE INTO train_tickets (train_no, date, ed_num) VALUES ('G108', '2025-12-24', '100')");
+    await run("INSERT OR REPLACE INTO orders (id, user_id, order_number, train_number, price, status, train_info, passenger_info) VALUES ('order-123', 'user-123', 'ORD123', 'G108', 100, '待确认', '{\"fromStationId\":\"SHH\",\"toStationId\":\"BJN\",\"travelDate\":\"2025-12-24\"}', '[{\"seatType\":\"二等座\"}]')");
   });
 
-  afterEach(async () => {
-    // 清理测试订单
-    try {
-      await run('DELETE FROM orders WHERE id IN (?, ?)', ['test-order-id', 'test-order-id-2']);
-    } catch (err) {
-      // 忽略错误
-    }
-  });
-
-  test('Given 有效的用户ID和订单状态 When 调用getOrdersByStatus Then 应返回对应状态的订单列表', async () => {
-    // Arrange
-    const userId = 'test-user-id';
-    const status = '未完成';
-
-    // Act
-    const result = await orderService.getOrdersByStatus(userId, status);
-
-    // Assert
-    expect(Array.isArray(result)).toBe(true);
-    // TODO: 验证返回的订单状态都为指定状态
-  });
-
-  test('Given 有效的查询参数 When 调用getOrdersByDateRange Then 应返回筛选后的订单列表', async () => {
-    // Arrange
-    const userId = 'test-user-id';
-    const queryParams = {
-      status: '未出行',
-      queryType: '按订票日期',
-      startDate: '2025-01-01',
-      endDate: '2025-01-31',
-      orderNumber: 'TEST123',
-      trainNumber: 'G108',
-      passengerName: '张三'
+  test('Given 合法订单数据 When 调用 createOrder Then 应该创建订单并返回订单 ID', async () => {
+    const userId = 'user-123';
+    const orderData = {
+      trainId: 'G108',
+      fromStationId: 'SHH',
+      toStationId: 'BJN',
+      date: '2025-12-24',
+      passengers: [{ passengerId: 'p1', seatType: '二等座', ticketType: '成人票', price: 100 }]
     };
 
-    // Act
-    const result = await orderService.getOrdersByDateRange(userId, queryParams);
-
-    // Assert
-    expect(Array.isArray(result)).toBe(true);
-    // TODO: 验证返回的订单符合查询条件
+    const result = await orderService.createOrder(userId, orderData);
+    expect(result).toHaveProperty('id');
   });
 
-  test('Given 可以退票的订单ID When 调用processRefund Then 应成功处理退票', async () => {
-    // Arrange
-    const orderId = 'test-order-id';
-    const refundData = { refundFee: 10.0 };
-
-    // Act
-    const result = await orderService.processRefund(orderId, refundData);
-
-    // Assert
-    expect(result).toHaveProperty('orderId');
-    expect(result).toHaveProperty('refundFee');
-    expect(result).toHaveProperty('refundDate');
-    expect(result.status).toBe('已退票');
+  test('Given 有效订单 ID When 调用 getOrderDetails Then 应该返回包含车次和乘车人的详情', async () => {
+    const orderId = 'order-123';
+    const details = await orderService.getOrderDetails(orderId);
+    
+    expect(details).toHaveProperty('id', orderId);
+    expect(details).toHaveProperty('trainNumber');
+    expect(details.passengerInfo).toBeInstanceOf(Array);
   });
 
-  test('Given 不能退票的订单ID When 调用processRefund Then 应抛出错误', async () => {
-    // Arrange
-    const invalidOrderId = 'invalid-order-id';
-
-    // Act & Assert
-    await expect(orderService.processRefund(invalidOrderId)).rejects.toThrow();                                                       
+  test('Given 待确认订单 When 调用 confirmOrder Then 订单状态应更新为待支付', async () => {
+    const orderId = 'order-123';
+    const result = await orderService.confirmOrder(orderId);
+    expect(result).toBe(true);
   });
 
-  test('Given 有效的订单ID和新状态 When 调用updateOrderStatus Then 应成功更新状态', async () => {
-    // Arrange
-    const orderId = 'test-order-id';
-    const newStatus = '历史';
-
-    // Act
-    const result = await orderService.updateOrderStatus(orderId, newStatus);    
-
-    // Assert
+  test('Given 待确认订单 When 调用 cancelOrder Then 订单状态应更新为已取消并释放席位', async () => {
+    // 重新插入一个待确认订单用于取消测试
+    await run("INSERT OR REPLACE INTO orders (id, user_id, order_number, train_number, price, status, train_info, passenger_info) VALUES ('order-cancel', 'user-123', 'ORD-CANCEL', 'G108', 100, '待确认', '{\"fromStationId\":\"SHH\",\"toStationId\":\"BJN\",\"travelDate\":\"2025-12-24\"}', '[{\"seatType\":\"二等座\"}]')");
+    
+    const result = await orderService.cancelOrder('order-cancel');
     expect(result).toBe(true);
   });
 });

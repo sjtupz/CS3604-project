@@ -516,3 +516,128 @@
   changeLog:
     - date: "2025-12-07"
       description: "新增以满足分页交互。"
+
+- type: Frontend
+  id: UI-OrderFillPage
+  description: 订单填写页，包含车次信息展示、乘客选择与车票信息确认。
+  properties: []
+  state:
+    - trainDetails
+    - passengers
+    - selectedPassengers
+    - ticketRows
+    - isLoading
+    - error
+  dependencies:
+    - UI-TopNavigationBar
+    - UI-QuickAccessMenu
+    - UI-TrainInfoBox
+    - UI-PassengerSelection
+    - UI-TicketTable
+    - UI-OrderSubmitActions
+    - API-GET-Passengers
+    - API-POST-Orders
+  acceptanceCriteria:
+    - 页面布局固定，背景为白色，分上中下三部分。
+    - 购票界面包含“列车信息”和“乘客信息”窗口。
+    - 自动加载当前用户的乘车人列表。
+    - 点击“提交订单”时进行校验，若未选乘车人弹出提示。
+  changeLog:
+    - date: "2025-12-24"
+      description: "依据订单填写页需求新增。"
+
+- type: Frontend
+  id: UI-TrainInfoBox
+  description: 展示购票车次的详细信息。
+  properties:
+    - name: train
+      type: object
+      description: "车次详情对象。"
+  state: []
+  dependencies: []
+  acceptanceCriteria:
+    - 显示车次日期、列车号、出发站、到达站、时间。
+    - 换行显示各席别的剩余票数与价格。
+  changeLog:
+    - date: "2025-12-24"
+      description: "依据订单填写页列车信息窗口需求新增。"
+
+- type: Frontend
+  id: UI-PassengerSelection
+  description: 乘车人勾选区域。
+  properties:
+    - name: passengers
+      type: array
+      description: "可选乘车人列表。"
+    - name: onToggle
+      type: function
+      description: "勾选/取消勾选回调。"
+  state: []
+  dependencies: []
+  acceptanceCriteria:
+    - 列出所有乘车人姓名及勾选框。
+    - 勾选时在车票信息区域新增一行；取消勾选时删除对应行。
+  changeLog:
+    - date: "2025-12-24"
+      description: "依据订单填写页乘车人信息区域需求新增。"
+
+- type: Frontend
+  id: UI-TicketTable
+  description: 车票信息输入与展示表格。
+  properties:
+    - name: rows
+      type: array
+      description: "已选乘车人的车票行数据。"
+  state: []
+  dependencies: []
+  acceptanceCriteria:
+    - 每行包含：票种、席别、姓名、证件类型、证件号码。
+    - 姓名、证件类型和号码由所选乘车人自动填充，证件号码需脱敏展示。
+    - 席别默认为二等座（或最便宜席别），售罄席位不可选。
+  changeLog:
+    - date: "2025-12-24"
+      description: "依据订单填写页车票信息区域需求新增。"
+
+- type: Frontend
+  id: UI-OrderSubmitActions
+  description: 订单填写页底部的操作按钮。
+  properties:
+    - name: onBack
+      type: function
+      description: "返回上一步回调。"
+    - name: onSubmit
+      type: function
+      description: "提交订单回调。"
+  state: []
+  dependencies: []
+  acceptanceCriteria:
+    - 包含“上一步”和“提交订单”按钮。
+    - “提交订单”在提交中应禁用。
+  changeLog:
+    - date: "2025-12-24"
+      description: "依据订单填写页选项按钮需求新增。"
+
+- type: Frontend
+  id: UI-OrderConfirmModal
+  description: 确认订单弹窗，包含订单详情确认与支付/取消操作。
+  properties:
+    - name: orderId
+      type: string
+      description: "已提交的订单ID。"
+    - name: onClose
+      type: function
+      description: "返回修改回调。"
+  state:
+    - orderDetails
+    - timeLeft
+  dependencies:
+    - API-GET-Order-Details
+    - API-POST-Order-Confirm
+    - API-POST-Order-Cancel
+  acceptanceCriteria:
+    - 弹出展示订单详情，包含20分钟倒计时。
+    - 点击“网上支付”跳转至支付页面；点击“取消订单”释放席位。
+    - 点击“返回修改”关闭弹窗。
+  changeLog:
+    - date: "2025-12-24"
+      description: "依据确认订单页面需求新增。"

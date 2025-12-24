@@ -1,60 +1,100 @@
 // 实现订单控制器
 const orderService = require('../services/orderService');
 
-// 获取订单列表
-const getOrders = async (req, res) => {
+/**
+ * 提交订单请求 (API-POST-Orders)
+ */
+const createOrder = async (req, res) => {
   try {
-    // 从认证中间件获取用户ID
     const userId = req.user?.id || req.user?.userId;
-    
     if (!userId) {
-      return res.status(401).json({ error: 'Unauthorized. User not logged in.' });
+      return res.status(401).json({ code: 401, message: '请先登录' });
     }
-    
-    const queryParams = req.query;
-    const orders = await orderService.getOrders(userId, queryParams);
 
-    res.status(200).json({ orders });
+    const orderData = req.body;
+    const result = await orderService.createOrder(userId, orderData);
+
+    res.status(201).json({
+      code: 201,
+      data: {
+        orderId: result.id,
+        orderNumber: result.orderNumber,
+        expireAt: result.expireAt
+      }
+    });
   } catch (error) {
-    console.error('Error getting orders:', error);
-    res.status(400).json({ error: 'Invalid query parameters.' });
+    console.error('Error in createOrder:', error);
+    const statusCode = error.code ? (error.code.toString().startsWith('4') ? 400 : 500) : 500;
+    res.status(statusCode).json({
+      code: error.code || 50009,
+      message: error.message || '网络忙，请稍后再试'
+    });
   }
 };
 
-// 处理退票申请
-const processRefund = async (req, res) => {
+/**
+ * 获取订单详情 (API-GET-Order-Details)
+ */
+const getOrderDetails = async (req, res) => {
   try {
-    // 从认证中间件获取用户ID
-    const userId = req.user?.id || req.user?.userId;
-    
-    if (!userId) {
-      return res.status(401).json({ error: 'Unauthorized. User not logged in.' });
-    }
-    
     const { orderId } = req.params;
-    const refundData = req.body; // { refundFee }
-
-    const refundResult = await orderService.processRefund(orderId, refundData); 
-
+    const order = await orderService.getOrderDetails(orderId);
     res.status(200).json({
-      orderId: refundResult.orderId,
-      refundFee: refundResult.refundFee || 0,
-      refundDate: refundResult.refundDate,
-      message: 'Refund processed successfully.'
+      code: 200,
+      data: order
     });
   } catch (error) {
-    console.error('Error processing refund:', error);
-    if (error.message === 'Order not found') {
-      res.status(404).json({ error: 'Order not found.' });
-    } else if (error.message === 'Order cannot be refunded') {
-      res.status(400).json({ error: 'Order cannot be refunded.' });
-    } else {
-      res.status(500).json({ error: 'Internal server error.' });
-    }
+    console.error('Error in getOrderDetails:', error);
+    res.status(error.code || 404).json({
+      code: error.code || 404,
+      message: error.message || '订单未找到'
+    });
+  }
+};
+
+/**
+ * 确认订单 (API-POST-Order-Confirm)
+ */
+const confirmOrder = async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    await orderService.confirmOrder(orderId);
+    res.status(200).json({
+      code: 200,
+      message: '订单已确认，请尽快支付'
+    });
+  } catch (error) {
+    console.error('Error in confirmOrder:', error);
+    res.status(400).json({
+      code: 400,
+      message: error.message
+    });
+  }
+};
+
+/**
+ * 取消订单 (API-POST-Order-Cancel)
+ */
+const cancelOrder = async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    await orderService.cancelOrder(orderId);
+    res.status(200).json({
+      code: 200,
+      message: '订单已取消'
+    });
+  } catch (error) {
+    console.error('Error in cancelOrder:', error);
+    res.status(400).json({
+      code: 400,
+      message: error.message
+    });
   }
 };
 
 module.exports = {
-  getOrders,
-  processRefund
+  createOrder,
+  getOrderDetails,
+  confirmOrder,
+  cancelOrder
 };
