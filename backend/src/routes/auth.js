@@ -30,7 +30,11 @@ router.post('/register', async (req, res) => {
 
     res.status(201).json({ message: 'Registration successful, please proceed to login.' });
   } catch (error) {
-    res.status(409).json({ error: error.message });
+    if (error.message.includes('不合法') || error.message.includes('invalid')) {
+      res.status(400).json({ error: error.message });
+    } else {
+      res.status(409).json({ error: error.message });
+    }
   }
 });
 

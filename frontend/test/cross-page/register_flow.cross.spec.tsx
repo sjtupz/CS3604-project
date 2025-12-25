@@ -50,7 +50,7 @@ describe('E2E Scenario: 用户注册跨页流程', () => {
     await user.type(screen.getByLabelText('登录密码'), 'Pass_w1')
     await user.type(screen.getByLabelText('确认密码'), 'Pass_w1')
     await user.type(screen.getByLabelText('姓名'), '张三')
-    await user.type(screen.getByLabelText('证件号码'), '123456789012345678')
+    await user.type(screen.getByLabelText('证件号码'), '110101199003074477')
     await user.type(screen.getByLabelText('手机号码'), '13800138001')
     await user.click(screen.getByRole('checkbox', { name: /我已同意/ }))
 

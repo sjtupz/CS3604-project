@@ -24,27 +24,18 @@ export function RegisterVerificationPage() {
   const identityNumber = searchParams.get('identityNumber') || (savedPayload?.identityNumber ?? '');
   const passengerType = searchParams.get('passengerType') || (savedPayload?.passengerType ?? '');
   const email = searchParams.get('email') || (savedPayload?.email ?? '');
-  const didSendRef = useRef(false);
+
 
   useEffect(() => {
     setMessage(MSG_GET_CODE_SUCCESS);
-    if (didSendRef.current) {
-      return;
-    }
-    didSendRef.current = true;
-    if (inRouter && phone) {
-      sendRegisterCode(phone).then((res) => {
-        setMessage(res.message);
-      }).catch(() => {
-        // 保持默认提示
-      });
-    }
+    
+    // Cleanup localStorage on unmount
     return () => {
       if (typeof window !== 'undefined') {
         try { window.localStorage.removeItem('register_payload'); } catch {}
       }
     };
-  }, [inRouter, phone]);
+  }, []);
 
   const handleResend = () => {
     setError('');
@@ -81,18 +72,8 @@ export function RegisterVerificationPage() {
         try { window.localStorage.removeItem('register_payload'); } catch {}
       }
       setSuccess(true);
-      try {
-        await finalizeRegister({
-          username,
-          password,
-          identityType,
-          fullName,
-          identityNumber,
-          passengerType,
-          email,
-          phoneNumber: phone,
-        });
-      } catch { /* ignore finalize error to not block navigation */ }
+      // verifyRegister already completes the registration process
+      // No need to call finalizeRegister, which would cause a 409 Conflict
     } catch (e) {
       const err = e as { response?: { status?: number; data?: { error?: string } } };
       const status = err.response?.status;

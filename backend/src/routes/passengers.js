@@ -47,13 +47,13 @@ router.post('/', auth, async (req, res) => {
     })
   } catch (error) {
     console.error('Create passenger error:', error)
-    if (error.message.includes('请输入')) {
-       return res.status(400).json({ code: 40004, message: error.message })
+    if (error.message.includes('请输入') || error.message.includes('不合法')) {
+       return res.status(400).json({ error: error.message, code: 40004, message: error.message })
     }
     if (error.message.includes('exists')) {
-       return res.status(409).json({ code: 40901, message: '乘车人已存在' })
+       return res.status(409).json({ error: '乘车人已存在', code: 40901, message: '乘车人已存在' })
     }
-    res.status(500).json({ code: 50007, message: '添加乘车人失败' })
+    res.status(500).json({ error: '添加乘车人失败', code: 50007, message: '添加乘车人失败' })
   }
 })
 

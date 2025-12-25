@@ -1,13 +1,21 @@
 // backend/src/services/authService.js
 const userDb = require('../db/userDb');
 const bcrypt = require('bcrypt');
+const { isValidIdentityNumber } = require('../utils/validators');
 
 const registerUser = async (userData) => {
-  const { username, password, identityNumber } = userData;
+  const { username, password, identityNumber, identityType } = userData;
   const emailRaw = userData.email;
   const phoneRaw = userData.phoneNumber;
   const email = emailRaw && String(emailRaw).trim() ? String(emailRaw).trim() : null;
   const phoneNumber = phoneRaw && String(phoneRaw).trim() ? String(phoneRaw).trim() : null;
+
+  // 校验身份证号码合法性
+  if (identityType === 'ID_CARD' || identityType === '居民身份证') {
+    if (!isValidIdentityNumber(identityNumber)) {
+      throw new Error('身份证号码不合法');
+    }
+  }
 
   // 检查用户名是否已存在
   const existingUserByUsername = await userDb.findUserByUsername(username);

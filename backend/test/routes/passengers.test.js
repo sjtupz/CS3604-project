@@ -1,6 +1,7 @@
 const request = require('supertest');
 const app = require('../../src/app');
 const { run, waitForInit } = require('../../src/db/personal_database');
+const userDb = require('../../src/db/userDb');
 
 describe('API-Passengers Management', () => {
   const userToken = 'test-token';
@@ -8,6 +9,12 @@ describe('API-Passengers Management', () => {
 
   beforeAll(async () => {
     await waitForInit();
+  });
+
+  beforeEach(async () => {
+    // Clean up
+    await run('DELETE FROM passengers');
+    await run('DELETE FROM users');
   });
 
   describe('GET /api/passengers', () => {
@@ -29,11 +36,101 @@ describe('API-Passengers Management', () => {
   });
 
   describe('POST /api/passengers', () => {
+    test('Given passenger name matches an existing user but ID number does not match When adding passenger Then returns 400', async () => {
+      // Create existing user
+      await userDb.createUser({
+        username: 'existing_user',
+        password: 'password123',
+        fullName: 'Zhang San',
+        identityType: 'ID_CARD',
+        identityNumber: '110101199003074477',
+        passengerType: 'ADULT'
+      });
+
+      const newPassenger = {
+        name: 'Zhang San', // Matches fullName
+        idType: '居民身份证',
+        idNumber: '110101199003074478', // Mismatch
+        phone: '13800138000',
+        type: '成人'
+      };
+
+      const res = await request(app)
+        .post('/api/passengers')
+        .set('Authorization', userToken)
+        .send(newPassenger);
+
+      expect(res.statusCode).toBe(400);
+      expect(res.body.error).toBe('请输入正确的证件号码');
+    });
+
+    test('Given passenger name matches an existing user and ID number matches When adding passenger Then returns 201', async () => {
+      // Create existing user
+      await userDb.createUser({
+        username: 'existing_user_match',
+        password: 'password123',
+        fullName: 'Li Si',
+        identityType: 'ID_CARD',
+        identityNumber: '110101199003074477',
+        passengerType: 'ADULT'
+      });
+
+      const newPassenger = {
+        name: 'Li Si',
+        idType: '居民身份证',
+        idNumber: '110101199003074477', // Match
+        phone: '13800138000',
+        type: '成人'
+      };
+
+      const res = await request(app)
+        .post('/api/passengers')
+        .set('Authorization', userToken)
+        .send(newPassenger);
+
+      expect(res.statusCode).toBe(201);
+    });
+
+    test('Given passenger name does not match any user and ID number is invalid When adding passenger Then returns 400', async () => {
+      const newPassenger = {
+        name: 'Wang Wu', // No such user
+        idType: '居民身份证',
+        idNumber: '110101199003074478', // Invalid checksum (should be 7)
+        phone: '13800138000',
+        type: '成人'
+      };
+
+      const res = await request(app)
+        .post('/api/passengers')
+        .set('Authorization', userToken)
+        .send(newPassenger);
+
+      expect(res.statusCode).toBe(400);
+      expect(res.body.error).toContain('证件号码不合法');
+    });
+
+    test('Given passenger name does not match any user and ID number is valid When adding passenger Then returns 201', async () => {
+      const newPassenger = {
+        name: 'Zhao Liu',
+        idType: '居民身份证',
+        idNumber: '110101199003074477', // Valid
+        phone: '13800138000',
+        type: '成人'
+      };
+
+      const res = await request(app)
+        .post('/api/passengers')
+        .set('Authorization', userToken)
+        .send(newPassenger);
+
+      expect(res.statusCode).toBe(201);
+    });
+
     test('Given valid passenger data When adding passenger Then returns 201 and new id', async () => {
       const newPassenger = {
         name: 'Test Passenger',
         idType: '居民身份证',
-        idNumber: '110101199001011234',
+        idNumber: '110101199003074477',
         phone: '13800138000',
         type: '成人'
       };
@@ -74,7 +171,7 @@ describe('API-Passengers Management', () => {
       const newPassenger = {
         name: 'To Be Updated',
         idType: '居民身份证',
-        idNumber: '110101199001015678',
+        idNumber: '110101199003074477',
         phone: '13800138000',
         type: '成人'
       };

@@ -37,8 +37,9 @@ const createPassenger = async (req, res) => {
     res.status(201).json(result);
   } catch (error) {
     console.error('Error creating passenger:', error);
-    if (error.message.includes('required') || error.message.includes('format') || error.message.includes('请输入')) {
-      res.status(400).json({ error: 'Invalid input format or validation failed.' });
+    if (error.message.includes('required') || error.message.includes('format') || error.message.includes('请输入') || error.message.includes('证件号码不合法')) {
+      console.log('Sending 400 error:', error.message);
+      res.status(400).json({ error: error.message });
     } else if (error.message.includes('exists') || error.message.includes('already')) {
       res.status(409).json({ error: 'Passenger already exists.' });
     } else {

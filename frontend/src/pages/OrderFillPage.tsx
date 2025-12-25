@@ -49,7 +49,8 @@ const OrderFillPage: React.FC = () => {
 
   const [allPassengers, setAllPassengers] = useState<Passenger[]>([]);
   const [selectedPassengers, setSelectedPassengers] = useState<Passenger[]>([]);
-  const [selectedSeatType, setSelectedSeatType] = useState(trainData.seats?.[0]?.type || '二等座');
+  const defaultSeatType = trainData.seats?.[0]?.type || '二等座';
+  const [passengerSeatTypes, setPassengerSeatTypes] = useState<Record<string, string>>({});
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [orderId, setOrderId] = useState('');
   const [alertMessage, setAlertMessage] = useState('');
@@ -68,14 +69,22 @@ const OrderFillPage: React.FC = () => {
   }, []);
 
   const handlePassengerToggle = (passenger: Passenger) => {
-    setSelectedPassengers(prev => {
-      const exists = prev.find(p => p.passengerId === passenger.passengerId);
-      if (exists) {
-        return prev.filter(p => p.passengerId !== passenger.passengerId);
-      } else {
-        return [...prev, passenger];
-      }
-    });
+    const isSelected = selectedPassengers.some(p => p.passengerId === passenger.passengerId);
+    
+    if (isSelected) {
+      setSelectedPassengers(prev => prev.filter(p => p.passengerId !== passenger.passengerId));
+      setPassengerSeatTypes(prev => {
+        const next = { ...prev };
+        delete next[passenger.passengerId];
+        return next;
+      });
+    } else {
+      setSelectedPassengers(prev => [...prev, passenger]);
+      setPassengerSeatTypes(prev => ({
+        ...prev,
+        [passenger.passengerId]: defaultSeatType
+      }));
+    }
   };
 
   const handleSubmit = async () => {
@@ -91,13 +100,14 @@ const OrderFillPage: React.FC = () => {
         date: trainData.date,
         fromStationId: trainData.fromStation,
         toStationId: trainData.toStation,
-        seatType: selectedSeatType,
+        seatType: passengerSeatTypes[selectedPassengers[0]?.passengerId] || defaultSeatType,
         passengers: selectedPassengers.map(p => ({
           id: p.passengerId,
           name: p.name,
           idType: p.idType,
           idNumber: p.idNumber,
-          ticketType: '成人票'
+          ticketType: '成人票',
+          seatType: passengerSeatTypes[p.passengerId] || defaultSeatType
         })),
         trainInfo: trainData
       };
@@ -166,8 +176,11 @@ const OrderFillPage: React.FC = () => {
                             </td>
                             <td style={{ padding: '10px' }}>
                               <select 
-                                value={selectedSeatType} 
-                                onChange={(e) => setSelectedSeatType(e.target.value)}
+                                value={passengerSeatTypes[p.passengerId] || defaultSeatType} 
+                                onChange={(e) => setPassengerSeatTypes(prev => ({
+                                  ...prev,
+                                  [p.passengerId]: e.target.value
+                                }))}
                                 style={{ padding: '5px' }}
                               >
                                 {trainData.seats.map((s) => (

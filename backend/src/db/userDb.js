@@ -1,5 +1,5 @@
 // backend/src/db/userDb.js
-const { run, get } = require('./personal_database');
+const { run, get, all } = require('./personal_database');
 const { v4: uuidv4 } = require('uuid');
 
 const mapUser = (row) => {
@@ -50,7 +50,7 @@ const findUserByIdentityNumber = async (identityNumber) => {
 
 const findUserByEmail = async (email) => {
   try {
-    const row = await get('SELECT * FROM users WHERE email = ?', [email]);
+    const row = await get('SELECT * FROM users WHERE email = ? COLLATE NOCASE', [email]);
     return mapUser(row);
   } catch (err) {
     throw err;
@@ -61,6 +61,15 @@ const findUserByPhoneNumber = async (phoneNumber) => {
   try {
     const row = await get('SELECT * FROM users WHERE phone_number = ?', [phoneNumber]);
     return mapUser(row);
+  } catch (err) {
+    throw err;
+  }
+};
+
+const findUsersByRealName = async (realName) => {
+  try {
+    const rows = await all('SELECT * FROM users WHERE real_name = ?', [realName]);
+    return rows.map(mapUser);
   } catch (err) {
     throw err;
   }
@@ -123,6 +132,7 @@ module.exports = {
   findUserByIdentityNumber,
   findUserByEmail,
   findUserByPhoneNumber,
+  findUsersByRealName,
   createUser,
   updateUserPasswordByPhone,
 };

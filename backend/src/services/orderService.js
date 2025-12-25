@@ -115,9 +115,34 @@ async function cancelOrder(orderId) {
   return success;
 }
 
+/**
+ * 查询订单列表
+ */
+async function listOrders(userId, statusType, searchQuery) {
+  let statusList = [];
+  
+  // Status mapping logic
+  if (statusType !== undefined && statusType !== null && statusType !== '') {
+    const type = parseInt(statusType);
+    if (type === 0) {
+      // 未完成
+      statusList = ['未支付', '待确认', '待支付'];
+    } else if (type === 1) {
+      // 未出行
+      statusList = ['已支付', '未出行'];
+    } else if (type === 2) {
+      // 历史订单
+      statusList = ['已完成', '已退票', '已取消', '历史订单'];
+    }
+  }
+  
+  return await dbOrders.dbGetOrdersByUser(userId, statusList, searchQuery);
+}
+
 module.exports = {
   createOrder,
   getOrderDetails,
   confirmOrder,
-  cancelOrder
+  cancelOrder,
+  listOrders
 };

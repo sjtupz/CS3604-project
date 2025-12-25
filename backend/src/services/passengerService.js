@@ -1,5 +1,6 @@
 const dbPassenger = require('../db/passenger')
 const userDb = require('../db/userDb')
+const { isValidIdentityNumber } = require('../utils/validators');
 
 async function getPassengers(userId, queryParams = {}) {
   const { name } = queryParams
@@ -79,9 +80,22 @@ async function createPassenger(userId, data) {
   if (!name) throw new Error('请输入您的姓名！')
   if (!idNumber) throw new Error('请输入证件号码！')
   
-  // Regex for ID Card (simple check for now, can be enhanced)
-  if (idType === '居民身份证' && !/(^\d{15}$)|(^\d{18}$)|(^\d{17}(\d|X|x)$)/.test(idNumber)) {
-    throw new Error('请输入正确的证件号码！')
+  // 1. Check if name exists in registered users
+  const existingUsers = await userDb.findUsersByRealName(name);
+
+  if (existingUsers && existingUsers.length > 0) {
+    // User(s) with this name exist. Check if ID matches any of them.
+    const match = existingUsers.find(u => u.identityNumber === idNumber);
+    if (!match) {
+      // Name exists but ID does not match any registered user with that name
+      throw new Error('请输入正确的证件号码');
+    }
+    // Match found, proceed to create passenger (association)
+  } else {
+    // No user with this name. Validate ID format.
+    if (idType === '居民身份证' && !isValidIdentityNumber(idNumber)) {
+      throw new Error('证件号码不合法');
+    }
   }
 
   return dbPassenger.createPassenger(userId, passengerData)

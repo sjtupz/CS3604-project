@@ -152,10 +152,55 @@ async function dbReleaseSeats(trainId, date, fromStationId, toStationId, seatTyp
   return true; // 如果不是数字（如 "有"），则不需要加回去
 }
 
+/**
+ * 根据用户ID和状态查询订单
+ */
+async function dbGetOrdersByUser(userId, statusList = [], searchQuery = null) {
+  let sql = `
+    SELECT id, user_id as userId, order_number as orderNumber, train_number as trainNumber, 
+           price, status, train_info as trainInfo, passenger_info as passengerInfo, 
+           created_at as createdAt, travel_date as travelDate
+    FROM orders
+    WHERE user_id = ?
+  `;
+  const params = [userId];
+
+  if (statusList && statusList.length > 0) {
+    const placeholders = statusList.map(() => '?').join(',');
+    sql += ` AND status IN (${placeholders})`;
+    params.push(...statusList);
+  }
+
+  if (searchQuery) {
+    sql += ` AND (order_number LIKE ? OR train_number LIKE ? OR passenger_name LIKE ?)`;
+    const likeQuery = `%${searchQuery}%`;
+    params.push(likeQuery, likeQuery, likeQuery);
+  }
+
+  sql += ` ORDER BY created_at DESC`;
+
+  const orders = await query(sql, params);
+  
+  return orders.map(order => {
+    try {
+      if (typeof order.trainInfo === 'string') {
+        order.trainInfo = JSON.parse(order.trainInfo);
+      }
+      if (typeof order.passengerInfo === 'string') {
+        order.passengerInfo = JSON.parse(order.passengerInfo);
+      }
+    } catch (e) {
+      console.error('Error parsing JSON fields in order:', e);
+    }
+    return order;
+  });
+}
+
 module.exports = {
   dbCreateOrder,
   dbGetOrderDetails,
   dbUpdateOrderStatus,
   dbLockSeats,
-  dbReleaseSeats
+  dbReleaseSeats,
+  dbGetOrdersByUser
 };

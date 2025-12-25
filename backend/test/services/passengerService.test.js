@@ -49,14 +49,14 @@ describe('Passenger Service', () => {
     // TODO: 验证返回的乘车人姓名包含指定关键词
   });
 
-  test('Given 有效的乘车人数据 When 调用createPassenger Then 应成功创建乘车人', async () => {
+  test('Given 有效的乘车人数据(非注册用户) When 调用createPassenger Then 应成功创建乘车人', async () => {
     // Arrange
     const userId = 'test-user-id';
     // 使用唯一的身份证号，避免冲突
     const passengerData = {
-      name: '张三',
+      name: '王五', // 使用非注册用户的姓名
       idType: '居民身份证',
-      idNumber: '110101199001011250', // 使用唯一的身份证号
+      idNumber: '110101199001011253', // 使用有效的身份证号 (Checksum verified)
       phone: '13800138000',
       discountType: '成人'
     };
@@ -73,14 +73,54 @@ describe('Passenger Service', () => {
 
     // Assert
     expect(result).toHaveProperty('passengerId');
-    // TODO: 验证数据库中已创建乘车人记录
   });
 
-  test('Given 无效的证件号 When 调用createPassenger Then 应抛出验证错误', async () => {
+  test('Given 已存在的用户姓名和正确的证件号 When 调用createPassenger Then 应成功创建乘车人', async () => {
+    // Arrange
+    const userId = 'test-user-id';
+    const passengerData = {
+      name: '张三', // 已存在的注册用户
+      idType: '居民身份证',
+      idNumber: '110101199001011234', // 正确的身份证号
+      phone: '13800138000',
+      discountType: '成人'
+    };
+
+    // Act
+    const result = await passengerService.createPassenger(userId, passengerData);
+    
+    // 清理
+    try {
+      await run('DELETE FROM passengers WHERE id_number = ?', [passengerData.idNumber]);
+    } catch (err) {
+      // 忽略错误
+    }
+
+    // Assert
+    expect(result).toHaveProperty('passengerId');
+  });
+
+  test('Given 已存在的用户姓名但错误的证件号 When 调用createPassenger Then 应抛出验证错误', async () => {
+    // Arrange
+    const userId = 'test-user-id';
+    const passengerData = {
+      name: '张三', // 已存在的注册用户
+      idType: '居民身份证',
+      idNumber: '110101199001011250', // 错误的身份证号（不匹配注册信息）
+      phone: '13800138000',
+      discountType: '成人'
+    };
+
+    // Act & Assert
+    await expect(passengerService.createPassenger(userId, passengerData))
+      .rejects.toThrow('请输入正确的证件号码');
+  });
+
+  test('Given 无效的证件号(非注册用户) When 调用createPassenger Then 应抛出验证错误', async () => {
     // Arrange
     const userId = 'test-user-id';
     const invalidPassengerData = {
-      name: '张三',
+      name: '赵六', // 非注册用户
       idType: '居民身份证',
       idNumber: '12345', // 无效的身份证号（太短）
       phone: '13800138000',

@@ -92,9 +92,36 @@ const cancelOrder = async (req, res) => {
   }
 };
 
+/**
+ * 获取订单列表 (API-GET-Orders-List)
+ */
+const listOrders = async (req, res) => {
+  try {
+    const userId = req.user?.id || req.user?.userId;
+    if (!userId) {
+      return res.status(401).json({ code: 401, message: '请先登录' });
+    }
+
+    const { status, q } = req.query;
+    const orders = await orderService.listOrders(userId, status, q);
+
+    res.status(200).json({
+      code: 200,
+      data: orders
+    });
+  } catch (error) {
+    console.error('Error in listOrders:', error);
+    res.status(500).json({
+      code: 500,
+      message: error.message || '获取订单列表失败'
+    });
+  }
+};
+
 module.exports = {
   createOrder,
   getOrderDetails,
   confirmOrder,
-  cancelOrder
+  cancelOrder,
+  listOrders
 };

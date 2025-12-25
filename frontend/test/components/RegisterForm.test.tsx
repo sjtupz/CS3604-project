@@ -282,12 +282,48 @@ describe('UI-RegisterForm Scenarios', () => {
     expect((identityNumberInput as HTMLInputElement).value.length).toBe(18);
   });
 
-  // 3.3.6 - 证件号码包含英文字符（除最后一位X）提示错误
+  // 场景 3.3.6 - 证件号码包含英文字符（除最后一位X）提示错误
   test('Given identity number contains letters not as last X When field loses focus Then it shows id number format error', async () => {
     render(<RegisterForm onRegisterSuccess={() => {}} />);
     const identityNumberInput = screen.getByLabelText('证件号码');
 
     fireEvent.change(identityNumberInput, { target: { value: '12345678901234567A' } });
+    fireEvent.blur(identityNumberInput);
+
+    const errorMessage = await screen.findByText('❌请正确输入18位的证件号码！');
+    expect(errorMessage).toBeInTheDocument();
+  });
+
+  // 场景 - 证件号码校验位错误
+  test('Given identity number has invalid checksum When field loses focus Then it shows id number format error', async () => {
+    render(<RegisterForm onRegisterSuccess={() => {}} />);
+    const identityNumberInput = screen.getByLabelText('证件号码');
+
+    fireEvent.change(identityNumberInput, { target: { value: '110101199003074478' } }); // Checksum should be 7
+    fireEvent.blur(identityNumberInput);
+
+    const errorMessage = await screen.findByText('❌请正确输入18位的证件号码！');
+    expect(errorMessage).toBeInTheDocument();
+  });
+
+  // 场景 - 证件号码日期错误
+  test('Given identity number has invalid date When field loses focus Then it shows id number format error', async () => {
+    render(<RegisterForm onRegisterSuccess={() => {}} />);
+    const identityNumberInput = screen.getByLabelText('证件号码');
+
+    fireEvent.change(identityNumberInput, { target: { value: '110101202302304477' } }); // Feb 30th
+    fireEvent.blur(identityNumberInput);
+
+    const errorMessage = await screen.findByText('❌请正确输入18位的证件号码！');
+    expect(errorMessage).toBeInTheDocument();
+  });
+
+  // 场景 - 证件号码省份错误
+  test('Given identity number has invalid province code When field loses focus Then it shows id number format error', async () => {
+    render(<RegisterForm onRegisterSuccess={() => {}} />);
+    const identityNumberInput = screen.getByLabelText('证件号码');
+
+    fireEvent.change(identityNumberInput, { target: { value: '990101199003074477' } }); // 99 Invalid
     fireEvent.blur(identityNumberInput);
 
     const errorMessage = await screen.findByText('❌请正确输入18位的证件号码！');
@@ -358,7 +394,7 @@ describe('UI-RegisterForm Scenarios', () => {
     fireEvent.change(screen.getByLabelText('登录密码'), { target: { value: 'password123' } });
     fireEvent.change(screen.getByLabelText('确认密码'), { target: { value: 'password123' } });
     fireEvent.change(screen.getByLabelText('姓名'), { target: { value: '张三' } });
-    fireEvent.change(screen.getByLabelText('证件号码'), { target: { value: '123456789012345678' } });
+    fireEvent.change(screen.getByLabelText('证件号码'), { target: { value: '110101199003074477' } });
     fireEvent.change(screen.getByLabelText('旅客类型'), { target: { value: '成人' } });
     fireEvent.change(screen.getByLabelText('证件类型'), { target: { value: '居民身份证' } });
     fireEvent.change(screen.getByLabelText('手机号码'), { target: { value: '13800138000' } });
@@ -378,7 +414,7 @@ describe('UI-RegisterForm Scenarios', () => {
     fireEvent.change(screen.getByLabelText('登录密码'), { target: { value: 'password123' } });
     fireEvent.change(screen.getByLabelText('确认密码'), { target: { value: 'password123' } });
     fireEvent.change(screen.getByLabelText('姓名'), { target: { value: '张三' } });
-    fireEvent.change(screen.getByLabelText('证件号码'), { target: { value: '123456789012345678' } });
+    fireEvent.change(screen.getByLabelText('证件号码'), { target: { value: '110101199003074477' } });
     fireEvent.change(screen.getByLabelText('旅客类型'), { target: { value: '成人' } });
     fireEvent.change(screen.getByLabelText('证件类型'), { target: { value: '居民身份证' } });
     fireEvent.change(screen.getByLabelText('手机号码'), { target: { value: '13800138000' } });
@@ -399,7 +435,7 @@ describe('UI-RegisterForm Scenarios', () => {
     fireEvent.change(screen.getByLabelText('登录密码'), { target: { value: 'password123' } });
     fireEvent.change(screen.getByLabelText('确认密码'), { target: { value: 'password123' } });
     fireEvent.change(screen.getByLabelText('姓名'), { target: { value: '张三' } });
-    fireEvent.change(screen.getByLabelText('证件号码'), { target: { value: '123456789012345678' } });
+    fireEvent.change(screen.getByLabelText('证件号码'), { target: { value: '110101199003074477' } });
     fireEvent.change(screen.getByLabelText('旅客类型'), { target: { value: '成人' } });
     fireEvent.change(screen.getByLabelText('证件类型'), { target: { value: '居民身份证' } });
     fireEvent.change(screen.getByLabelText('手机号码'), { target: { value: '13800138000' } });

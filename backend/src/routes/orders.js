@@ -3,6 +3,10 @@ const router = express.Router();
 const orderController = require('../controllers/orderController');
 const auth = require('../middleware/auth');
 
+// GET /api/orders
+// 获取订单列表，支持状态筛选和关键词搜索
+router.get('/', auth, orderController.listOrders);
+
 // POST /api/orders
 // 提交订单请求，锁定席位并创建订单记录。
 router.post('/', auth, orderController.createOrder);

@@ -404,6 +404,7 @@ const close = () => {
 module.exports = {
   getDb,
   query,
+  all: query,
   get,
   run,
   waitForInit: () => {

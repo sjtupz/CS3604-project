@@ -4,16 +4,18 @@ import PassengerList from '../../src/components/PassengerList';
 import '@testing-library/jest-dom';
 import * as api from '../../src/api/passengers';
 import { vi } from 'vitest';
+import * as userApi from '../../src/api/personal_user';
 
 // Mock the API module
 vi.mock('../../src/api/passengers');
+vi.mock('../../src/api/personal_user');
 
 const mockPassengers = [
   {
     passengerId: 'p1',
     name: '张三',
     idType: '居民身份证',
-    idNumber: '110101199001011234',
+    idNumber: '110101199003074477',
     phone: '13800138000',
     verificationStatus: '已通过',
     isSelf: true
@@ -32,6 +34,15 @@ const mockPassengers = [
 describe('PassengerList Component', () => {
   beforeEach(() => {
     (api.getPassengers as any).mockResolvedValue(mockPassengers);
+    (userApi.getUserInfo as any).mockResolvedValue({
+      id: 'u1',
+      username: 'testuser',
+      realName: '张三',
+      idType: '居民身份证',
+      idNumber: '110101199003074477',
+      phoneNumber: '13800138000',
+      verificationStatus: '已通过'
+    });
   });
 
   test('5.1.8.6: First row is current user, no delete/edit buttons', async () => {
@@ -77,7 +88,7 @@ describe('PassengerList Component', () => {
     // So 1101 (4 chars) *********** 1234 (4 chars). 
     // Total 18 chars. 4 + 10 stars + 4 = 18? 
     // Let's implement generic masking logic: keep first 4, keep last 4, replace middle with *.
-    expect(screen.getByText('1101**********1234')).toBeInTheDocument();
+    expect(screen.getByText('1101**********4477')).toBeInTheDocument();
 
     // Phone masking: 4th to 7th char.
     // 13800138000 (11 chars)

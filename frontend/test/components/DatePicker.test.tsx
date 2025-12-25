@@ -8,7 +8,7 @@ test('Given the DatePicker is rendered, When a date is selected, Then the onDate
   render(<DatePicker onDateSelect={onDateSelect} />);
 
     const dateInput = screen.getByTestId('date-picker-input');
-  const testDate = '2025-12-25';
+  const testDate = '2025-12-26';
 
   fireEvent.change(dateInput, { target: { value: testDate } });
 
