@@ -281,7 +281,7 @@ const insertTestUser = (database, reject, resolve) => {
     
     if (!row) {
       database.run(`
-        INSERT INTO users (
+        INSERT OR IGNORE INTO users (
           id, username, real_name, country, id_type, id_number,
           verification_status, phone_number, email, phone_verified,
           discount_type, gender

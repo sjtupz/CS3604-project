@@ -5,7 +5,10 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
 const handleVerify = async (payload) => {
-  const { identifier, code, password } = payload || {};
+  const { identifier: idRaw, code: codeRaw, password } = payload || {};
+  const identifier = idRaw ? String(idRaw).trim() : '';
+  const code = codeRaw ? String(codeRaw).trim() : '';
+  
   const makeError = (message, status) => {
     const e = new Error(message);
     e.status = status;
@@ -49,7 +52,7 @@ const handleVerify = async (payload) => {
 
   await invalidateLoginCodeRecord({ identifier });
   
-  const secret = process.env.JWT_SECRET || 'super_secret_jwt_key_123456';
+  const { secret } = require('../config/jwt');
   const token = jwt.sign(
     { id: user.id, username: user.username }, 
     secret, 

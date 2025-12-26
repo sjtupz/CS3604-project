@@ -1,4 +1,5 @@
 const express = require('express');
+require('dotenv').config();
 const { corsMiddleware } = require('./config/cors');
 const { initSchema, getDB } = require('./config/database');
 const { generateMockData } = require('./services/generator');

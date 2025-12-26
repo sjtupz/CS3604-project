@@ -25,7 +25,7 @@ const OrderSubmitActions: React.FC<OrderSubmitActionsProps> = ({ onBack, onSubmi
           fontSize: '16px'
         }}
       >
-        下一步
+        上一页
       </button>
       <button 
         onClick={onSubmit}

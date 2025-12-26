@@ -1,8 +1,7 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Navigate, useInRouterContext } from 'react-router-dom';
 import { useCountdown } from '../hooks/useCountdown';
 import { sendRegisterCode, verifyRegister } from '../api/register';
-import { finalizeRegister } from '../api/user';
 import { REGISTER_CODE_DURATION, MSG_GET_CODE_SUCCESS, MSG_ERROR_EMPTY_CODE, MSG_ERROR_INVALID_CODE, MSG_SUCCESS_REGISTER } from '../constants/registerVerification';
 import './RegisterVerificationPage.css';
 

@@ -175,18 +175,23 @@ export const TrainFilterBar: React.FC<Props> = ({
   }
 
   useEffect(() => {
+    const place = (fromStation || '').trim()
+    if (!place) {
+      setLoadingDep(false)
+      return
+    }
     let mounted = true
     const load = async () => {
       setLoadingDep(true)
       setDepError(null)
       try {
-        const names = await resolveStations(fromStation)
+        const names = await resolveStations(place)
         if (mounted) {
           setDepStations(names)
           if (names.length === 0) {
             // 映射为空且API失败时才显示错误
             try {
-              const list = await getStations(fromStation)
+              const list = await getStations(place)
               setDepStations(Array.from(new Set(list.map((s) => s.name))))
             } catch {
               setDepStations([])
@@ -203,17 +208,22 @@ export const TrainFilterBar: React.FC<Props> = ({
   }, [fromStation, resolveStations])
 
   useEffect(() => {
+    const place = (toStation || '').trim()
+    if (!place) {
+      setLoadingArr(false)
+      return
+    }
     let mounted = true
     const load = async () => {
       setLoadingArr(true)
       setArrError(null)
       try {
-        const names = await resolveStations(toStation)
+        const names = await resolveStations(place)
         if (mounted) {
           setArrStations(names)
           if (names.length === 0) {
             try {
-              const list = await getStations(toStation)
+              const list = await getStations(place)
               setArrStations(Array.from(new Set(list.map((s) => s.name))))
             } catch {
               setArrStations([])

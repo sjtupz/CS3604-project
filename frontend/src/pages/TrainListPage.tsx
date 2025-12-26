@@ -122,11 +122,11 @@ export const TrainListPage: React.FC<TrainListPageProps> = ({ isLoading, error }
   }, [handleQuery, location.search]);
 
   useEffect(() => {
-    setSelectedFromStations(undefined)
+    if (from) setSelectedFromStations(undefined)
   }, [from])
 
   useEffect(() => {
-    setSelectedToStations(undefined)
+    if (to) setSelectedToStations(undefined)
   }, [to])
 
   const handleReserve = useCallback((item: TrainListItem) => {

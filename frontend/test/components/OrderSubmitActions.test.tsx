@@ -4,11 +4,11 @@ import OrderSubmitActions from '../../src/components/OrderSubmitActions';
 import React from 'react';
 
 describe('OrderSubmitActions', () => {
-  test('Given 选项按钮 When 点击“下一步” Then 触发 onBack 回调', () => {
+  test('Given 选项按钮 When 点击“上一页” Then 触发 onBack 回调', () => {
     const onBack = vi.fn();
     render(<OrderSubmitActions onBack={onBack} onSubmit={() => {}} />);
     
-    fireEvent.click(screen.getByText('下一步'));
+    fireEvent.click(screen.getByText('上一页'));
     expect(onBack).toHaveBeenCalled();
   });
 

@@ -4,15 +4,25 @@ const bcrypt = require('bcrypt');
 const { isValidIdentityNumber } = require('../utils/validators');
 
 const registerUser = async (userData) => {
-  const { username, password, identityNumber, identityType } = userData;
+  const usernameRaw = userData.username;
+  const password = userData.password;
+  const idNumRaw = userData.identityNumber || userData.id_number || userData.idNumber;
+  const identityType = userData.identityType || userData.id_type || userData.idType;
+  const fullNameRaw = userData.fullName || userData.real_name || userData.realName;
+  
+  const username = usernameRaw ? String(usernameRaw).trim() : '';
+  const identityNumber = idNumRaw ? String(idNumRaw).trim() : '';
+  const fullName = fullNameRaw ? String(fullNameRaw).trim() : '';
+
   const emailRaw = userData.email;
-  const phoneRaw = userData.phoneNumber;
+  const phoneRaw = userData.phoneNumber || userData.phone_number || userData.phone;
   const email = emailRaw && String(emailRaw).trim() ? String(emailRaw).trim() : null;
   const phoneNumber = phoneRaw && String(phoneRaw).trim() ? String(phoneRaw).trim() : null;
 
   // 校验身份证号码合法性
   if (identityType === 'ID_CARD' || identityType === '居民身份证') {
     if (!isValidIdentityNumber(identityNumber)) {
+      console.warn('Invalid Identity Number:', identityNumber);
       throw new Error('身份证号码不合法');
     }
   }
@@ -49,7 +59,15 @@ const registerUser = async (userData) => {
   const hashedPassword = await bcrypt.hash(password, 10);
 
   // 创建用户
-  const newUser = { ...userData, email, phoneNumber, password: hashedPassword };
+  const newUser = { 
+    ...userData, 
+    username, 
+    identityNumber, 
+    fullName,
+    email, 
+    phoneNumber, 
+    password: hashedPassword 
+  };
   const result = await userDb.createUser(newUser);
 
   return result;

@@ -40,7 +40,10 @@ router.post('/register', async (req, res) => {
 
 router.post('/login/send-code', async (req, res) => {
   try {
-    const { identifier, idLast4 } = req.body || {};
+    const { identifier: idRaw, idLast4: idLast4Raw } = req.body || {};
+    const identifier = idRaw ? String(idRaw).trim() : '';
+    const idLast4 = idLast4Raw ? String(idLast4Raw).trim() : '';
+
     const { resolveUserByIdentifier } = loginSendCodeService;
     const user = await resolveUserByIdentifier(identifier);
 
@@ -49,7 +52,8 @@ router.post('/login/send-code', async (req, res) => {
     }
 
     const last4 = (user.identityNumber || '').slice(-4);
-    if (!idLast4 || last4 !== idLast4) {
+    // Case insensitive comparison for 'x'
+    if (!idLast4 || last4.toLowerCase() !== idLast4.toLowerCase()) {
       return res.status(422).json({ error: '请输入正确的用户信息！' });
     }
     const { generateSixDigitCode } = require('../utils/validators');
