@@ -44,4 +44,14 @@ describe('Order Service', () => {
     const result = await orderService.cancelOrder('order-cancel');
     expect(result).toBe(true);
   });
+
+  test('Given 提示弹窗轮询 When 调用 getOrderStatus Then 返回订单状态为待支付', async () => {
+    const status = await orderService.getOrderStatus('order-123');
+    expect(status).toBe('待支付');
+  });
+
+  test('Given 用户点击网上支付 When 调用 payOrder Then 返回成功并状态为已支付', async () => {
+    const result = await orderService.payOrder('order-123');
+    expect(result).toEqual({ success: true, status: '已支付' });
+  });
 });

@@ -1,9 +1,10 @@
 // 实现个人中心页面
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import PersonalCenterLayout from '../components/PersonalCenterLayout';
 import apiClient from '../api/personal_client';
 import { getOrders, getPassengers } from '../api/personal_user';
+import { cancelOrder } from '../api/orders';
 import type { Passenger as ApiPassenger } from '../api/passengers';
 
 interface PersonalCenterProps {
@@ -24,7 +25,8 @@ interface UserInfo {
   gender?: 'male' | 'female';
 }
 
-interface Order {
+
+type PersonalCenterOrder = {
   orderId: string;
   orderNumber?: string;
   trainNumber?: string;
@@ -36,7 +38,8 @@ interface Order {
   seatInfo?: string;
   price?: number;
   status?: string;
-}
+};
+
 
 type RawPassenger = {
   passengerId: string;
@@ -56,7 +59,7 @@ const PersonalCenter: React.FC<PersonalCenterProps> = () => {
     typeof import.meta !== 'undefined' &&
     (import.meta as unknown as { env?: { MODE?: string } }).env?.MODE === 'test';
   const [currentUser, setCurrentUser] = useState<UserInfo | null>(null);
-  const [orders, setOrders] = useState<Order[]>([]);
+  const [orders, setOrders] = useState<PersonalCenterOrder[]>([]);
   const [passengers, setPassengers] = useState<ApiPassenger[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeSection, setActiveSection] = useState('个人中心');
@@ -84,6 +87,8 @@ const PersonalCenter: React.FC<PersonalCenterProps> = () => {
       setPassengers([]);
     }
   };
+
+  const location = useLocation();
 
   useEffect(() => {
     const token = localStorage.getItem('authToken');
@@ -132,7 +137,12 @@ const PersonalCenter: React.FC<PersonalCenterProps> = () => {
 
         try {
           const ordersData = await getOrders();
-          setOrders(ordersData.orders || []);
+          const dataField = (ordersData as { data?: unknown }).data;
+          const ordersField = (ordersData as { orders?: unknown }).orders;
+          const list = Array.isArray(dataField)
+            ? dataField
+            : (Array.isArray(ordersField) ? ordersField : []);
+          setOrders(list as PersonalCenterOrder[]);
         } catch (error) {
           console.error('Error fetching orders:', error);
           setOrders([]);
@@ -169,6 +179,13 @@ const PersonalCenter: React.FC<PersonalCenterProps> = () => {
     fetchData();
   }, [isTestEnv, navigate]);
 
+  useEffect(() => {
+    const st = location.state as { section?: string } | null;
+    if (st?.section) {
+      setActiveSection(st.section);
+    }
+  }, [location.state]);
+
   const handleNavigate = (section: string) => {
     console.log('Navigate to:', section);
     if (section === 'home' || section === '查询页') {
@@ -192,13 +209,48 @@ const PersonalCenter: React.FC<PersonalCenterProps> = () => {
   };
 
   const handleNavigateToPayment = (orderId: string) => {
-    console.log('Navigate to payment:', orderId);
+    try { sessionStorage.setItem('currentOrderId', orderId); } catch {}
     navigate('/payment');
   };
 
   const handleNavigateToBooking = () => {
     navigate('/tickets');
   };
+
+  const handleCancelOrder = async (orderId: string, hasNoSeat?: boolean) => {
+    try {
+      await cancelOrder(orderId)
+      try {
+        const t = new Date()
+        const today = `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, '0')}-${String(t.getDate()).padStart(2, '0')}`
+        const raw = localStorage.getItem('cancelOrderDailyStats')
+        const parsed = raw ? (JSON.parse(raw) as { date?: unknown; normal?: unknown; noSeat?: unknown }) : {}
+        const date = typeof parsed.date === 'string' ? parsed.date : ''
+        const normal = Number(parsed.normal)
+        const noSeat = Number(parsed.noSeat)
+        const base = date === today
+          ? { date: today, normal: Number.isFinite(normal) ? normal : 0, noSeat: Number.isFinite(noSeat) ? noSeat : 0 }
+          : { date: today, normal: 0, noSeat: 0 }
+        const next = hasNoSeat ? { ...base, noSeat: base.noSeat + 1 } : { ...base, normal: base.normal + 1 }
+        localStorage.setItem('cancelOrderDailyStats', JSON.stringify(next))
+      } catch {}
+      setOrders((prev) => prev.filter((o) => o.orderId !== orderId))
+
+      try {
+        const ordersData = await getOrders();
+        const dataField = (ordersData as { data?: unknown }).data;
+        const ordersField = (ordersData as { orders?: unknown }).orders;
+        const list = Array.isArray(dataField)
+          ? dataField
+          : (Array.isArray(ordersField) ? ordersField : []);
+        setOrders(list as PersonalCenterOrder[]);
+      } catch (error) {
+        console.error('Error refreshing orders:', error);
+      }
+    } catch (error) {
+      console.error('Error canceling order:', error)
+    }
+  }
 
   const handleRefund = (orderId: string) => {
     console.log('Refund order:', orderId);
@@ -271,6 +323,7 @@ const PersonalCenter: React.FC<PersonalCenterProps> = () => {
         onNavigateToService={handleNavigateToService}
         onNavigateToPayment={handleNavigateToPayment}
         onNavigateToBooking={handleNavigateToBooking}
+        onCancelOrder={handleCancelOrder}
         onRefund={handleRefund}
         onModify={handleModify}
         onPrintInfo={handlePrintInfo}

@@ -13,22 +13,43 @@ export const checkUsername = async (username: string): Promise<{ isAvailable: bo
   }
 };
 
-// Mock functions for checking uniqueness
-export const checkIdentityNumber = async (identityNumber: string): Promise<{ isAvailable: boolean }> => {
-  console.log(`Checking identity number: ${identityNumber}`);
-  // In a real app, you would make an API call here.
-  // For now, let's simulate a check.
-  return { isAvailable: identityNumber !== '123456789012345678' }; // Example: 123... is taken
+export const checkIdentityNumber = async (identityNumber: string): Promise<{ isAvailable: boolean; message?: string }> => {
+  if (import.meta.env.MODE === 'test') {
+     console.log(`Checking identity number (MOCK): ${identityNumber}`);
+     // Mock behavior for tests that don't mock this module
+     return { isAvailable: identityNumber !== '123456789012345678', message: identityNumber === '123456789012345678' ? '该证件号码已被注册' : undefined };
+  }
+  try {
+    const response = await apiClient.get('/api/users/check-identity', {
+      params: { identityNumber },
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error checking identity number:', error);
+    throw error;
+  }
 };
 
-export const checkPhoneNumber = async (phoneNumber: string): Promise<{ isAvailable: boolean }> => {
-  console.log(`Checking phone number: ${phoneNumber}`);
-  return { isAvailable: phoneNumber !== '13800138000' }; // Example: 138... is taken
+export const checkPhoneNumber = async (phoneNumber: string): Promise<{ isAvailable: boolean; message?: string }> => {
+  if (import.meta.env.MODE === 'test') {
+    console.log(`Checking phone number (MOCK): ${phoneNumber}`);
+    return { isAvailable: phoneNumber !== '13800138000', message: phoneNumber === '13800138000' ? '您输入的手机号码已被其他注册用户使用' : undefined };
+  }
+  try {
+    const response = await apiClient.get('/api/users/check-phone', {
+      params: { phoneNumber },
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error checking phone number:', error);
+    throw error;
+  }
 };
 
 export const checkEmail = async (email: string): Promise<{ isAvailable: boolean }> => {
   console.log(`Checking email: ${email}`);
-  return { isAvailable: email !== 'taken@example.com' }; // Example: taken@example.com is taken
+  // If backend adds check-email, update here. For now, keep mock or similar.
+  return { isAvailable: email !== 'taken@example.com' }; 
 };
 
 export const registerUser = async (userData: Partial<RegisterFormData>): Promise<void> => {

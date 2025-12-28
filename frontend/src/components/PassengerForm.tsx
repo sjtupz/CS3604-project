@@ -14,7 +14,7 @@ interface Passenger {
 
 interface PassengerFormProps {
   passenger?: Passenger;
-  onSubmit?: (data: Passenger) => void;
+  onSubmit?: (data: Passenger) => Promise<void> | void;
   onCancel?: () => void;
 }
 
@@ -83,7 +83,7 @@ const PassengerForm: React.FC<PassengerFormProps> = ({
   const handleIdNumberBlur = () => {
     if (idNumber && idType) {
       if (!validateIdNumber(idType, idNumber)) {
-        setErrors(prev => ({ ...prev, idNumber: '请输入正确的证件号码！' }));
+        setErrors(prev => ({ ...prev, idNumber: '请正确输入18位的证件号码！' }));
       } else {
         setErrors(prev => {
           const newErrors = { ...prev };
@@ -94,7 +94,7 @@ const PassengerForm: React.FC<PassengerFormProps> = ({
     }
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     const newErrors: Record<string, string> = {};
 
     // 验证必填项
@@ -116,7 +116,7 @@ const PassengerForm: React.FC<PassengerFormProps> = ({
 
     // 验证证件号格式
     if (idNumber && idType && !validateIdNumber(idType, idNumber)) {
-      newErrors.idNumber = '请输入正确的证件号码！'; // Requirement 5.1.10.5
+      newErrors.idNumber = '请正确输入18位的证件号码！'; // Requirement 5.1.10.5
     }
 
     // 验证日期格式（如果需要）
@@ -134,17 +134,34 @@ const PassengerForm: React.FC<PassengerFormProps> = ({
 
     if (Object.keys(newErrors).length === 0) {
       setIsSubmitting(true);
-      onSubmit?.({
-        passengerId: passenger?.passengerId, // Include passengerId when editing
-        name,
-        idType,
-        idNumber,
-        phone,
-        discountType,
-        expiryDate: needsDate ? expiryDate : undefined,
-        birthDate: needsDate ? birthDate : undefined
-      });
-      setIsSubmitting(false);
+      try {
+        if (onSubmit) {
+          await onSubmit({
+            passengerId: passenger?.passengerId, // Include passengerId when editing
+            name,
+            idType,
+            idNumber,
+            phone,
+            discountType,
+            expiryDate: needsDate ? expiryDate : undefined,
+            birthDate: needsDate ? birthDate : undefined
+          });
+        }
+      } catch (error: any) {
+        // Handle server-side validation errors
+        const msg = error.response?.data?.error || error.message || error.toString();
+        if (msg.includes('身份信息不一致') || msg.includes('证件号码')) {
+          setErrors(prev => ({ ...prev, idNumber: msg }));
+        } else if (msg.includes('乘车人已存在') || msg.includes('Passenger already exists')) {
+           setErrors(prev => ({ ...prev, idNumber: '该乘车人已存在' }));
+        } else {
+           console.error('Submission error:', error);
+           // Optional: set a general error
+           // setErrors(prev => ({ ...prev, general: '保存失败' }));
+        }
+      } finally {
+        setIsSubmitting(false);
+      }
     }
   };
 
@@ -206,14 +223,14 @@ const PassengerForm: React.FC<PassengerFormProps> = ({
           )}
         </div>
 
-        <div style={{ marginBottom: '10px', textAlign: passenger ? 'center' : 'left' }}>
-          <label htmlFor="idNumber" style={{ display: 'inline-block', width: '100px', textAlign: 'right' }}>
+        <div style={{ marginBottom: '10px', textAlign: passenger ? 'center' : 'left', display: passenger ? 'block' : 'flex', alignItems: 'flex-start' }}>
+          <label htmlFor="idNumber" style={{ display: 'inline-block', width: '100px', textAlign: 'right', flexShrink: 0, paddingTop: '5px' }}>
             <span style={{ color: 'red' }}>*</span>证件号码：
           </label>
           {passenger ? (
              <span>{idNumber}</span>
           ) : (
-            <div style={{ display: 'inline-block' }}>
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
               <input
                 id="idNumber"
                 type="text"
@@ -223,7 +240,7 @@ const PassengerForm: React.FC<PassengerFormProps> = ({
                 placeholder="请填写证件号码"
                 style={{ marginLeft: '10px', padding: '5px', color: idNumber ? 'black' : '#ccc' }}
               />
-              {errors.idNumber && <div style={{ color: 'red', marginTop: '5px' }}>{errors.idNumber}</div>}
+              {errors.idNumber && <div style={{ color: 'red', marginTop: '5px', marginLeft: '10px', fontSize: '12px' }}>{errors.idNumber}</div>}
             </div>
           )}
         </div>

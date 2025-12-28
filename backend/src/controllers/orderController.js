@@ -19,6 +19,7 @@ const createOrder = async (req, res) => {
       data: {
         orderId: result.id,
         orderNumber: result.orderNumber,
+        orderNo: result.orderNumber,
         expireAt: result.expireAt
       }
     });
@@ -123,5 +124,25 @@ module.exports = {
   getOrderDetails,
   confirmOrder,
   cancelOrder,
-  listOrders
+  listOrders,
+  getOrderStatus: async (req, res) => {
+    try {
+      const { orderId } = req.params;
+      const status = await orderService.getOrderStatus(orderId);
+      res.status(200).json({ code: 200, data: { status } });
+    } catch (error) {
+      console.error('Error in getOrderStatus:', error);
+      res.status(error.code || 404).json({ code: error.code || 404, message: error.message || '订单未找到' });
+    }
+  },
+  payOrder: async (req, res) => {
+    try {
+      const { orderId } = req.params;
+      await orderService.payOrder(orderId);
+      res.status(200).json({ code: 200, message: '支付成功' });
+    } catch (error) {
+      console.error('Error in payOrder:', error);
+      res.status(error.code || 400).json({ code: error.code || 400, message: error.message || '支付失败' });
+    }
+  }
 };
