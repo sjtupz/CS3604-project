@@ -12,6 +12,7 @@ interface PersonalCenterProps {
 }
 
 interface UserInfo {
+  userId?: string;
   username?: string;
   realName?: string;
   country?: string;
@@ -121,7 +122,11 @@ const PersonalCenter: React.FC<PersonalCenterProps> = () => {
       try {
         const userResponse = await apiClient.get('/api/user/info');
         const userInfo = userResponse.data;
+        if (userInfo.userId) {
+          localStorage.setItem('userId', userInfo.userId);
+        }
         setCurrentUser({
+          userId: userInfo.userId,
           username: userInfo.username,
           realName: userInfo.realName,
           country: userInfo.country,
@@ -223,7 +228,9 @@ const PersonalCenter: React.FC<PersonalCenterProps> = () => {
       try {
         const t = new Date()
         const today = `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, '0')}-${String(t.getDate()).padStart(2, '0')}`
-        const raw = localStorage.getItem('cancelOrderDailyStats')
+        const userId = localStorage.getItem('userId')
+        const key = userId ? `cancelOrderDailyStats_${userId}` : 'cancelOrderDailyStats'
+        const raw = localStorage.getItem(key)
         const parsed = raw ? (JSON.parse(raw) as { date?: unknown; normal?: unknown; noSeat?: unknown }) : {}
         const date = typeof parsed.date === 'string' ? parsed.date : ''
         const normal = Number(parsed.normal)
@@ -232,7 +239,7 @@ const PersonalCenter: React.FC<PersonalCenterProps> = () => {
           ? { date: today, normal: Number.isFinite(normal) ? normal : 0, noSeat: Number.isFinite(noSeat) ? noSeat : 0 }
           : { date: today, normal: 0, noSeat: 0 }
         const next = hasNoSeat ? { ...base, noSeat: base.noSeat + 1 } : { ...base, normal: base.normal + 1 }
-        localStorage.setItem('cancelOrderDailyStats', JSON.stringify(next))
+        localStorage.setItem(key, JSON.stringify(next))
       } catch {}
       setOrders((prev) => prev.filter((o) => o.orderId !== orderId))
 
@@ -301,6 +308,7 @@ const PersonalCenter: React.FC<PersonalCenterProps> = () => {
 
   const handleLogout = () => {
     localStorage.removeItem('authToken');
+    localStorage.removeItem('userId');
     window.dispatchEvent(new Event('auth-change'));
     setCurrentUser(null);
     navigate('/login');

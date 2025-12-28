@@ -135,7 +135,9 @@ export const TrainListPage: React.FC<TrainListPageProps> = ({ isLoading, error }
 
   const handleReserve = useCallback(async (item: TrainListItem) => {
     try {
-      const raw = localStorage.getItem('cancelOrderDailyStats')
+      const userId = localStorage.getItem('userId')
+      const key = userId ? `cancelOrderDailyStats_${userId}` : 'cancelOrderDailyStats'
+      const raw = localStorage.getItem(key)
       if (raw) {
         const parsed = JSON.parse(raw) as { date?: unknown; normal?: unknown; noSeat?: unknown }
         const date = typeof parsed.date === 'string' ? parsed.date : ''
