@@ -2,6 +2,7 @@ import { test, expect, vi } from 'vitest';
 
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { MemoryRouter } from 'react-router-dom';
 import { TicketQueryForm } from '../../src/components/TicketQueryForm';
 
 // Mock child components
@@ -19,7 +20,11 @@ vi.mock('../../src/components/DatePicker', () => ({
 }));
 
 test('Given TicketQueryForm, when rendered, it should display two station inputs and a date picker', () => {
-  render(<TicketQueryForm />);
+  render(
+    <MemoryRouter>
+      <TicketQueryForm />
+    </MemoryRouter>
+  );
   
   const stationInputs = screen.getAllByTestId('station-input');
   expect(stationInputs).toHaveLength(2);
@@ -30,7 +35,11 @@ test('Given TicketQueryForm, when rendered, it should display two station inputs
 
 test('Given date is empty, when query button is clicked, then it should show date error message', async () => {
   const user = userEvent.setup();
-  render(<TicketQueryForm />);
+  render(
+    <MemoryRouter>
+      <TicketQueryForm />
+    </MemoryRouter>
+  );
 
   const stationInputs = screen.getAllByTestId('station-input');
   const fromInput = stationInputs[0];
@@ -47,7 +56,11 @@ test('Given date is empty, when query button is clicked, then it should show dat
 
 test('Given from and to stations are filled, when swap button is clicked, then their values should be swapped', async () => {
   const user = userEvent.setup();
-  render(<TicketQueryForm />);
+  render(
+    <MemoryRouter>
+      <TicketQueryForm />
+    </MemoryRouter>
+  );
 
   const stationInputs = screen.getAllByTestId('station-input');
   const fromInput = stationInputs[0];

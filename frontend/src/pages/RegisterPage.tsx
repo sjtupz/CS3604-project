@@ -10,7 +10,9 @@ export const RegisterPage: React.FC = () => {
 
   return (
     <div data-testid="register-page">
-      <h1 style={{ position: 'absolute', left: '-10000px' }}>用户注册</h1>
+      <h1 style={{ textAlign: 'center' }}>
+        用户注册
+      </h1>
       <RegisterForm onRegisterSuccess={handleRegisterSuccess} />
     </div>
   );

@@ -1,160 +1,103 @@
 const request = require('supertest');
-const app = require('../../src/app');
-const { run, waitForInit } = require('../../src/db/personal_database');
+const express = require('express');
+const ordersRouter = require('../../src/routes/orders');
+const { initializeDatabase, run } = require('../../src/db/personal_database');
+const jwt = require('jsonwebtoken');
 
-beforeAll(async () => {
-  await waitForInit();
-});
+const app = express();
+app.use(express.json());
+app.use('/api/orders', ordersRouter);
 
-describe('API-GET-Orders', () => {
-  beforeEach(async () => {
-    // 清理测试订单
-    try {
-      await run('DELETE FROM orders WHERE id = ?', ['test-order-route-id']);
-    } catch (err) {
-      // 忽略错误
-    }
-    
-    // 插入测试订单
-    await run(`
-      INSERT INTO orders (id, user_id, order_number, train_number, passenger_name, 
-                         booking_date, travel_date, price, status)
-      VALUES ('test-order-route-id', 'test-user-id', 'TEST123', 'G108', '张三',
-              '2025-01-01', '2025-01-15', 100.0, '未完成')
-    `);
+// 模拟 Auth 中间件需要的 Token
+const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret';
+const testToken = jwt.sign({ id: 'user-123', username: 'zhangsan' }, JWT_SECRET);
+
+describe('Orders API Routes', () => {
+  beforeAll(async () => {
+    await initializeDatabase();
+    await run("INSERT OR REPLACE INTO train_tickets (train_no, date, ed_num) VALUES ('G108', '2025-12-24', '100')");
+    await run("INSERT OR REPLACE INTO train_tickets (train_no, date, ed_num) VALUES ('SOLD_OUT', '2025-12-24', '0')");
+    await run("INSERT OR REPLACE INTO orders (id, user_id, order_number, train_number, price, status, train_info, passenger_info) VALUES ('order-uuid-123', 'user-123', 'ORD123', 'G108', 100, '待确认', '{\"fromStationId\":\"SHH\",\"toStationId\":\"BJN\",\"travelDate\":\"2025-12-24\"}', '[]')");
   });
 
-  afterEach(async () => {
-    // 清理测试订单
-    try {
-      await run('DELETE FROM orders WHERE id = ?', ['test-order-route-id']);
-    } catch (err) {
-      // 忽略错误
-    }
-  });
-
-  test('Given 用户已登录 When 请求获取未完成订单 Then 应返回200 OK和订单列表', async () => {
-    // Arrange
-    const userToken = 'test-token';
-    const queryParams = {
-      status: '未完成'
-    };
-
-    // Act
+  test('Given 用户未选择任何乘车人 When 点击“提交订单”按钮 Then 返回 40005 错误', async () => {
     const response = await request(app)
-      .get('/api/orders')
-      .set('Authorization', userToken)
-      .query(queryParams);
+      .post('/api/orders')
+      .set('Authorization', `Bearer ${testToken}`)
+      .send({
+        trainId: 'G108',
+        fromStationId: 'SHH',
+        toStationId: 'BJN',
+        date: '2025-12-24',
+        passengers: []
+      });
 
-    // Assert
-    expect(response.status).toBe(200);
-    expect(response.body).toHaveProperty('orders');
-    expect(Array.isArray(response.body.orders)).toBe(true);
-  });
-
-  test('Given 用户已登录且提供查询条件 When 请求获取筛选后的订单 Then 应返回200 OK和筛选后的订单列表', async () => {
-    // Arrange
-    const userToken = 'test-token';
-    const queryParams = {
-      status: '未出行',
-      queryType: '按订票日期',
-      startDate: '2025-01-01',
-      endDate: '2025-01-31',
-      orderNumber: 'TEST123'
-    };
-
-    // Act
-    const response = await request(app)
-      .get('/api/orders')
-      .set('Authorization', userToken)
-      .query(queryParams);
-
-    // Assert
-    expect(response.status).toBe(200);
-    expect(response.body).toHaveProperty('orders');
-    // TODO: 验证订单列表根据查询条件筛选
-  });
-});
-
-describe('API-POST-Refund', () => {
-  beforeEach(async () => {
-    // 清理测试订单
-    try {
-      await run('DELETE FROM orders WHERE id = ?', ['test-order-refund-route-id']);
-    } catch (err) {
-      // 忽略错误
-    }
-    
-    // 插入测试订单（未出行状态，可以退票）
-    await run(`
-      INSERT INTO orders (id, user_id, order_number, train_number, passenger_name, 
-                         booking_date, travel_date, price, status)
-      VALUES ('test-order-refund-route-id', 'test-user-id', 'TEST456', 'G109', '李四',
-              '2025-01-01', '2025-01-20', 150.0, '未出行')
-    `);
-  });
-
-  afterEach(async () => {
-    // 清理测试订单
-    try {
-      await run('DELETE FROM orders WHERE id = ?', ['test-order-refund-route-id']);
-    } catch (err) {
-      // 忽略错误
-    }
-  });
-
-  test('Given 用户已登录且订单可以退票 When 请求退票 Then 应返回200 OK和退票信息', async () => {
-    // Arrange
-    const userToken = 'test-token';
-    const orderId = 'test-order-refund-route-id';
-    const refundData = { refundFee: 15.0 };
-
-    // Act
-    const response = await request(app)
-      .post(`/api/orders/${orderId}/refund`)
-      .set('Authorization', userToken)
-      .send(refundData);
-
-    // Assert
-    expect(response.status).toBe(200);
-    expect(response.body).toHaveProperty('orderId');
-    expect(response.body).toHaveProperty('refundFee');
-    expect(response.body).toHaveProperty('refundDate');
-  });
-
-  test('Given 用户已登录但订单不能退票 When 请求退票 Then 应返回400 Bad Request', async () => {
-    // Arrange
-    const userToken = 'test-token';
-    
-    // 创建一个已退票的订单（不能再次退票）
-    const orderId = 'test-order-cannot-refund-id';
-    try {
-      await run('DELETE FROM orders WHERE id = ?', [orderId]);
-      await run(`
-        INSERT INTO orders (id, user_id, order_number, train_number, passenger_name, 
-                           booking_date, travel_date, price, status)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `, [orderId, 'test-user-id', 'TEST789', 'G110', '王五',
-          '2025-01-01', '2025-01-30', 200.0, '已退票']);
-    } catch (err) {
-      // 忽略错误
-    }
-
-    // Act
-    const response = await request(app)
-      .post(`/api/orders/${orderId}/refund`)
-      .set('Authorization', userToken)
-      .send({ refundFee: 10.0 });
-
-    // Assert
     expect(response.status).toBe(400);
-    expect(response.body).toHaveProperty('error', 'Order cannot be refunded.');
-    
-    // 清理
-    try {
-      await run('DELETE FROM orders WHERE id = ?', [orderId]);
-    } catch (err) {
-      // 忽略错误
-    }
+    expect(response.body.code).toBe(40005);
+    expect(response.body.message).toBe('请选择乘车人！');
+  });
+
+  test('Given 用户提交订单时车票售罄 When 点击“提交订单”按钮 Then 返回 40902 错误', async () => {
+    const response = await request(app)
+      .post('/api/orders')
+      .set('Authorization', `Bearer ${testToken}`)
+      .send({
+        trainId: 'SOLD_OUT',
+        fromStationId: 'SHH',
+        toStationId: 'BJN',
+        date: '2025-12-24',
+        passengers: [{ passengerId: 'p1', seatType: '二等座', ticketType: '成人票' }]
+      });
+
+    expect(response.status).toBe(400); // 因为 controller 中 4xx 都转为了 400
+    expect(response.body.code).toBe(40902);
+  });
+
+  test('Given 用户成功提交订单 When 提交合法信息 Then 返回 201 和 orderId', async () => {
+    const response = await request(app)
+      .post('/api/orders')
+      .set('Authorization', `Bearer ${testToken}`)
+      .send({
+        trainId: 'G108',
+        fromStationId: 'SHH',
+        toStationId: 'BJN',
+        date: '2025-12-24',
+        passengers: [{ passengerId: 'p1', seatType: '二等座', ticketType: '成人票', price: 100 }]
+      });
+
+    expect(response.status).toBe(201);
+    expect(response.body.data).toHaveProperty('orderId');
+  });
+
+  test('Given 用户查询订单详情 When 提供有效 orderId Then 返回订单详细信息', async () => {
+    const response = await request(app)
+      .get('/api/orders/order-uuid-123')
+      .set('Authorization', `Bearer ${testToken}`);
+
+    expect(response.status).toBe(200);
+    expect(response.body.data).toHaveProperty('id', 'order-uuid-123');
+    expect(response.body.data).toHaveProperty('trainNumber');
+    expect(response.body.data).toHaveProperty('passengerInfo');
+  });
+
+  test('Given 用户确认订单 When 调用确认接口 Then 返回成功消息', async () => {
+    const response = await request(app)
+      .post('/api/orders/order-uuid-123/confirm')
+      .set('Authorization', `Bearer ${testToken}`);
+
+    expect(response.status).toBe(200);
+    expect(response.body.message).toBe('订单已确认，请尽快支付');
+  });
+
+  test('Given 用户取消订单 When 调用取消接口 Then 返回成功消息', async () => {
+    // 重新插入一个待确认订单用于取消测试
+    await run("INSERT OR REPLACE INTO orders (id, user_id, order_number, train_number, price, status, train_info, passenger_info) VALUES ('order-cancel-api', 'user-123', 'ORD-CANCEL-API', 'G108', 100, '待确认', '{\"fromStationId\":\"SHH\",\"toStationId\":\"BJN\",\"travelDate\":\"2025-12-24\"}', '[{\"seatType\":\"二等座\"}]')");
+
+    const response = await request(app)
+      .post('/api/orders/order-cancel-api/cancel')
+      .set('Authorization', `Bearer ${testToken}`);
+
+    expect(response.status).toBe(200);
+    expect(response.body.message).toBe('订单已取消');
   });
 });

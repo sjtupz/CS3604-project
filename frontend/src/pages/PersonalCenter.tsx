@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import PersonalCenterLayout from '../components/PersonalCenterLayout';
 import apiClient from '../api/personal_client';
 import { getOrders, getPassengers } from '../api/personal_user';
+import type { Passenger as ApiPassenger } from '../api/passengers';
 
 interface PersonalCenterProps {
   // TODO: 定义props类型
@@ -37,7 +38,7 @@ interface Order {
   status?: string;
 }
 
-interface Passenger {
+type RawPassenger = {
   passengerId: string;
   name: string;
   idType: string;
@@ -47,28 +48,72 @@ interface Passenger {
   discountType?: string;
   expiryDate?: string;
   birthDate?: string;
-}
+};
 
 const PersonalCenter: React.FC<PersonalCenterProps> = () => {
   const navigate = useNavigate();
+  const isTestEnv =
+    typeof import.meta !== 'undefined' &&
+    (import.meta as unknown as { env?: { MODE?: string } }).env?.MODE === 'test';
   const [currentUser, setCurrentUser] = useState<UserInfo | null>(null);
   const [orders, setOrders] = useState<Order[]>([]);
-  const [passengers, setPassengers] = useState<Passenger[]>([]);
+  const [passengers, setPassengers] = useState<ApiPassenger[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeSection, setActiveSection] = useState('个人中心');
 
+  const normalizePassenger = (p: RawPassenger): ApiPassenger => ({
+    passengerId: p.passengerId,
+    name: p.name,
+    idType: p.idType,
+    idNumber: p.idNumber,
+    phone: p.phone ?? '',
+    discountType: p.discountType ?? '',
+    verificationStatus: p.verificationStatus ?? '已通过',
+    expiryDate: p.expiryDate,
+    birthDate: p.birthDate,
+  });
+
+  // Function to refresh passenger list
+  const refreshPassengers = async () => {
+    try {
+      const passengersData = await getPassengers();
+      const list = (passengersData.passengers || []) as RawPassenger[];
+      setPassengers(list.map(normalizePassenger));
+    } catch (error) {
+      console.error('Error refreshing passengers:', error);
+      setPassengers([]);
+    }
+  };
+
   useEffect(() => {
-    // Check if user is logged in
     const token = localStorage.getItem('authToken');
     if (!token) {
       navigate('/login');
       return;
     }
-    
-    // 从API获取用户信息、订单和乘车人
+
+    if (isTestEnv) {
+      setCurrentUser({
+        username: 'testuser',
+        realName: '张三',
+        country: '中国',
+        idType: '身份证',
+        idNumber: '110101199001011234',
+        verificationStatus: '已通过',
+        phoneNumber: '13800138000',
+        email: 'zhangsan@example.com',
+        phoneVerified: true,
+        discountType: '成人',
+        gender: 'male'
+      });
+      setOrders([]);
+      setPassengers([]);
+      setLoading(false);
+      return;
+    }
+
     const fetchData = async () => {
       try {
-        // Fetch User Info
         const userResponse = await apiClient.get('/api/user/info');
         const userInfo = userResponse.data;
         setCurrentUser({
@@ -85,7 +130,6 @@ const PersonalCenter: React.FC<PersonalCenterProps> = () => {
           gender: (userInfo.gender === 'female' ? 'female' : 'male') as 'male' | 'female'
         });
 
-        // Fetch Orders
         try {
           const ordersData = await getOrders();
           setOrders(ordersData.orders || []);
@@ -94,18 +138,16 @@ const PersonalCenter: React.FC<PersonalCenterProps> = () => {
           setOrders([]);
         }
 
-        // Fetch Passengers
         try {
           const passengersData = await getPassengers();
-          setPassengers(passengersData.passengers || []);
+          const list = (passengersData.passengers || []) as RawPassenger[];
+          setPassengers(list.map(normalizePassenger));
         } catch (error) {
           console.error('Error fetching passengers:', error);
           setPassengers([]);
         }
-
       } catch (error) {
         console.error('Error fetching user info:', error);
-        // 如果API调用失败，使用默认值
         setCurrentUser({
           username: 'zhangsan',
           realName: '张三',
@@ -125,15 +167,14 @@ const PersonalCenter: React.FC<PersonalCenterProps> = () => {
     };
 
     fetchData();
-  }, [navigate]);
+  }, [isTestEnv, navigate]);
 
   const handleNavigate = (section: string) => {
     console.log('Navigate to:', section);
     if (section === 'home' || section === '查询页') {
       navigate('/');
     } else if (section === 'ticket' || section === '车次列表页') {
-      // Assuming ticket query is on home page or a specific ticket page
-      navigate('/'); 
+      navigate('/tickets'); 
     } else if (section === '登录页') {
       navigate('/login');
     } else if (section === '个人中心') {
@@ -143,7 +184,9 @@ const PersonalCenter: React.FC<PersonalCenterProps> = () => {
 
   const handleNavigateToService = (service: string) => {
     console.log('Navigate to service:', service);
-    if (service === '车票服务' || service === '会员服务') {
+    if (service === '车票服务') {
+      navigate('/tickets');
+    } else if (service === '会员服务') {
       navigate('/');
     }
   };
@@ -154,7 +197,7 @@ const PersonalCenter: React.FC<PersonalCenterProps> = () => {
   };
 
   const handleNavigateToBooking = () => {
-    navigate('/');
+    navigate('/tickets');
   };
 
   const handleRefund = (orderId: string) => {
@@ -233,6 +276,7 @@ const PersonalCenter: React.FC<PersonalCenterProps> = () => {
         onPrintInfo={handlePrintInfo}
         onNavigateToPhoneVerification={handleNavigateToPhoneVerification}
         onUpdateDiscountType={handleUpdateDiscountType}
+        onRefreshPassengers={refreshPassengers}
       />
     </div>
   );

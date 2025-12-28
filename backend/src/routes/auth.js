@@ -2,22 +2,48 @@
 const express = require('express');
 const router = express.Router();
 const authService = require('../services/authService');
+const passengerDb = require('../db/passenger');
 const loginSendCodeService = require('../services/loginSendCode');
 const loginVerifyService = require('../services/loginVerify');
 
 // 对应 API-POST-Register
 router.post('/register', async (req, res) => {
   try {
-    await authService.registerUser(req.body);
+    const result = await authService.registerUser(req.body);
+    
+    // Create self passenger record automatically
+    try {
+      const { fullName, identityType, identityNumber, phoneNumber, passengerType } = req.body;
+      if (fullName && identityNumber) {
+        await passengerDb.createPassenger(result.id, {
+          name: fullName,
+          idType: identityType || '中国居民身份证',
+          idNumber: identityNumber,
+          phone: phoneNumber,
+          discountType: passengerType || '成人'
+        });
+      }
+    } catch (passErr) {
+      console.warn('Failed to auto-create passenger record:', passErr);
+      // Non-fatal error, continue
+    }
+
     res.status(201).json({ message: 'Registration successful, please proceed to login.' });
   } catch (error) {
-    res.status(409).json({ error: error.message });
+    if (error.message.includes('不合法') || error.message.includes('invalid')) {
+      res.status(400).json({ error: error.message });
+    } else {
+      res.status(409).json({ error: error.message });
+    }
   }
 });
 
 router.post('/login/send-code', async (req, res) => {
   try {
-    const { identifier, idLast4 } = req.body || {};
+    const { identifier: idRaw, idLast4: idLast4Raw } = req.body || {};
+    const identifier = idRaw ? String(idRaw).trim() : '';
+    const idLast4 = idLast4Raw ? String(idLast4Raw).trim() : '';
+
     const { resolveUserByIdentifier } = loginSendCodeService;
     const user = await resolveUserByIdentifier(identifier);
 
@@ -26,7 +52,8 @@ router.post('/login/send-code', async (req, res) => {
     }
 
     const last4 = (user.identityNumber || '').slice(-4);
-    if (!idLast4 || last4 !== idLast4) {
+    // Case insensitive comparison for 'x'
+    if (!idLast4 || last4.toLowerCase() !== idLast4.toLowerCase()) {
       return res.status(422).json({ error: '请输入正确的用户信息！' });
     }
     const { generateSixDigitCode } = require('../utils/validators');

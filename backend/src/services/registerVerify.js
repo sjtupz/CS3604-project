@@ -2,6 +2,7 @@ const { findLoginCodeRecord } = require('../db/findLoginCodeRecord');
 const { invalidateLoginCodeRecord } = require('../db/invalidateLoginCodeRecord');
 const userDb = require('../db/userDb');
 const authService = require('./authService');
+const passengerDb = require('../db/passenger');
 
 async function handleRegisterVerify(payload) {
   const { phoneNumber, code, username, password, identityType, fullName, identityNumber, passengerType, email } = payload || {};
@@ -33,7 +34,22 @@ async function handleRegisterVerify(payload) {
   const existingByIdentity = await userDb.findUserByIdentityNumber(identityNumber);
 
   if (!existingByUsername && !existingByPhone && !existingByIdentity) {
-    await authService.registerUser(userData);
+    const result = await authService.registerUser(userData);
+    
+    // Auto create passenger
+    try {
+      if (fullName && identityNumber) {
+        await passengerDb.createPassenger(result.id, {
+          name: fullName,
+          idType: identityType || '中国居民身份证',
+          idNumber: identityNumber,
+          phone: phoneNumber,
+          discountType: passengerType || '成人'
+        });
+      }
+    } catch (passErr) {
+      console.warn('Failed to auto-create passenger record in verify:', passErr);
+    }
   }
 
   await invalidateLoginCodeRecord({ identifier: record.identifier });

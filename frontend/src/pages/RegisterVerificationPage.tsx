@@ -1,8 +1,9 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Navigate, useInRouterContext } from 'react-router-dom';
 import { useCountdown } from '../hooks/useCountdown';
 import { sendRegisterCode, verifyRegister } from '../api/register';
 import { REGISTER_CODE_DURATION, MSG_GET_CODE_SUCCESS, MSG_ERROR_EMPTY_CODE, MSG_ERROR_INVALID_CODE, MSG_SUCCESS_REGISTER } from '../constants/registerVerification';
+import './RegisterVerificationPage.css';
 
 export function RegisterVerificationPage() {
   const [code, setCode] = useState('');
@@ -22,24 +23,21 @@ export function RegisterVerificationPage() {
   const identityNumber = searchParams.get('identityNumber') || (savedPayload?.identityNumber ?? '');
   const passengerType = searchParams.get('passengerType') || (savedPayload?.passengerType ?? '');
   const email = searchParams.get('email') || (savedPayload?.email ?? '');
-  const didSendRef = useRef(false);
+
 
   useEffect(() => {
     setMessage(MSG_GET_CODE_SUCCESS);
-    if (didSendRef.current) {
-      return;
-    }
-    didSendRef.current = true;
-    if (inRouter && phone) {
-      sendRegisterCode(phone).then((res) => {
-        setMessage(res.message);
-      }).catch(() => {
-        // 保持默认提示
-      });
-    }
-  }, [inRouter, phone]);
+    
+    // Cleanup localStorage on unmount
+    return () => {
+      if (typeof window !== 'undefined') {
+        try { window.localStorage.removeItem('register_payload'); } catch {}
+      }
+    };
+  }, []);
 
   const handleResend = () => {
+    setError('');
     setMessage(MSG_GET_CODE_SUCCESS);
     reset();
     if (inRouter && phone) {
@@ -73,6 +71,8 @@ export function RegisterVerificationPage() {
         try { window.localStorage.removeItem('register_payload'); } catch {}
       }
       setSuccess(true);
+      // verifyRegister already completes the registration process
+      // No need to call finalizeRegister, which would cause a 409 Conflict
     } catch (e) {
       const err = e as { response?: { status?: number; data?: { error?: string } } };
       const status = err.response?.status;
@@ -86,30 +86,53 @@ export function RegisterVerificationPage() {
       } else {
         setError(apiError || MSG_ERROR_INVALID_CODE);
       }
+      if (typeof window !== 'undefined') {
+        try { window.localStorage.removeItem('register_payload'); } catch {}
+      }
     }
   };
+
+  const resendLabel = (inRouter && !!phone && countdown > 0) ? `${countdown}秒后重新发送` : '重新发送验证码';
 
   return (
     <div>
       {!success && (
-        <div>
-          <input
-            placeholder="请输入短信验证码"
-            value={code}
-            onChange={(e) => setCode(e.target.value)}
-          />
-          <button onClick={handleResend} disabled={sendDisabled}>重新发送验证码</button>
-          {countdown > 0 && <div>{countdown}秒后重新发送</div>}
-          {message && <div>{message}</div>}
-          {error && <div>{error}</div>}
-          <button onClick={handleNext}>下一步</button>
+        <div className="verify-form" data-testid="register-verify-form">
+          <div className="form-header">
+            <span className="form-header-title">验证信息</span>
+          </div>
+          <div className="verify-row">
+            <label>短信验证码：</label>
+            <input
+              className="verify-input"
+              placeholder="请输入短信验证码"
+              value={code}
+              onChange={(e) => setCode(e.target.value)}
+            />
+            <button className="verify-resend" onClick={handleResend} disabled={sendDisabled}>{resendLabel}</button>
+          </div>
+          {(message || error) && (
+            <div className="verify-row">
+              <div className={error ? 'verify-info verify-err' : 'verify-info verify-msg'}>
+                {error ? error : message}
+              </div>
+            </div>
+          )}
+          {countdown > 0 && (!inRouter || !phone) && (
+            <div className="verify-row">
+              <div className="verify-info verify-hint">{countdown}秒后重新发送</div>
+            </div>
+          )}
+          <div className="verify-row" style={{ gridTemplateColumns: '1fr' }}>
+            <button className="verify-submit" onClick={handleNext}>下一步</button>
+          </div>
         </div>
       )}
       {success && (
         inRouter ? (
           <Navigate to="/register/success" replace />
         ) : (
-          <div>{MSG_SUCCESS_REGISTER}</div>
+          <div className="success-inline">{MSG_SUCCESS_REGISTER}</div>
         )
       )}
     </div>

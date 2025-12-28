@@ -73,7 +73,7 @@ const UncompletedOrders: React.FC<UncompletedOrdersProps> = ({
                     cursor: 'pointer'
                   }}
                 >
-                  车票预定
+                  车票预订
                 </span>
                 功能，来制定出行计划。
               </div>

@@ -1,0 +1,189 @@
+
+.ticket-list-container {
+  margin-top: 20px;
+}
+
+.sort-controls {
+  margin-bottom: 15px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.sort-controls button {
+  padding: 5px 15px;
+  border: 1px solid #ddd;
+  background: #f5f5f5;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.sort-controls button.active {
+  background: #e6f7ff;
+  border-color: #1890ff;
+  color: #1890ff;
+}
+
+.ticket-card {
+  background: white;
+  border: 1px solid #e8e8e8;
+  border-radius: 4px;
+  padding: 20px;
+  margin-bottom: 15px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: box-shadow 0.3s;
+}
+
+.ticket-card:hover {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.train-info {
+  display: flex;
+  gap: 40px;
+  align-items: center;
+}
+
+.train-number {
+  font-size: 24px;
+  font-weight: bold;
+  width: 100px;
+}
+
+.train-type {
+  font-size: 12px;
+  background: #eee;
+  padding: 2px 4px;
+  border-radius: 2px;
+  vertical-align: middle;
+}
+
+.route-info {
+  display: flex;
+  gap: 20px;
+  text-align: center;
+}
+
+.station .time {
+  font-size: 24px;
+  font-weight: bold;
+  color: #333;
+}
+
+.station .name {
+  color: #666;
+}
+
+.duration-arrow {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  color: #999;
+  font-size: 12px;
+}
+
+.seat-list {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap; /* Allow wrapping if too many seats */
+  max-width: 600px; /* Limit width to force wrap if needed */
+  justify-content: flex-end;
+}
+
+.seat-item {
+  text-align: center;
+  min-width: 50px;
+  padding: 5px;
+}
+
+.seat-type {
+  font-size: 12px;
+  color: #666;
+  margin-bottom: 2px;
+}
+
+.seat-item.disabled {
+  color: #e8e8e8;
+}
+
+.seat-item.disabled .seat-price,
+.seat-item.disabled .seat-count {
+  color: #e8e8e8;
+}
+
+.seat-item.no-stock {
+  color: #999;
+}
+
+.seat-item.no-stock .seat-count {
+  color: #999;
+}
+
+.seat-item.available .seat-count {
+  color: #52c41a; /* Green */
+  font-weight: bold;
+}
+
+.seat-item.low-stock .seat-count {
+  color: #fa8c16; /* Orange */
+  font-weight: bold;
+}
+
+.seat-price {
+  color: #ff4d4f;
+  font-weight: bold;
+  font-size: 13px;
+}
+
+.seat-count {
+  font-size: 12px;
+  margin-top: 2px;
+}
+
+.book-btn {
+  background: #1890ff;
+  color: white;
+  border: none;
+  padding: 8px 20px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.book-btn:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+.loading, .error, .no-data {
+  text-align: center;
+  padding: 40px;
+  color: #666;
+}
+
+.pagination {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  margin-top: 20px;
+  align-items: center;
+}
+
+@media (max-width: 768px) {
+  .ticket-card {
+    flex-direction: column;
+    gap: 20px;
+  }
+  
+  .seat-list {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  
+  .train-info {
+    flex-direction: column;
+    gap: 10px;
+  }
+}

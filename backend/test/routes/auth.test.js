@@ -15,6 +15,51 @@ describe('API-POST-Register: /api/auth/register', () => {
     await run('DELETE FROM users');
   });
 
+  // 场景 3.3.11 - 输入不合法的身份证号码（校验位错误）
+  test('Given identity number has invalid checksum When user submits Then returns 400 error', async () => {
+    const invalidData = {
+      username: 'validuser1',
+      password: 'password123',
+      identityType: 'ID_CARD',
+      fullName: 'Valid User',
+      identityNumber: '110101199003074478', // Checksum should be 7, but is 8
+      passengerType: 'ADULT',
+    };
+    const res = await request(app).post('/api/auth/register').send(invalidData);
+    expect(res.statusCode).toBe(400);
+    expect(res.body.error).toContain('身份证号码不合法');
+  });
+
+  // 场景 3.3.11 - 输入不合法的身份证号码（省份编码错误）
+  test('Given identity number has invalid province code When user submits Then returns 400 error', async () => {
+    const invalidData = {
+      username: 'validuser2',
+      password: 'password123',
+      identityType: 'ID_CARD',
+      fullName: 'Valid User',
+      identityNumber: '990101199003074477', // 99 is invalid province
+      passengerType: 'ADULT',
+    };
+    const res = await request(app).post('/api/auth/register').send(invalidData);
+    expect(res.statusCode).toBe(400);
+    expect(res.body.error).toContain('身份证号码不合法');
+  });
+
+  // 场景 3.3.11 - 输入不合法的身份证号码（日期错误）
+  test('Given identity number has invalid date When user submits Then returns 400 error', async () => {
+    const invalidData = {
+      username: 'validuser3',
+      password: 'password123',
+      identityType: 'ID_CARD',
+      fullName: 'Valid User',
+      identityNumber: '110101202302304477', // Feb 30th does not exist
+      passengerType: 'ADULT',
+    };
+    const res = await request(app).post('/api/auth/register').send(invalidData);
+    expect(res.statusCode).toBe(400);
+    expect(res.body.error).toContain('身份证号码不合法');
+  });
+
   // 场景 3.3.11 - 用户已完成所有必填信息的规范填写
   test('Given all information is filled correctly When user clicks next Then registration succeeds', async () => {
     const validUserData = {
@@ -22,7 +67,7 @@ describe('API-POST-Register: /api/auth/register', () => {
       password: 'password123',
       identityType: 'ID_CARD',
       fullName: 'Test User',
-      identityNumber: '123456789012345678',
+      identityNumber: '110101199003074477',
       passengerType: 'ADULT',
     };
     const res = await request(app).post('/api/auth/register').send(validUserData);
@@ -38,7 +83,7 @@ describe('API-POST-Register: /api/auth/register', () => {
       password: 'password123',
       identityType: 'ID_CARD',
       fullName: 'Existing User',
-      identityNumber: '123456789012345678', // 这个身份证号已经被注册
+      identityNumber: '110101199003074477', // 这个身份证号已经被注册
       passengerType: 'ADULT',
     };
     await userDb.createUser(existingUser);
@@ -48,7 +93,7 @@ describe('API-POST-Register: /api/auth/register', () => {
       password: 'password123',
       identityType: 'ID_CARD',
       fullName: 'New User',
-      identityNumber: '123456789012345678', // 尝试使用已存在的身份证号注册
+      identityNumber: '110101199003074477', // 尝试使用已存在的身份证号注册
       passengerType: 'ADULT',
     };
     const res = await request(app).post('/api/auth/register').send(conflictingUserData);
@@ -63,7 +108,7 @@ describe('API-POST-Register: /api/auth/register', () => {
       password: 'password123',
       identityType: 'ID_CARD',
       fullName: 'Existing User 2',
-      identityNumber: 'UNIQUE_ID_123',
+      identityNumber: '110101199003074477',
       passengerType: 'ADULT',
       email: 'conflict@example.com',
     };
@@ -74,7 +119,7 @@ describe('API-POST-Register: /api/auth/register', () => {
       password: 'password123',
       identityType: 'ID_CARD',
       fullName: 'New User 2',
-      identityNumber: 'UNIQUE_ID_456',
+      identityNumber: '110101199003074485', // Valid and different
       passengerType: 'ADULT',
       email: 'conflict@example.com',
     };
@@ -90,7 +135,7 @@ describe('API-POST-Register: /api/auth/register', () => {
       password: 'password123',
       identityType: 'ID_CARD',
       fullName: 'Existing User 3',
-      identityNumber: 'UNIQUE_ID_789',
+      identityNumber: '110101199003074477',
       passengerType: 'ADULT',
       phoneNumber: '13800138000',
     };
@@ -101,7 +146,7 @@ describe('API-POST-Register: /api/auth/register', () => {
       password: 'password123',
       identityType: 'ID_CARD',
       fullName: 'New User 3',
-      identityNumber: 'UNIQUE_ID_012',
+      identityNumber: '110101199003074485', // Valid and different
       passengerType: 'ADULT',
       phoneNumber: '13800138000',
     };
@@ -117,7 +162,7 @@ describe('API-POST-Register: /api/auth/register', () => {
       password: 'password123',
       identityType: 'ID_CARD',
       fullName: 'Taken User',
-      identityNumber: 'UNIQUE_ID_ABC',
+      identityNumber: '110101199003074477',
       passengerType: 'ADULT',
     };
     await userDb.createUser(existingUser);
@@ -127,7 +172,7 @@ describe('API-POST-Register: /api/auth/register', () => {
       password: 'password123',
       identityType: 'ID_CARD',
       fullName: 'New User 4',
-      identityNumber: 'UNIQUE_ID_DEF',
+      identityNumber: '110101199003074485', // Valid and different
       passengerType: 'ADULT',
     };
     const res = await request(app).post('/api/auth/register').send(conflictingUserData);

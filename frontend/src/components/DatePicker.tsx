@@ -5,9 +5,12 @@ interface DatePickerProps {
   defaultDate?: string;
   id?: string;
   value?: string;
+  width?: number;
+  minDate?: string;
+  maxDate?: string;
 }
 
-const DatePicker: React.FC<DatePickerProps> = ({ onDateSelect, defaultDate, value, id }) => {
+const DatePicker: React.FC<DatePickerProps> = ({ onDateSelect, defaultDate, value, id, width, minDate, maxDate }) => {
   const getToday = () => {
     const today = new Date();
     const year = today.getFullYear();
@@ -30,8 +33,9 @@ const DatePicker: React.FC<DatePickerProps> = ({ onDateSelect, defaultDate, valu
       type="date"
       value={value !== undefined ? value : selectedDate}
       onChange={handleDateChange}
-      min={getToday()}
-      style={{ padding: '10px' }}
+      min={minDate ?? getToday()}
+      max={maxDate}
+      style={{ padding: '10px', width: width ? `${width}px` : undefined, flexShrink: 0 }}
       data-testid="date-picker-input"
     />
   );

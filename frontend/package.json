@@ -11,8 +11,10 @@
     "test": "vitest"
   },
   "dependencies": {
+    "@types/react-datepicker": "^6.2.0",
     "axios": "^1.6.0",
     "react": "^18.2.0",
+    "react-datepicker": "^9.0.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.22.0"
   },
@@ -29,6 +31,7 @@
     "eslint-plugin-react-hooks": "^4.6.0",
     "eslint-plugin-react-refresh": "^0.4.5",
     "jsdom": "^24.0.0",
+    "msw": "^2.12.4",
     "typescript": "^5.2.2",
     "vite": "^7.2.4",
     "vitest": "^4.0.14"

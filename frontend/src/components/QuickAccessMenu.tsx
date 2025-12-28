@@ -1,7 +1,9 @@
-import { Link } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import './QuickAccessMenu.css';
 
 const QuickAccessMenu = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
   const menuItems = [
     { name: '首页', to: '/' },
     { name: '车票', to: '/tickets' }, // 示例路径，后续需要根据实际路由调整
@@ -14,11 +16,16 @@ const QuickAccessMenu = () => {
   ];
 
   return (
-    <div className="quick-access-menu">
+    <div className="quick-access-menu" data-testid="quick-access">
       {menuItems.map((item, index) => (
-        <Link key={index} to={item.to} className="menu-item">
+        <button
+          key={index}
+          type="button"
+          className={`menu-item${location.pathname === item.to ? ' active' : ''}`}
+          onClick={() => navigate(item.to)}
+        >
           {item.name}
-        </Link>
+        </button>
       ))}
     </div>
   );

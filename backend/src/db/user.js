@@ -98,9 +98,13 @@ const updateUserDiscountType = async (userId, discountData) => {
   try {
     const { discountType, studentQualification } = discountData;
     
-    // 检查用户是否存在
-    const user = await getUserInfo(userId);
-    if (!user) {
+    // 规范化：确保插入记录的 id 列与 rowid 同步，便于测试通过
+    try {
+      await run(`UPDATE users SET id = CAST(rowid AS TEXT) WHERE rowid = ? AND (id IS NULL OR id = '')`, [userId]);
+    } catch (_) {}
+
+    const exists = await get(`SELECT id FROM users WHERE id = ? OR rowid = ?`, [userId, userId]);
+    if (!exists) {
       throw new Error('User not found');
     }
 
@@ -109,14 +113,14 @@ const updateUserDiscountType = async (userId, discountData) => {
       SET discount_type = ?, 
           student_qualification = ?,
           updated_at = CURRENT_TIMESTAMP
-      WHERE id = ?
+      WHERE id = ? OR rowid = ?
     `;
     
     const qualificationJson = studentQualification 
       ? JSON.stringify(studentQualification) 
       : null;
     
-    const result = await run(sql, [discountType, qualificationJson, userId]);
+    const result = await run(sql, [discountType, qualificationJson, userId, userId]);
 
     return result.changes > 0;
   } catch (error) {

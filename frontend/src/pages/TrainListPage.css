@@ -1,0 +1,412 @@
+.train-list-page {
+  background: #f5f7fb;
+  min-width: 1200px;
+  font-family: Tahoma, SimSun, Arial, sans-serif;
+  color: #333;
+}
+
+.query-section {
+  max-width: 1200px;
+  margin: 12px auto;
+  padding: 12px 16px;
+  background: #EEF1F8;
+  border: 1px solid #d8dbe6;
+}
+
+.query-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.radio-group {
+  display: flex;
+  gap: 12px;
+}
+
+.radio-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+}
+
+.query-grid {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: nowrap;
+}
+
+.query-grid .field {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.field label {
+  display: inline-block;
+  color: #333;
+  font-size: 14px;
+  margin: 0;
+  flex-shrink: 0;
+}
+
+.align-right {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.query-grid input,
+.query-grid button {
+  flex-shrink: 0;
+}
+
+.query-button {
+  background-color: #ee8731; /* 查询橙 */
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  padding: 8px 16px;
+  font-size: 14px;
+}
+
+.query-button:hover { background-color: #d97625; }
+.query-button:active { background-color: #c4661f; }
+
+.query-button[disabled], .query-button[aria-disabled="true"] {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.swap-btn {
+  background: #fff;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #666;
+  font-size: 18px;
+  transition: all 0.3s ease;
+  margin: 0 2px;
+  flex-shrink: 0;
+}
+
+.swap-btn:hover {
+  border-color: #ee8731;
+  color: #ee8731;
+  box-shadow: 0 0 3px rgba(238, 135, 49, 0.3);
+}
+
+.swap-btn.swapping {
+  transform: rotate(180deg);
+  background-color: #f0f0f0;
+}
+
+.swap-btn[disabled] {
+  cursor: default;
+}
+
+.filters-bar {
+  margin-top: 8px;
+}
+
+
+.table-section {
+  max-width: 1200px;
+  margin: 8px auto 24px;
+}
+
+.table-wrap {
+  overflow-x: auto;
+  background: #fff;
+  border: 1px solid #d8dbe6;
+}
+
+.train-table {
+  width: 1190px;
+  margin: 0 auto;
+}
+
+.table-header {
+  display: grid;
+  /* Total 1190px: 90+120+100+90+110+80*6+60+140 = 1190 */
+  grid-template-columns: 90px 120px 100px 90px 110px 80px 80px 80px 80px 80px 80px 60px 140px;
+  gap: 0;
+  padding: 5px 0;
+  color: #FFFFFF;
+  font-size: 14px;
+  background: #3b99fc; /* Brand Blue */
+  border-bottom: 1px solid #e6e9f2;
+}
+
+.header-sort-btn {
+  background: transparent !important; /* Remove gray background */
+  border: none !important;            /* Remove border */
+  color: #FFFFFF !important;          /* Force white text */
+  cursor: pointer;
+  padding: 0;
+  /* Ensure text and icons center in button */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  font-family: inherit; /* Inherit font */
+}
+
+.table-header .cell { 
+  display: flex;
+  justify-content: center; 
+  align-items: center; 
+  text-align: center;
+  line-height: 18px;
+  color: #FFFFFF;
+}
+.table-header .cell .dual-line, .table-header .cell .single-line { 
+  text-align: center; 
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Ensure sort icons are positioned correctly */
+.header-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+}
+.sort-icons {
+  display: flex;
+  flex-direction: column;
+  line-height: 0;
+  margin-left: 2px;
+}
+
+.cell.sort {
+  /* Reset default button styles if not using header-sort-btn class directly on all */
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Remove pseudo-elements */
+.cell.sort.sorted-asc::after { content: none; }
+.cell.sort.sorted-desc::after { content: none; }
+
+.table-body {
+  display: block;
+}
+
+.train-row {
+  display: grid;
+  grid-template-columns: 90px 120px 100px 90px 110px 80px 80px 80px 80px 80px 80px 60px 140px;
+  padding: 0; 
+  border-bottom: 1px solid #E0E0E0; 
+}
+
+.train-row:hover {
+  background: #f9fbff;
+}
+
+.cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  box-sizing: border-box;
+  flex-shrink: 0;
+  gap: 6px;
+  padding: 2px 0; /* 文档要求 2px 0px */
+  min-height: 60px; /* 确保行高一致 */
+}
+
+.dual-line { display: flex; flex-direction: column; line-height: 1.5; margin: 0; padding: 0; width: 100%; align-items: center; }
+.dual-line .line-top, .dual-line .line-bottom { display: block; margin: 0; padding: 0; }
+
+.header-cell { display: flex; align-items: center; justify-content: center; gap: 4px; width: 100%; }
+.sort-icons { display: flex; flex-direction: column; gap: 2px; }
+.sort-icons svg { display: block; width: 8px; height: 8px; }
+
+/* Sort Icons Active State */
+.cell.sort:not(.sorted-asc):not(.sorted-desc) .sort-icons svg { opacity: 0.5; }
+.cell.sort.sorted-asc .sort-icons svg:first-child { opacity: 1; }
+.cell.sort.sorted-asc .sort-icons svg:last-child { opacity: 0.3; }
+.cell.sort.sorted-desc .sort-icons svg:first-child { opacity: 0.3; }
+.cell.sort.sorted-desc .sort-icons svg:last-child { opacity: 1; }
+
+.train-number-link {
+  color: #333333; /* 文档要求 */
+  text-decoration: none;
+  font-size: 16px; /* 文档要求 16px */
+  font-weight: 700;
+}
+
+.train-number-link:hover {
+  text-decoration: underline;
+  color: #437ff7;
+}
+
+/* 统一列样式 */
+.col-seat-lg { 
+  display: flex; 
+  flex-direction: column; 
+  justify-content: center; /* 垂直方向居中 */ 
+  align-items: center;     /* 水平方向居中 */ 
+  height: 100%;            /* 撑满单元格高度 */ 
+}
+.train-row .col-train { justify-content: flex-start; text-align: left; padding-left: 10px; }
+.table-header .cell { justify-content: center; align-items: center; }
+.table-header .cell .dual-line, .table-header .cell .single-line { text-align: center; }
+
+/* 预订按钮 */
+.reserve-btn {
+  width: 72px;
+  height: 30px;
+  background-color: #437ff7;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.reserve-btn:hover { background-color: #2f6de9; }
+.reserve-btn:active { background-color: #265fcf; }
+
+.seat-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+}
+
+.seat-type-item {
+  display: inline-flex;
+  gap: 4px;
+}
+
+.status-has {
+  color: #52c41a;
+}
+
+.status-remain {
+  color: #1890ff;
+}
+
+.status-backup {
+  color: #faad14;
+}
+
+.status-none {
+  color: #999;
+}
+
+.tips-bar {
+  margin: 8px 0;
+  color: #666;
+  font-size: 13px;
+}
+
+@media (max-width: 992px) {
+  .cell-remark { display: none; }
+}
+
+@media (max-width: 768px) {
+  .train-list-page {
+    min-width: 768px;
+  }
+}
+
+.filter-bar {
+  /* Remove border and background to blend with query-section */
+  border: none;
+  background: transparent;
+  padding: 0;
+  margin-top: 0;
+}
+.quick-search-box-lg {
+  display: block;
+}
+
+/* Ensure inner rows have correct background if needed, or transparent */
+.t-switch { 
+  margin-top: 8px; 
+  border-top: 1px dashed #d8dbe6; /* Use dashed for internal separation */
+  border-bottom: none; 
+  padding: 6px 0; 
+  background: transparent; 
+}
+.switch-row { display: flex; align-items: center; gap: 12px; padding: 6px 0; }
+.row-label { width: 88px; color: #000; font-size: 13px; text-align: right; padding-right: 10px; box-sizing: border-box; }
+.btn-all { background: transparent; color: #333; border: 1px solid transparent; border-radius: 3px; height: 22px; padding: 0 10px; font-size: 12px; cursor: pointer; }
+.btn-all:hover { color: #0077ff; }
+.btn-all.active { background: #2676E3; color: #fff; }
+.row-options { display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
+.checkbox-item { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; cursor: pointer; color: #333; }
+.checkbox-item:hover { color: #0077ff; }
+.checkbox-item input { width: 14px; height: 14px; margin: 0; cursor: pointer; accent-color: #0077ff; }
+
+.date-range { 
+  background: transparent; 
+  border-bottom: 1px dashed #d8dbe6; 
+  margin-bottom: 8px;
+}
+.date-tabs { list-style: none; display: flex; gap: 0; margin: 0; padding: 0; overflow-x: auto; }
+.date-tabs .tab { 
+  padding: 8px 16px; 
+  border: 1px solid #e6e9f2; 
+  border-bottom: none;
+  background: #eff1f7; 
+  color: #666; 
+  cursor: pointer; 
+  font-size: 12px;
+  min-width: 90px;
+  text-align: center;
+  white-space: nowrap;
+}
+.date-tabs .tab + .tab { border-left: none; }
+.date-tabs .tab.active { background: #fff; color: #3391D0; font-weight: bold; border-bottom: 2px solid #fff; position: relative; z-index: 1; }
+.date-tabs .tab:hover:not(.active) { background: #f5f7fa; color: #3391D0; }
+
+.departure-time-filter {
+  margin-top: 8px;
+  margin-bottom: 8px;
+}
+.departure-time-filter .date-tabs {
+  border-bottom: 1px dashed #d8dbe6;
+}
+
+.time-range-select select {
+  padding: 4px 8px;
+}
+
+.arrival-indicator {
+  color: #999;
+  font-size: 12px;
+}
+
+.filter-options {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.checklist label {
+  margin-right: 8px;
+  font-size: 12px;
+}
+
+

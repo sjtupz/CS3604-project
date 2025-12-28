@@ -5,7 +5,7 @@
   -webkit-box-sizing: border-box;
   box-sizing: border-box;
   background: #fff;
-  min-height: 100vh;
+  min-height: auto;
   display: flex;
   flex-direction: column;
 }
@@ -51,7 +51,7 @@
 .login-panel {
   position: relative;
   height: 600px;
-  margin-bottom: -40px;
+  margin-bottom: 0;
 }
 .login-panel .login-bg {
   position: absolute;
@@ -75,15 +75,3 @@
 }
 .login-title { margin: 0; font-size: 20px; color: #000; }
 .login-register { margin-top: 8px; }
-
-.page-login .footer { background: #fff; }
-.page-login .footer-inner {
-  padding: 24px;
-  padding-top: 48px;
-  border-top: 1px solid #eee;
-  max-width: 960px;
-  margin: 0 auto;
-  display: flex;
-  justify-content: space-between;
-}
-.page-login .footer-img { display: block; margin-top: 12px; max-width: 360px; height: auto; }

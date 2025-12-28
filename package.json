@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "test": "vitest",
-    "dev": "vite"
+    "dev": "vite",
+    "seed:all": "npx ts-node backend/scripts/seed_full_db.ts"
   },
   "keywords": [],
   "author": "",

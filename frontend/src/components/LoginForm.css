@@ -64,15 +64,33 @@
 .login-form .link-secondary { color: #999; text-decoration: none; font-family: 'SimSun', '宋体'; }
 .login-form .link-sep { color: #ccc; margin: 0 8px; font-family: 'SimSun', '宋体'; }
 .login-form .form-error { margin-top: 8px; color: #ff4d4f; }
+
+/* 调整错误提示的字体与居中显示 */
+.login-form .form-error {
+  margin: 0;
+  color: #ff4d4f;
+  font-size: 12px;
+  font-family: 'SimSun', '宋体';
+  line-height: 16px;
+  text-align: left;
+}
+
+/* 仅调整密码输入行与按钮之间的垂直间距，使错误提示位于中间 */
+.login-form .input-row:nth-of-type(2) {
+  margin-bottom: 8px;
+}
+.login-form .submit {
+  margin-top: 8px;
+}
 .login-form .modal-container {
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.4);
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: center;
   z-index: 1000;
-  padding-top: 200px;
+  padding-top: 0;
 }
 
 .sms-modal input::placeholder {

@@ -2,18 +2,27 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    background-color: #3B99FC;
+    background-color: #3b99fc;
     padding: 12px 0;
 }
 
 .menu-item {
-    color: white;
+    color: #ffffff !important;
     text-decoration: none;
     font-size: 16px;
     padding: 0 25px;
     transition: background-color 0.3s;
+    background-color: transparent;
+    border: none;
 }
 
 .menu-item:hover {
-    background-color: #0056b3;
+    background-color: #2676E3;
+}
+.menu-item.active {
+    background-color: #2676E3;
+}
+
+.nav-main .menu-item {
+    color: #ffffff !important;
 }

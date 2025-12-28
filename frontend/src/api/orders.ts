@@ -1,22 +1,37 @@
-// TODO: 实现订单相关API调用
-// import apiClient from './personal_client';
+import apiClient from './client';
 
-// 获取订单列表
-// export const getOrders = async (params?: {
-//   status?: string;
-//   queryType?: string;
-//   startDate?: string;
-//   endDate?: string;
-//   orderNumber?: string;
-//   trainNumber?: string;
-//   passengerName?: string;
-// }) => {
-//   const response = await apiClient.get('/api/orders', { params });
-//   return response.data;
-// };
+export interface CreateOrderParams {
+  trainId: string;
+  date: string;
+  fromStationId: string;
+  toStationId: string;
+  seatType: string;
+  passengers: Array<{
+    id: string;
+    name: string;
+    idType: string;
+    idNumber: string;
+    ticketType: string;
+  }>;
+  trainInfo: unknown;
+}
 
-// 退票申请
-// export const refundOrder = async (orderId: string) => {
-//   const response = await apiClient.post(`/api/orders/${orderId}/refund`);
-//   return response.data;
-// };
+export const createOrder = async (data: CreateOrderParams) => {
+  const response = await apiClient.post('/api/orders', data);
+  return response.data;
+};
+
+export const getOrderDetails = async (orderId: string) => {
+  const response = await apiClient.get(`/api/orders/${orderId}`);
+  return response.data;
+};
+
+export const confirmOrder = async (orderId: string) => {
+  const response = await apiClient.post(`/api/orders/${orderId}/confirm`);
+  return response.data;
+};
+
+export const cancelOrder = async (orderId: string) => {
+  const response = await apiClient.post(`/api/orders/${orderId}/cancel`);
+  return response.data;
+};

@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="351" height="116" viewBox="0 0 351 116" shape-rendering="geometricPrecision" text-rendering="optimizeLegibility">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FF6F21"/>
+      <stop offset="1" stop-color="#FF6700"/>
+    </linearGradient>
+  </defs>
+  <rect x="0" y="0" width="351" height="116" fill="transparent"/>
+  <g transform="translate(16,18)">
+    <circle cx="30" cy="40" r="30" fill="url(#g)"/>
+    <circle cx="30" cy="40" r="20" fill="#fff"/>
+    <path d="M30 22c9 0 16 7 16 16 0 6-3 11-7 14v12h-18V52c-4-3-7-8-7-14 0-9 7-16 16-16z" fill="url(#g)"/>
+    <rect x="23" y="54" width="14" height="10" rx="2" fill="#fff"/>
+    <rect x="20" y="64" width="20" height="6" rx="3" fill="url(#g)"/>
+  </g>
+  <text x="84" y="52" font-family="Microsoft YaHei, PingFang SC, Noto Sans SC, Arial, sans-serif" font-size="26" fill="#333333">中国铁路<tspan font-weight="600">12306</tspan></text>
+  <text x="84" y="82" font-family="Arial, Helvetica, sans-serif" font-size="15" letter-spacing="2" fill="#9B9B9B">12306 CHINA RAILWAY</text>
+</svg>
