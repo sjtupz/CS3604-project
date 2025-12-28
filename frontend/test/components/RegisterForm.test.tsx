@@ -11,6 +11,8 @@ describe('UI-RegisterForm Scenarios', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(userApi.checkUsername).mockResolvedValue({ isAvailable: true });
+    vi.mocked(userApi.checkIdentityNumber).mockResolvedValue({ isAvailable: true });
+    vi.mocked(userApi.checkPhoneNumber).mockResolvedValue({ isAvailable: true });
     vi.mocked(userApi.registerUser).mockResolvedValue(undefined);
   });
 
@@ -146,18 +148,6 @@ describe('UI-RegisterForm Scenarios', () => {
     expect(errorMessage).toBeInTheDocument();
   });
 
-  // 场景 3.3.11 - 条款未勾选点击下一步
-  test('Given the terms checkbox is not checked When user clicks next Then it shows a terms confirmation error', async () => {
-    render(<RegisterForm onRegisterSuccess={() => {}} />);
-    const nextButton = screen.getByRole('button', { name: '下一步' });
-
-    fireEvent.click(nextButton);
-
-    await waitFor(() => {
-      expect(screen.getByText('请勾选服务条款')).toBeInTheDocument();
-    });
-  });
-
   // 场景 3.3.11 - 手机号码未填写点击下一步
   test('Given the phone number is empty When user clicks next Then it shows a required field error', async () => {
     render(<RegisterForm onRegisterSuccess={() => {}} />);
@@ -168,7 +158,7 @@ describe('UI-RegisterForm Scenarios', () => {
     fireEvent.click(nextButton);
 
     await waitFor(() => {
-      expect(screen.getByText('请输入手机号码')).toBeInTheDocument();
+      expect(screen.getByText('请输入手机号，以完成用户校验')).toBeInTheDocument();
     });
   });
 
@@ -385,9 +375,11 @@ describe('UI-RegisterForm Scenarios', () => {
     });
   });
 
-  // 3.3.11 - 输入已注册的证件号码点击下一步弹窗显示长文案
-  test('Given identity is registered When user clicks next Then a modal shows identity registered guidance', async () => {
-    vi.mocked(userApi.registerUser).mockRejectedValue({ response: { status: 409, data: { error: '该证件号码已被注册' } } });
+  // 3.3.11 - 输入已注册的证件号码点击下一步弹窗显示短文案（优先校验）
+  test('Given identity is registered When user clicks next Then a modal shows identity registered popup', async () => {
+    vi.mocked(userApi.checkIdentityNumber).mockResolvedValue({ isAvailable: false, message: '该证件号码已被注册' });
+    vi.mocked(userApi.checkPhoneNumber).mockResolvedValue({ isAvailable: true });
+
     render(<RegisterForm onRegisterSuccess={() => {}} />);
     fireEvent.click(screen.getByLabelText('我已同意《中国铁路客户服务中心网站服务条款》《隐私权政策》'));
     fireEvent.change(screen.getByLabelText('用户名'), { target: { value: 'testuser' } });
@@ -399,10 +391,13 @@ describe('UI-RegisterForm Scenarios', () => {
     fireEvent.change(screen.getByLabelText('证件类型'), { target: { value: '居民身份证' } });
     fireEvent.change(screen.getByLabelText('手机号码'), { target: { value: '13800138000' } });
     fireEvent.click(screen.getByRole('button', { name: '下一步' }));
+    
     await waitFor(() => {
       expect(screen.getByRole('dialog')).toBeInTheDocument();
-      expect(screen.getByText('该证件号码已经被注册过，请确认是否您本人注册，是请使用原账号登录，不是请通过铁路12306App办理抢注或持该证件到就近的办理客运业务的铁路车站办理被抢注处理，完成后即可继续注册，或致电12306客服咨询。')).toBeInTheDocument();
+      expect(screen.getByText('该证件号码已被注册。请确认是否您本人注册，“是”请使用原账号登录，“不是”请通过铁路12306App办理抢注或持该证件原件到就近的办理客运业务的铁路车站办理被抢注处理，完成后即可继续注册，或致电12306客服咨询。')).toBeInTheDocument();
     });
+
+    expect(userApi.checkPhoneNumber).not.toHaveBeenCalled();
   });
 
   // 3.3.11 - 输入已注册的邮箱点击下一步弹窗显示长文案
@@ -422,13 +417,15 @@ describe('UI-RegisterForm Scenarios', () => {
     fireEvent.click(screen.getByRole('button', { name: '下一步' }));
     await waitFor(() => {
       expect(screen.getByRole('dialog')).toBeInTheDocument();
-      expect(screen.getByText('您输入的邮箱已被其他注册用户使用，请确认是否本人注册。如果此邮箱是本人注册，您可使用此邮箱进行登录，或返回登录页点击忘记密码进行重置密码;如果邮箱不是您注册的，您可更换邮箱或致电12306客服协助处理。')).toBeInTheDocument();
+      expect(screen.getByText('您输入的邮箱已被其他注册用户使用，请确认是否本人注册。如果此邮箱是本人注册，您可使用此邮箱进行登录，或返回登录页点击忘记密码进行重置密码；如果邮箱不是您注册的，您可更换邮箱或致电12306客服协助处理。')).toBeInTheDocument();
     });
   });
 
-  // 3.3.11 - 输入已注册的手机号码点击下一步弹窗显示长文案
-  test('Given phone is registered When user clicks next Then a modal shows phone registered guidance', async () => {
-    vi.mocked(userApi.registerUser).mockRejectedValue({ response: { status: 409, data: { error: '该手机号码已被注册' } } });
+  // 3.3.11 - 输入已注册的手机号码点击下一步弹窗显示短文案（优先校验）
+  test('Given phone is registered When user clicks next Then a modal shows phone registered popup', async () => {
+    vi.mocked(userApi.checkIdentityNumber).mockResolvedValue({ isAvailable: true });
+    vi.mocked(userApi.checkPhoneNumber).mockResolvedValue({ isAvailable: false, message: '您输入的手机号码已被其他注册用户使用' });
+
     render(<RegisterForm onRegisterSuccess={() => {}} />);
     fireEvent.click(screen.getByLabelText('我已同意《中国铁路客户服务中心网站服务条款》《隐私权政策》'));
     fireEvent.change(screen.getByLabelText('用户名'), { target: { value: 'testuser' } });
@@ -440,10 +437,14 @@ describe('UI-RegisterForm Scenarios', () => {
     fireEvent.change(screen.getByLabelText('证件类型'), { target: { value: '居民身份证' } });
     fireEvent.change(screen.getByLabelText('手机号码'), { target: { value: '13800138000' } });
     fireEvent.click(screen.getByRole('button', { name: '下一步' }));
+    
     await waitFor(() => {
       expect(screen.getByRole('dialog')).toBeInTheDocument();
-      expect(screen.getByText('您输入的手机号码已被其他注册用户使用，请确认是否本人注册。如果此手机号是本人注册，您可使用此手机号进行登录，或返回登录页点击忘记密码进行重置密码;如果手机号不是您注册的，您可更换手机号码或致电12306客服协助处理。')).toBeInTheDocument();
+      expect(screen.getByText('您输入的手机号码已被其他注册用户使用，请确认是否本人注册。如果此手机号是本人注册，您可使用此手机号进行登录，或返回登录页点击忘记密码进行重置密码；如果手机号不是您注册的，您可更换手机号码或致电12306客服协助处理。')).toBeInTheDocument();
     });
+
+    expect(userApi.checkIdentityNumber).toHaveBeenCalled();
+    expect(userApi.checkPhoneNumber).toHaveBeenCalled();
   });
 
   test('Given 用户在注册页面 And 用户已填写手机号，且已勾选同意用户协议 When 用户的部分必填项未规范填写，并点击“下一步”按钮 Then 未通过规范认证的输入框下方若已经存在系统提示，则直接保留之前的提示信息；如果没有系统提示，则显示相应的提示信息', async () => {

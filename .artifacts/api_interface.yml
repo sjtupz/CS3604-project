@@ -697,6 +697,7 @@
         code: 200
         data:
           orderId: "uuid"
+          orderNo: "EX123456789"
           trainNumber: "T109"
           departureStation: "北京站"
           arrivalStation: "上海站"
@@ -721,9 +722,12 @@
   acceptanceCriteria:
     - 返回订单完整信息，包含倒计时所需的 expireAt。
     - 证件号码应脱敏处理（显示前4后3）。
+    - 返回字段包含 orderNo（格式以 "EX" 开头 + 9位数字）。
   changeLog:
     - date: "2025-12-24"
       description: "依据订单确认页需求新增。"
+    - date: "2025-12-27"
+      description: "补充返回字段包含 orderNo。"
 
 - type: Backend
   id: API-POST-Order-Confirm
@@ -771,3 +775,102 @@
     - date: "2025-12-24"
       description: "依据订单取消交互需求新增。"
 
+- type: Backend
+  id: API-GET-Order-Status
+  route: GET /api/orders/{id}/status
+  description: 轮询获取订单当前状态，用于提示弹窗等待逻辑。
+  version: v1
+  auth: JWT
+  input:
+    type: Path
+    params:
+      id: string (orderId)
+  output:
+    success:
+      statusCode: 200
+      body:
+        code: 200
+        data: { status: "待确认" }
+    error:
+      - statusCode: 404
+        body: { code: 40403, message: "订单不存在" }
+  dependencies:
+    - DB-GetOrderDetails
+  acceptanceCriteria:
+    - 返回订单状态枚举：待确认/待支付/已支付/已取消。
+  changeLog:
+    - date: "2025-12-27"
+      description: "新增，用于确认后提示弹窗的轮询状态接口。"
+
+- type: Backend
+  id: API-POST-Order-Pay
+  route: POST /api/orders/{id}/pay
+  description: 支付订单并更新状态为“已支付”。
+  version: v1
+  auth: JWT
+  input:
+    type: Path
+    params:
+      id: string (orderId)
+  output:
+    success:
+      statusCode: 200
+      body: { code: 200, message: "支付成功" }
+    error:
+      - statusCode: 404
+        body: { code: 40403, message: "订单不存在" }
+  dependencies:
+    - DB-UpdateOrderStatus
+  acceptanceCriteria:
+    - 将订单状态更新为“已支付”。
+  changeLog:
+    - date: "2025-12-27"
+      description: "新增，用于支付页面“网上支付”按钮。"
+
+- type: Backend
+  id: API-GET-Orders
+  route: GET /api/orders
+  description: 获取当前用户的订单列表，支持按状态筛选与分页。
+  version: v1
+  auth: JWT
+  input:
+    type: QueryParams
+    params:
+      status: string (optional, values: 待支付,已支付)
+      page: number (optional, default: 1)
+      pageSize: number (optional, default: 20)
+  output:
+    success:
+      statusCode: 200
+      body:
+        code: 200
+        data:
+          items:
+            - orderId: "uuid"
+              orderNo: "EX123456789"
+              trainNumber: "G108"
+              departureStation: "上海虹桥"
+              arrivalStation: "北京南"
+              passengers:
+                - name: "张三"
+                  idType: "身份证"
+                  idNumber: "110***********1234"
+                  seatType: "二等座"
+                  coach: "05"
+                  seatNo: "06A"
+                  price: 100.0
+              totalAmount: 100.0
+              status: "待支付"
+          pagination:
+            total: 1
+            currentPage: 1
+            perPage: 20
+            totalPages: 1
+  dependencies:
+    - DB-ListUserOrdersByStatus
+  acceptanceCriteria:
+    - 返回指定状态的订单列表；未指定时返回全部或默认“待支付”。
+    - 列表项字段满足“个人中心订单”页面展示需求。
+  changeLog:
+    - date: "2025-12-27"
+      description: "新增，用于个人中心订单的状态筛选列表。"

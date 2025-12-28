@@ -1,0 +1,165 @@
+@font-face {
+  font-family: "SimSunLocal";
+  src: local("SimSun"), local("宋体");
+}
+
+@font-face {
+  font-family: "SimHeiDigitsLatin";
+  src: local("SimHei"), local("黑体"), local("Arial Black"), local("Arial");
+  unicode-range: U+0030-0039, U+0041-005A, U+0061-007A, U+002D, U+003A, U+002E, U+002F;
+}
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal {
+  width: 600px;
+  height: 280px;
+  background: #fff;
+  border-radius: 4px;
+  overflow: hidden;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+  font-family: SimHeiDigitsLatin, SimSunLocal, SimSun, "宋体", serif;
+  display: flex;
+  flex-direction: column;
+}
+
+.header {
+  background: #288BCC;
+  color: #fff;
+  padding: 14px 20px;
+  font-family: SimHeiDigitsLatin, SimSunLocal, SimSun, "宋体", serif;
+  font-weight: 400;
+  font-size: 18px;
+}
+
+.content {
+  padding: 12px 14px 8px 14px;
+  font-family: SimHeiDigitsLatin, SimSunLocal, SimSun, "宋体", serif;
+  line-height: 1.35;
+  flex: 1;
+  overflow: auto;
+}
+
+.trainLine {
+  font-family: SimHeiDigitsLatin, SimSunLocal, SimSun, "宋体", serif;
+  font-weight: 400;
+  font-size: 14px;
+  margin-bottom: 6px;
+  line-height: 1.3;
+}
+
+.trainStrong {
+  font-weight: 700;
+  font-size: 16px;
+}
+
+.trainMinor {
+  font-size: 14px;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  font-family: SimHeiDigitsLatin, SimSunLocal, SimSun, "宋体", serif;
+  line-height: 1.3;
+}
+
+.th {
+  background: #f5f5f5;
+  border: 1px solid #ddd;
+  padding: 6px 8px;
+  color: #333;
+  font-family: SimHeiDigitsLatin, SimSunLocal, SimSun, "宋体", serif;
+  line-height: 1.3;
+}
+
+.tr {}
+
+.td,
+.tdCenter {
+  border: 1px solid #ddd;
+  padding: 6px 8px;
+  font-family: SimHeiDigitsLatin, SimSunLocal, SimSun, "宋体", serif;
+  line-height: 1.3;
+}
+
+.tdCenter {
+  text-align: center;
+}
+
+.remain {
+  margin-top: 6px;
+  color: #333;
+  font-size: 14px;
+  font-family: SimHeiDigitsLatin, SimSunLocal, SimSun, "宋体", serif;
+  line-height: 1.3;
+}
+
+.remainSeat {}
+
+.remainNum {
+  color: #d33;
+  font-weight: 700;
+  font-size: 15px;
+}
+
+.footer {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  padding: 12px;
+  border-top: 1px solid #eee;
+  font-family: SimHeiDigitsLatin, SimSunLocal, SimSun, "宋体", serif;
+}
+
+.btnSecondary {
+  padding: 8px 24px;
+  background: #fff;
+  color: #000;
+  border: 1px solid #000;
+  border-radius: 3px;
+}
+
+.btnPrimary {
+  padding: 8px 24px;
+  background: #ff7f00;
+  color: #fff;
+  border: none;
+  border-radius: 3px;
+}
+
+.btnSecondary:hover {
+  background: #f7f7f7;
+}
+
+.btnPrimary:hover {
+  background: #f36b00;
+}
+
+.btnSecondary:active {
+  transform: translateY(1px);
+}
+
+.btnPrimary:active {
+  transform: translateY(1px);
+}
+
+.btnPrimary:disabled {
+  cursor: not-allowed;
+  opacity: 0.8;
+}
+
+.btnSecondary:focus,
+.btnPrimary:focus {
+  outline: 2px solid #288BCC;
+  outline-offset: 2px;
+}

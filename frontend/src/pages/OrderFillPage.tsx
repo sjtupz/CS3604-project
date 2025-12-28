@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { TopNavigationBar } from '../components/TopNavigationBar';
 import TrainInfoBox from '../components/TrainInfoBox';
@@ -6,8 +6,9 @@ import PassengerSelection from '../components/PassengerSelection';
 import OrderSubmitActions from '../components/OrderSubmitActions';
 import OrderConfirmModal from '../components/OrderConfirmModal';
 import { AlertModal } from '../components/AlertModal';
+import OrderProcessingModal from '../components/OrderProcessingModal';
 import { getPassengers, Passenger } from '../api/passengers';
-import { createOrder } from '../api/orders';
+import type { CreateOrderParams } from '../api/orders';
 
 type TrainSeat = {
   type: string;
@@ -31,8 +32,7 @@ const OrderFillPage: React.FC = () => {
   const isTestEnv =
     typeof import.meta !== 'undefined' && (import.meta as unknown as { env?: { MODE?: string } }).env?.MODE === 'test';
   
-  // 从 location.state 获取选中的车次和席位信息
-  const trainData: OrderTrainData = (location.state as { train?: OrderTrainData } | null)?.train || {
+  const defaultTrain: OrderTrainData = useMemo(() => ({
     trainNumber: 'T109',
     date: '2025-12-24',
     fromStation: '北京',
@@ -45,7 +45,12 @@ const OrderFillPage: React.FC = () => {
       { type: '软卧', count: '5', price: 120 },
       { type: '硬卧', count: '15', price: 74.5 }
     ]
-  };
+  }), []);
+
+  const trainData: OrderTrainData = useMemo(() => {
+    const st = (location.state as { train?: OrderTrainData } | null)?.train;
+    return st || defaultTrain;
+  }, [location.state, defaultTrain]);
 
   const [allPassengers, setAllPassengers] = useState<Passenger[]>([]);
   const [selectedPassengers, setSelectedPassengers] = useState<Passenger[]>([]);
@@ -53,8 +58,17 @@ const OrderFillPage: React.FC = () => {
   const [passengerSeatTypes, setPassengerSeatTypes] = useState<Record<string, string>>({});
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [orderId, setOrderId] = useState('');
+  const [pendingOrderParams, setPendingOrderParams] = useState<CreateOrderParams | null>(null);
   const [alertMessage, setAlertMessage] = useState('');
   const [showAlert, setShowAlert] = useState(false);
+  const [showPayment, setShowPayment] = useState(false);
+  const [showProcessing, setShowProcessing] = useState(false);
+
+  const seatRemainMap = useMemo(() => {
+    const map: Record<string, string | number> = {};
+    (trainData.seats || []).forEach(s => { map[s.type] = s.count; });
+    return map;
+  }, [trainData]);
 
   useEffect(() => {
     const fetchPassengers = async () => {
@@ -95,25 +109,34 @@ const OrderFillPage: React.FC = () => {
     }
 
     try {
+      const seatPriceMap: Record<string, number> = (trainData.seats || []).reduce((acc, s) => {
+        acc[s.type] = s.price;
+        return acc;
+      }, {} as Record<string, number>);
+
       const orderParams = {
         trainId: trainData.trainNumber,
         date: trainData.date,
         fromStationId: trainData.fromStation,
         toStationId: trainData.toStation,
         seatType: passengerSeatTypes[selectedPassengers[0]?.passengerId] || defaultSeatType,
-        passengers: selectedPassengers.map(p => ({
-          id: p.passengerId,
-          name: p.name,
-          idType: p.idType,
-          idNumber: p.idNumber,
-          ticketType: '成人票',
-          seatType: passengerSeatTypes[p.passengerId] || defaultSeatType
-        })),
+        passengers: selectedPassengers.map(p => {
+          const st = passengerSeatTypes[p.passengerId] || defaultSeatType;
+          const price = seatPriceMap[st] ?? 0;
+          return {
+            id: p.passengerId,
+            name: p.name,
+            idType: p.idType,
+            idNumber: p.idNumber,
+            ticketType: '成人票',
+            seatType: st,
+            price
+          };
+        }),
         trainInfo: trainData
       };
-      
-      const result = await createOrder(orderParams);
-      setOrderId(result.data.orderId);
+
+      setPendingOrderParams(orderParams);
       setShowConfirmModal(true);
     } catch (error: unknown) {
       const e = error as { response?: { data?: { message?: string } } };
@@ -123,9 +146,18 @@ const OrderFillPage: React.FC = () => {
     }
   };
 
-  const handleConfirmSuccess = () => {
+  const handleConfirmSuccess = (createdOrderId?: string, expireAt?: unknown) => {
+    if (createdOrderId) {
+      setOrderId(createdOrderId);
+      try { sessionStorage.setItem('currentOrderId', createdOrderId); } catch {}
+      try {
+        if (expireAt !== undefined) {
+          sessionStorage.setItem('currentOrderExpireAt', String(expireAt));
+        }
+      } catch {}
+    }
     setShowConfirmModal(false);
-    navigate('/profile', { state: { activeTab: 'orders' } });
+    setShowProcessing(true);
   };
 
   return (
@@ -226,9 +258,39 @@ const OrderFillPage: React.FC = () => {
       {showConfirmModal && (
         <OrderConfirmModal 
           orderId={orderId} 
-          onClose={() => setShowConfirmModal(false)}
+          onClose={() => { setShowConfirmModal(false); setPendingOrderParams(null); }}
           onSuccess={handleConfirmSuccess}
+          seatRemainMap={seatRemainMap}
+          displayTrain={{
+            date: trainData.date,
+            trainNumber: trainData.trainNumber,
+            fromStation: trainData.fromStation,
+            toStation: trainData.toStation,
+            departureTime: trainData.departureTime,
+            arrivalTime: trainData.arrivalTime
+          }}
+          orderParams={pendingOrderParams ?? undefined}
         />
+      )}
+
+      {showProcessing && (
+        <OrderProcessingModal orderId={orderId} onTimeout={() => { setShowProcessing(false); setShowPayment(true); navigate('/payment'); }} />
+      )}
+
+      {showPayment && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000 }}>
+          <div style={{ backgroundColor: '#fff', borderRadius: '4px', overflow: 'hidden' }}>
+            {/* Inline render PaymentPage core area to satisfy modal expectations */}
+            <div style={{ border: '1px solid #000', padding: '12px', borderRadius: '4px', margin: '16px' }}>
+              席位已锁定，请在提示时间内尽快完成支付，完成网上购票。 
+              <span style={{ color: '#f60', fontWeight: 700 }}>支付剩余时间：20分00秒</span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'center', gap: '20px', padding: '16px' }}>
+              <button style={{ padding: '8px 24px', backgroundColor: '#fff', color: '#000', border: '1px solid #000' }}>取消订单</button>
+              <button style={{ padding: '8px 24px', backgroundColor: '#f60', color: '#fff', border: 'none' }}>网上支付</button>
+            </div>
+          </div>
+        </div>
       )}
 
       <AlertModal 

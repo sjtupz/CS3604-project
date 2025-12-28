@@ -8,11 +8,16 @@ interface Order {
   passengerName?: string;
   bookingDate?: string;
   travelDate?: string;
+  fromStation?: string;
+  toStation?: string;
+  departureTime?: string;
   trainInfo?: string;
   passengerInfo?: string;
+  passengerIdTypes?: string;
   seatInfo?: string;
   price?: number;
   status?: string;
+  ticketType?: string;
 }
 
 interface UpcomingOrdersProps {
@@ -25,7 +30,6 @@ interface UpcomingOrdersProps {
 const UpcomingOrders: React.FC<UpcomingOrdersProps> = ({
   orders = [],
   onRefund,
-  onModify,
   onNavigateToBooking
 }) => {
   const [queryType, setQueryType] = useState<'按订票日期' | '按乘车日期'>('按订票日期');
@@ -150,8 +154,8 @@ const UpcomingOrders: React.FC<UpcomingOrdersProps> = ({
           padding: '20px',
           minHeight: '500px',
           display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center'
+          alignItems: isEmpty ? 'center' : 'flex-start',
+          justifyContent: isEmpty ? 'center' : 'flex-start'
         }}
       >
         {isEmpty ? (
@@ -199,63 +203,53 @@ const UpcomingOrders: React.FC<UpcomingOrdersProps> = ({
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead>
                 <tr style={{ backgroundColor: '#f0f0f0' }}>
-                  <th style={{ padding: '10px', border: '1px solid #ddd', textAlign: 'left' }}>订票日期</th>
                   <th style={{ padding: '10px', border: '1px solid #ddd', textAlign: 'left' }}>车次信息</th>
                   <th style={{ padding: '10px', border: '1px solid #ddd', textAlign: 'left' }}>旅客信息</th>
                   <th style={{ padding: '10px', border: '1px solid #ddd', textAlign: 'left' }}>席位信息</th>
                   <th style={{ padding: '10px', border: '1px solid #ddd', textAlign: 'left' }}>票价</th>
                   <th style={{ padding: '10px', border: '1px solid #ddd', textAlign: 'left' }}>车票状态</th>
-                  <th style={{ padding: '10px', border: '1px solid #ddd', textAlign: 'left' }}>操作</th>
                 </tr>
               </thead>
               <tbody>
                 {filteredOrders.map((order) => (
                   <tr key={order.orderId}>
                     <td style={{ padding: '10px', border: '1px solid #ddd' }}>
-                      {order.bookingDate ? order.bookingDate.replace(/\//g, '-') : '-'}
+                      <div style={{ color: '#333' }}>
+                        {(order.fromStation || '-') + '→' + (order.toStation || '-') + ' ' + (order.trainNumber || '-')}
+                      </div>
+                      <div style={{ color: '#666', fontSize: '13px' }}>
+                        <span>{(order.travelDate || order.bookingDate || '-').replace(/\//g, '-')}</span>
+                        <span>{'\u00A0\u00A0\u00A0\u00A0'}</span>
+                        <span>{(order.departureTime || '-') + '\u00A0开'}</span>
+                      </div>
                     </td>
                     <td style={{ padding: '10px', border: '1px solid #ddd' }}>
-                      {order.trainNumber || order.trainInfo}
-                    </td>
-                    <td style={{ padding: '10px', border: '1px solid #ddd' }}>
-                      {order.passengerName || order.passengerInfo}
+                      <div style={{ color: '#333' }}>{order.passengerName || order.passengerInfo || '-'}</div>
+                      <div style={{ color: '#666', fontSize: '13px' }}>{order.passengerIdTypes || '-'}</div>
                     </td>
                     <td style={{ padding: '10px', border: '1px solid #ddd' }}>
                       {order.seatInfo || '-'}
                     </td>
                     <td style={{ padding: '10px', border: '1px solid #ddd' }}>
-                      ¥{order.price || 0}
+                      <div style={{ color: '#333' }}>{order.ticketType || '成人票'}</div>
+                      <div style={{ color: '#666', fontSize: '13px' }}>{(order.price ?? 0) + '元'}</div>
                     </td>
                     <td style={{ padding: '10px', border: '1px solid #ddd' }}>
-                      {order.status || '未出行'}
-                    </td>
-                    <td style={{ padding: '10px', border: '1px solid #ddd' }}>
+                      <div style={{ color: '#333' }}>已支付</div>
                       <button
+                        type="button"
                         onClick={() => onRefund?.(order.orderId)}
                         style={{
-                          marginRight: '10px',
-                          padding: '5px 10px',
-                          backgroundColor: '#ff4d4f',
-                          color: 'white',
+                          padding: 0,
                           border: 'none',
-                          borderRadius: '4px',
-                          cursor: 'pointer'
+                          backgroundColor: 'transparent',
+                          color: '#1890ff',
+                          cursor: 'pointer',
+                          textDecoration: 'underline',
+                          fontSize: '13px'
                         }}
                       >
                         退票
-                      </button>
-                      <button
-                        onClick={() => onModify?.(order.orderId)}
-                        style={{
-                          padding: '5px 10px',
-                          backgroundColor: '#1890ff',
-                          color: 'white',
-                          border: 'none',
-                          borderRadius: '4px',
-                          cursor: 'pointer'
-                        }}
-                      >
-                        改签
                       </button>
                     </td>
                   </tr>

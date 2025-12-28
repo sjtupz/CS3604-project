@@ -80,21 +80,18 @@ async function createPassenger(userId, data) {
   if (!name) throw new Error('请输入您的姓名！')
   if (!idNumber) throw new Error('请输入证件号码！')
   
-  // 1. Check if name exists in registered users
-  const existingUsers = await userDb.findUsersByRealName(name);
+  // 1. Check if ID exists in registered users (Users table)
+  const registeredUser = await userDb.findUserByIdentityNumber(idNumber);
 
-  if (existingUsers && existingUsers.length > 0) {
-    // User(s) with this name exist. Check if ID matches any of them.
-    const match = existingUsers.find(u => u.identityNumber === idNumber);
-    if (!match) {
-      // Name exists but ID does not match any registered user with that name
-      throw new Error('请输入正确的证件号码');
+  if (registeredUser) {
+    // If ID is registered, Name MUST match
+    if (registeredUser.fullName !== name && registeredUser.realName !== name) {
+       throw new Error('身份信息不一致！');
     }
-    // Match found, proceed to create passenger (association)
   } else {
-    // No user with this name. Validate ID format.
+    // If ID not registered, check format
     if (idType === '居民身份证' && !isValidIdentityNumber(idNumber)) {
-      throw new Error('证件号码不合法');
+      throw new Error('请正确输入18位的证件号码！');
     }
   }
 

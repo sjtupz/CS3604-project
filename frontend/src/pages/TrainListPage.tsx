@@ -8,6 +8,8 @@ import { DatePicker } from '../components/DatePicker'
 import { getTrains } from '../api/trains'
 import './TrainListPage.css'
 import { TopNavigationBar } from '../components/TopNavigationBar'
+import { AlertModal } from '../components/AlertModal'
+import { getOrders } from '../api/personal_user'
 
 interface TrainListPageProps {
   isLoading?: boolean
@@ -44,6 +46,8 @@ export const TrainListPage: React.FC<TrainListPageProps> = ({ isLoading, error }
   const [seatTypes, setSeatTypes] = useState<string[]>([...ALL_SEAT_TYPES])
   const [selectedFromStations, setSelectedFromStations] = useState<string[] | undefined>(undefined)
   const [selectedToStations, setSelectedToStations] = useState<string[] | undefined>(undefined)
+  const [showOrderBlock, setShowOrderBlock] = useState(false)
+  const [showCancelLimitBlock, setShowCancelLimitBlock] = useState(false)
 
   const [isSwapping, setIsSwapping] = useState(false)
   const [hasInteracted, setHasInteracted] = useState(false)
@@ -129,7 +133,27 @@ export const TrainListPage: React.FC<TrainListPageProps> = ({ isLoading, error }
     if (to) setSelectedToStations(undefined)
   }, [to])
 
-  const handleReserve = useCallback((item: TrainListItem) => {
+  const handleReserve = useCallback(async (item: TrainListItem) => {
+    try {
+      const userId = localStorage.getItem('userId')
+      const key = userId ? `cancelOrderDailyStats_${userId}` : 'cancelOrderDailyStats'
+      const raw = localStorage.getItem(key)
+      if (raw) {
+        const parsed = JSON.parse(raw) as { date?: unknown; normal?: unknown; noSeat?: unknown }
+        const date = typeof parsed.date === 'string' ? parsed.date : ''
+        if (date === todayStr) {
+          const normal = Number(parsed.normal)
+          const noSeat = Number(parsed.noSeat)
+          const n = Number.isFinite(normal) ? normal : 0
+          const ns = Number.isFinite(noSeat) ? noSeat : 0
+          if (n + Math.floor(ns / 5) >= 3) {
+            setShowCancelLimitBlock(true)
+            return
+          }
+        }
+      }
+    } catch {}
+
     const token = localStorage.getItem('token') || localStorage.getItem('authToken')
     if (!token) {
       navigate('/login')
@@ -139,6 +163,18 @@ export const TrainListPage: React.FC<TrainListPageProps> = ({ isLoading, error }
       }
       return
     }
+
+    try {
+      const res = await getOrders({ status: 0 })
+      const r = res as { data?: unknown; orders?: unknown }
+      const rawList = Array.isArray(r?.data) ? r.data : (Array.isArray(r?.orders) ? r.orders : [])
+      const list = (rawList as Array<{ status?: unknown }>)
+      const hasUnpaid = list.some((o) => ['未支付', '待确认', '待支付', '未完成'].includes(String(o.status)))
+      if (hasUnpaid) {
+        setShowOrderBlock(true)
+        return
+      }
+    } catch {}
 
     // Map TrainListItem to OrderFillPage's expected format
     const seats = Object.entries(item.seatAvailability || {}).map(([type, info]) => {
@@ -172,7 +208,7 @@ export const TrainListPage: React.FC<TrainListPageProps> = ({ isLoading, error }
         }
       }
     })
-  }, [date, navigate])
+  }, [date, navigate, todayStr])
 
   const filteredTrainList = useMemo(() => {
     return items.filter(item => {
@@ -369,6 +405,36 @@ export const TrainListPage: React.FC<TrainListPageProps> = ({ isLoading, error }
           )}
         </div>
       </section>
+      <AlertModal visible={showOrderBlock} onClose={() => setShowOrderBlock(false)}>
+        <span>
+          您还有未处理的订单，请您到
+          <a style={{ color: '#1890ff', cursor: 'pointer', textDecoration: 'underline' }} onClick={() => { setShowOrderBlock(false); navigate('/profile', { state: { section: '火车票订单' } }) }}>未处理订单</a>
+          进行处理！
+        </span>
+      </AlertModal>
+      <AlertModal visible={showCancelLimitBlock} onClose={() => setShowCancelLimitBlock(false)}>
+        <span>
+          <span>订票失败！原因:对不起，由于您取消次数过多，今日将不能继续受理您的订票请求。明日您可继续使用订票功能。请点击</span>
+          <a
+            style={{ color: '#1890ff', cursor: 'pointer', textDecoration: 'underline' }}
+            onClick={() => {
+              navigate('/profile', { state: { section: '火车票订单' } })
+            }}
+          >
+            [我的12306]
+          </a>
+          <span>办理其他业务。您也可以点击</span>
+          <a
+            style={{ color: '#1890ff', cursor: 'pointer', textDecoration: 'underline' }}
+            onClick={() => {
+              navigate('/tickets')
+            }}
+          >
+            [预订车票]
+          </a>
+          <span>，重新规划您的旅程。</span>
+        </span>
+      </AlertModal>
     </div>
   )
 }

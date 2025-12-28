@@ -32,7 +32,7 @@ describe('PassengerForm Component', () => {
     // Click submit
     fireEvent.click(screen.getByText('保存'));
 
-    expect(screen.getByText('请输入正确的证件号码！')).toBeInTheDocument();
+    expect(screen.getByText('请正确输入18位的证件号码！')).toBeInTheDocument();
   });
 
   test('5.1.9: Edit mode - Read only fields and Layout', () => {

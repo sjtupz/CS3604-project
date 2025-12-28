@@ -101,4 +101,23 @@ describe('Orders List API', () => {
          expect(res.body.data.length).toBe(1);
          expect(res.body.data[0].id).toBe('ord-upcoming');
     });
+
+    test('Given 状态=待支付 When 查询订单列表 Then 返回待支付订单', async () => {
+        const res = await request(app)
+            .get('/api/orders')
+            .query({ status: '待支付' })
+            .set('Authorization', `Bearer ${testToken}`);
+        expect(res.status).toBe(200);
+        expect(res.body.code).toBe(200);
+        res.body.data.forEach(o => expect(o.status).toBe('待支付'));
+    });
+
+    test('Given 状态=已支付 When 查询订单列表 Then 返回已支付订单', async () => {
+        const res = await request(app)
+            .get('/api/orders')
+            .query({ status: '已支付' })
+            .set('Authorization', `Bearer ${testToken}`);
+        expect(res.status).toBe(200);
+        res.body.data.forEach(o => expect(o.status).toBe('已支付'));
+    });
 });

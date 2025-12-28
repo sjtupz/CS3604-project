@@ -49,6 +49,7 @@ interface PersonalCenterLayoutProps {
   onNavigateToService?: (service: string) => void;
   onNavigateToPayment?: (orderId: string) => void;
   onNavigateToBooking?: () => void;
+  onCancelOrder?: (orderId: string, hasNoSeat?: boolean) => void | Promise<void>;
   onRefund?: (orderId: string) => void;
   onModify?: (orderId: string) => void;
   onPrintInfo?: (orderId: string) => void;
@@ -65,6 +66,7 @@ const PersonalCenterLayout: React.FC<PersonalCenterLayoutProps> = ({
   onNavigateToService,
   onNavigateToPayment,
   onNavigateToBooking,
+  onCancelOrder,
   onRefund,
   onModify,
   onPrintInfo,
@@ -111,33 +113,34 @@ const PersonalCenterLayout: React.FC<PersonalCenterLayoutProps> = ({
     birthDate?: string
   }
 
-  const handlePassengerSubmit = (data: PassengerSubmitData) => {
-    void (async () => {
-      try {
-        if (data.passengerId && !data.passengerId.startsWith('new_')) {
-          const { passengerId, ...updateData } = data;
-          await updatePassenger(passengerId, updateData);
-        } else {
-          await createPassenger({
-            name: data.name ?? '',
-            idType: data.idType ?? '居民身份证',
-            idNumber: data.idNumber ?? '',
-            phone: data.phone ?? '',
-            discountType: data.discountType ?? '',
-            expiryDate: data.expiryDate,
-            birthDate: data.birthDate,
-          });
-        }
-        if (onRefreshPassengers) {
-          await onRefreshPassengers();
-        }
-        setPassengerView('list');
-        setPassengerListVersion((v) => v + 1);
-      } catch (error) {
-        console.error('Failed to save passenger:', error);
-        alert('保存失败，请重试');
+  const handlePassengerSubmit = async (data: PassengerSubmitData) => {
+    try {
+      if (data.passengerId && !data.passengerId.startsWith('new_')) {
+        const { passengerId, ...updateData } = data;
+        await updatePassenger(passengerId, updateData);
+      } else {
+        await createPassenger({
+          name: data.name ?? '',
+          idType: data.idType ?? '居民身份证',
+          idNumber: data.idNumber ?? '',
+          phone: data.phone ?? '',
+          discountType: data.discountType ?? '',
+          expiryDate: data.expiryDate,
+          birthDate: data.birthDate,
+        });
       }
-    })();
+      if (onRefreshPassengers) {
+        await onRefreshPassengers();
+      }
+      setPassengerView('list');
+      setPassengerListVersion((v) => v + 1);
+    } catch (error: any) {
+      console.error('Failed to save passenger:', error);
+      // Propagate error to PassengerForm
+      // Axios error handling to extract message
+      const message = error.response?.data?.error || error.response?.data?.message || error.message || '保存失败';
+      throw new Error(message);
+    }
   };
 
   const implementedSections = useMemo(() => ['个人中心', '火车票订单', '查看个人信息', '乘车人'], []);
@@ -191,28 +194,128 @@ const PersonalCenterLayout: React.FC<PersonalCenterLayoutProps> = ({
         return (
           <div>
             <OrderTabs activeTab={orderTab} onTabChange={setOrderTab} />
-            {orderTab === '未完成订单' && (
-              <UncompletedOrders 
-                orders={[]} 
-                onNavigateToPayment={onNavigateToPayment}
-                onNavigateToBooking={onNavigateToBooking}
-              />
-            )}
-            {orderTab === '未出行订单' && (
-              <UpcomingOrders 
-                orders={[]} 
-                onRefund={onRefund}
-                onModify={onModify}
-                onNavigateToBooking={onNavigateToBooking}
-              />
-            )}
-            {orderTab === '历史订单' && (
-              <HistoryOrders 
-                orders={[]} 
-                onPrintInfo={onPrintInfo}
-                onNavigateToBooking={onNavigateToBooking}
-              />
-            )}
+            {(() => {
+              type PassengerItem = { name?: string };
+              type TrainInfoItem = {
+                travelDate?: string;
+                date?: string;
+                fromStation?: string;
+                toStation?: string;
+                fromStationId?: string;
+                toStationId?: string;
+                departureTime?: string;
+                startTime?: string;
+              } | undefined;
+              type RawOrder = {
+                id?: string;
+                orderId?: string;
+                orderNumber?: string;
+                orderNo?: string;
+                trainNumber?: string;
+                passengerInfo?: PassengerItem[] | unknown;
+                passengerName?: string;
+                createdAt?: string;
+                travelDate?: string;
+                trainInfo?: TrainInfoItem | unknown;
+                seatInfo?: string;
+                price?: number;
+                status?: string;
+              };
+
+              const rawOrders = Array.isArray(_orders) ? (_orders as RawOrder[]) : [];
+              const parseMaybeJson = (v: unknown): unknown => {
+                if (typeof v !== 'string') return undefined;
+                try {
+                  return JSON.parse(v) as unknown;
+                } catch {
+                  return undefined;
+                }
+              };
+              const normalized = rawOrders.map((o) => {
+                const passengerInfoParsed = Array.isArray(o.passengerInfo)
+                  ? o.passengerInfo
+                  : (Array.isArray(parseMaybeJson(o.passengerInfo)) ? (parseMaybeJson(o.passengerInfo) as PassengerItem[]) : []);
+                const passengerList = passengerInfoParsed;
+                const passengerName = passengerList.length > 0
+                  ? passengerList.map((p) => p?.name ?? '').filter(Boolean).join('、')
+                  : (o.passengerName ?? undefined);
+                const bookingDate = typeof o.createdAt === 'string' ? o.createdAt.slice(0, 10) : undefined;
+                const trainInfoParsed = (o.trainInfo && typeof o.trainInfo === 'object')
+                  ? o.trainInfo
+                  : parseMaybeJson(o.trainInfo);
+                const tInfo = (trainInfoParsed && typeof trainInfoParsed === 'object') ? (trainInfoParsed as TrainInfoItem) : undefined;
+                const tInfoRecord = (tInfo && typeof tInfo === 'object') ? (tInfo as unknown as Record<string, unknown>) : null;
+                const travelDate = (tInfo && (tInfo.travelDate || tInfo.date)) ? String(tInfo.travelDate || tInfo.date) : (o.travelDate ?? undefined);
+                const fromStation = (tInfo && (tInfo.fromStation || tInfo.fromStationId)) ? String(tInfo.fromStation || tInfo.fromStationId) : undefined;
+                const toStation = (tInfo && (tInfo.toStation || tInfo.toStationId)) ? String(tInfo.toStation || tInfo.toStationId) : undefined;
+                const departureTimeValue = tInfoRecord
+                  ? (tInfoRecord.departureTime
+                    ?? tInfoRecord.startTime
+                    ?? tInfoRecord.departure_time
+                    ?? tInfoRecord.start_time
+                    ?? tInfoRecord.departTime
+                    ?? tInfoRecord.depart_time)
+                  : undefined;
+                const departureTime = (typeof departureTimeValue === 'string' || typeof departureTimeValue === 'number')
+                  ? String(departureTimeValue)
+                  : undefined;
+                const passengerIdTypes = passengerInfoParsed.length > 0
+                  ? passengerInfoParsed.map((p) => (p as { idType?: string })?.idType ?? '').filter(Boolean).join('、')
+                  : undefined;
+                const hasNoSeat = typeof o.seatInfo === 'string' ? o.seatInfo.includes('无座') : undefined;
+                const rawStatus = String(o.status ?? '');
+                const status = rawStatus === '未支付' || rawStatus === '待确认' ? '待支付' : rawStatus;
+                return {
+                  orderId: o.id ?? o.orderId ?? '',
+                  orderNumber: o.orderNumber ?? o.orderNo,
+                  trainNumber: o.trainNumber ?? '',
+                  passengerName,
+                  bookingDate,
+                  travelDate,
+                  fromStation,
+                  toStation,
+                  departureTime,
+                  seatInfo: o.seatInfo,
+                  price: o.price ?? 0,
+                  status,
+                  ticketType: '成人票',
+                  passengerIdTypes,
+                  hasNoSeat,
+                };
+              });
+
+              const uncompleted = normalized.filter((x) => ['待支付'].includes(String(x.status)));
+              const upcoming = normalized.filter((x) => ['已支付', '未出行'].includes(String(x.status)));
+              const history = normalized.filter((x) => ['已完成', '已退票', '已取消', '历史订单'].includes(String(x.status)));
+
+              return (
+                <>
+                  {orderTab === '未完成订单' && (
+                    <UncompletedOrders 
+                      orders={uncompleted}
+                      onNavigateToPayment={onNavigateToPayment}
+                      onNavigateToBooking={onNavigateToBooking}
+                      onCancelOrder={onCancelOrder}
+                    />
+                  )}
+                  {orderTab === '未出行订单' && (
+                    <UpcomingOrders 
+                      orders={upcoming}
+                      onRefund={onRefund}
+                      onModify={onModify}
+                      onNavigateToBooking={onNavigateToBooking}
+                    />
+                  )}
+                  {orderTab === '历史订单' && (
+                    <HistoryOrders 
+                      orders={history}
+                      onPrintInfo={onPrintInfo}
+                      onNavigateToBooking={onNavigateToBooking}
+                    />
+                  )}
+                </>
+              );
+            })()}
           </div>
         );
       case '查看个人信息':

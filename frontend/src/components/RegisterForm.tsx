@@ -18,6 +18,15 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onRegisterSuccess })
     setSubmitted(true);
     onRegisterSuccess();
   };
+
+  const [modalVisible, setModalVisible] = useState(false);
+  const [modalMessage, setModalMessage] = useState('');
+
+  const showModal = (message: string) => {
+    setModalMessage(message);
+    setModalVisible(true);
+  };
+
   const {
     state,
     handleInputChange,
@@ -25,10 +34,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onRegisterSuccess })
     handleBlur,
     handleSubmit,
     clearFormError,
-  } = useRegisterForm(onSuccess);
-
-  const [modalVisible, setModalVisible] = useState(false);
-  const [modalMessage, setModalMessage] = useState('');
+  } = useRegisterForm(onSuccess, showModal);
 
   const handleSubmitWithModal = (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,8 +44,9 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onRegisterSuccess })
     } else if (!state.agreeToTerms) {
       setModalMessage(MODAL_MESSAGES.CONFIRM_TERMS);
       setModalVisible(true);
+    } else {
+      handleSubmit(e);
     }
-    handleSubmit(e);
   };
 
   return (

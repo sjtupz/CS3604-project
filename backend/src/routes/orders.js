@@ -23,4 +23,10 @@ router.post('/:orderId/confirm', auth, orderController.confirmOrder);
 // 取消订单并释放席位。
 router.post('/:orderId/cancel', auth, orderController.cancelOrder);
 
+// GET /api/orders/:orderId/status
+router.get('/:orderId/status', auth, orderController.getOrderStatus);
+
+// POST /api/orders/:orderId/pay
+router.post('/:orderId/pay', auth, orderController.payOrder);
+
 module.exports = router;

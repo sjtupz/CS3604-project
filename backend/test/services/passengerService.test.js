@@ -100,20 +100,47 @@ describe('Passenger Service', () => {
     expect(result).toHaveProperty('passengerId');
   });
 
-  test('Given 已存在的用户姓名但错误的证件号 When 调用createPassenger Then 应抛出验证错误', async () => {
+  test('Given 已存在的用户姓名但错误的证件号(格式错误) When 调用createPassenger Then 应抛出格式错误', async () => {
     // Arrange
     const userId = 'test-user-id';
     const passengerData = {
       name: '张三', // 已存在的注册用户
       idType: '居民身份证',
-      idNumber: '110101199001011250', // 错误的身份证号（不匹配注册信息）
+      idNumber: '110101199001011250', // 错误的身份证号（不匹配注册信息且格式无效）
       phone: '13800138000',
       discountType: '成人'
     };
 
     // Act & Assert
     await expect(passengerService.createPassenger(userId, passengerData))
-      .rejects.toThrow('请输入正确的证件号码');
+      .rejects.toThrow('请正确输入18位的证件号码！');
+  });
+
+  test('Given 已存在的用户证件号但姓名不一致 When 调用createPassenger Then 应抛出身份信息不一致错误', async () => {
+    // Arrange
+    const userId = 'test-user-id';
+    // 假设 '110101199001011234' 是 '张三' 的ID (在 createLoginCodeRecord.test.js 或其他地方建立的，或者在此测试套件初始化时建立)
+    // 根据 setup.js, 可能没有预置用户? 
+    // Wait, createLoginCodeRecord.test.js is not relevant. 
+    // setup.js or beforeAll might create users. 
+    // The previous test "Given 已存在的用户姓名..." assumes '张三' exists.
+    // Let's rely on that.
+    
+    // We need to know what ID '张三' has.
+    // In "Given 已存在的用户姓名和正确的证件号" test, it uses '110101199001011234'.
+    // So '110101199001011234' belongs to '张三'.
+
+    const passengerData = {
+      name: '李四', // 名字不匹配
+      idType: '居民身份证',
+      idNumber: '110101199001011234', // '张三' 的ID
+      phone: '13800138000',
+      discountType: '成人'
+    };
+
+    // Act & Assert
+    await expect(passengerService.createPassenger(userId, passengerData))
+      .rejects.toThrow('身份信息不一致！');
   });
 
   test('Given 无效的证件号(非注册用户) When 调用createPassenger Then 应抛出验证错误', async () => {

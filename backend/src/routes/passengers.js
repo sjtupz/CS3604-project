@@ -47,7 +47,7 @@ router.post('/', auth, async (req, res) => {
     })
   } catch (error) {
     console.error('Create passenger error:', error)
-    if (error.message.includes('请输入') || error.message.includes('不合法')) {
+    if (error.message.includes('请输入') || error.message.includes('不合法') || error.message.includes('身份信息不一致') || error.message.includes('证件号码')) {
        return res.status(400).json({ error: error.message, code: 40004, message: error.message })
     }
     if (error.message.includes('exists')) {

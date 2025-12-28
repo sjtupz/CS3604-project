@@ -6,7 +6,7 @@ const resolveUserByIdentifier = async (identifierRaw) => {
   const identifier = identifierRaw ? String(identifierRaw).trim() : '';
   if (!identifier) return null;
 
-  if (/^\d{11}$/.test(identifier)) {
+  if (/^\d{7,11}$/.test(identifier)) {
     const user = await userDb.findUserByPhoneNumber(identifier);
     if (user) return user;
   }
@@ -25,7 +25,7 @@ const resolveUserByIdentifier = async (identifierRaw) => {
 const handleSendCode = async (payload) => {
   const { identifier, idLast4, code: providedCode } = payload || {};
   const code = providedCode || generateSixDigitCode();
-  const phoneValue = /^\d{11}$/.test(identifier) ? identifier : null;
+  const phoneValue = /^\d{7,11}$/.test(identifier) ? identifier : null;
   await createLoginCodeRecord({
     phone: phoneValue,
     identifier,

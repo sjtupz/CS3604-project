@@ -87,8 +87,11 @@ export const SMSVerificationModal: React.FC<Props> = ({ onClose: _onClose, onVer
       return;
     }
     try {
-      const { token } = await verifyLogin(identifier, idLast4, code, password);
+      const { token, userId } = await verifyLogin(identifier, idLast4, code, password);
       localStorage.setItem('authToken', token);
+      if (userId) {
+        localStorage.setItem('userId', userId);
+      }
       window.dispatchEvent(new Event('auth-change')); // Trigger event for App to update
       _onVerified();
     } catch (err: unknown) {

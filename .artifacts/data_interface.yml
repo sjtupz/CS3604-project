@@ -345,11 +345,14 @@
     - 成功执行后，orders 表中会增加一条新记录。
     - 包含：userId, trainId, fromStationId, toStationId, passengers(JSON/关联表), totalAmount, status('待确认'/'待支付'/'已支付'/'已取消'), createdAt, expireAt(20分钟后)。
     - 关联记录包含每个乘车人的具体席位号（由锁定席位逻辑生成）。
+    - 生成订单号：orderNo 以 "EX" 开头 + 9位数字，系统保证唯一且建立唯一索引。
   changeLog:
     - date: "2025-12-24"
       description: "依据订单填写页需求新增。"
     - date: "2025-12-24"
       description: "细化关联记录与席位号要求。"
+    - date: "2025-12-27"
+      description: "增加订单号生成规则与唯一性约束。"
 
 - type: Database
   id: DB-GetOrderDetails
@@ -358,9 +361,12 @@
     - none
   acceptanceCriteria:
     - 返回订单完整信息，包括列车详情、乘车人详情、席位与价格。
+    - 返回字段应包含 orderNo，用于支付成功页展示（格式同 DB-CreateOrder 定义）。
   changeLog:
     - date: "2025-12-24"
       description: "依据订单确认页需求新增。"
+    - date: "2025-12-27"
+      description: "补充返回字段包含 orderNo。"
 
 - type: Database
   id: DB-UpdateOrderStatus
@@ -397,3 +403,15 @@
     - date: "2025-12-24"
       description: "依据订单取消或超时释放席位需求新增。"
 
+- type: Database
+  id: DB-ListUserOrdersByStatus
+  description: 按状态返回指定用户的订单列表，用于个人中心订单展示。
+  dependencies:
+    - none
+  acceptanceCriteria:
+    - 输入：userId(required)、status(enum: 待支付/已支付)、page(optional, default 1)、pageSize(optional, default 20)。
+    - 输出：items 数组与分页元数据；每条记录包含 orderId、orderNo、trainNumber、departureStation、arrivalStation、seatInfo(每人席别/车厢/席位号)、totalAmount、status。
+    - 当无记录时返回 items 空数组、total=0。
+  changeLog:
+    - date: "2025-12-27"
+      description: "新增，用于个人中心订单列表按状态查询。"
