@@ -6,7 +6,7 @@ const dbOrders = require('../db/orders');
  * 创建订单
  */
 async function createOrder(userId, orderData) {
-  const { trainId, fromStationId, toStationId, date, passengers } = orderData;
+  const { trainId, fromStationId, toStationId, date, passengers, trainInfo } = orderData;
   
   // 1. 校验乘客信息
   if (!passengers || passengers.length === 0) {
@@ -43,7 +43,8 @@ async function createOrder(userId, orderData) {
     travelDate: date,
     passengers,
     totalAmount,
-    status: '待确认'
+    status: '待确认',
+    trainInfo: trainInfo
   };
 
   const result = await dbOrders.dbCreateOrder(orderInfo);
@@ -120,23 +121,37 @@ async function cancelOrder(orderId) {
  */
 async function listOrders(userId, statusType, searchQuery) {
   let statusList = [];
-  
-  // Status mapping logic
+  let externalStatus = null;
+
   if (statusType !== undefined && statusType !== null && statusType !== '') {
-    const type = parseInt(statusType);
-    if (type === 0) {
-      // 未完成
-      statusList = ['未支付', '待确认', '待支付'];
-    } else if (type === 1) {
-      // 未出行
-      statusList = ['已支付', '未出行'];
-    } else if (type === 2) {
-      // 历史订单
-      statusList = ['已完成', '已退票', '已取消', '历史订单'];
+    const typeNum = parseInt(statusType);
+    if (!Number.isNaN(typeNum)) {
+      if (typeNum === 0) {
+        statusList = ['未支付', '待确认', '待支付'];
+      } else if (typeNum === 1) {
+        statusList = ['已支付', '未出行'];
+      } else if (typeNum === 2) {
+        statusList = ['已完成', '已退票', '已取消', '历史订单'];
+      }
+    } else {
+      if (statusType === '待支付') {
+        statusList = ['未支付', '待支付'];
+        externalStatus = '待支付';
+      } else if (statusType === '已支付') {
+        statusList = ['已支付'];
+      } else {
+        statusList = [statusType];
+      }
     }
   }
-  
-  return await dbOrders.dbGetOrdersByUser(userId, statusList, searchQuery);
+
+  const orders = await dbOrders.dbGetOrdersByUser(userId, statusList, searchQuery);
+  if (externalStatus === '待支付') {
+    orders.forEach(o => {
+      if (o.status === '未支付') o.status = '待支付';
+    });
+  }
+  return orders;
 }
 
 module.exports = {
@@ -144,5 +159,23 @@ module.exports = {
   getOrderDetails,
   confirmOrder,
   cancelOrder,
-  listOrders
+  listOrders,
+  getOrderStatus: async (orderId) => {
+    const order = await dbOrders.dbGetOrderDetails(orderId);
+    if (!order) {
+      const err = new Error('订单不存在');
+      err.code = 404;
+      throw err;
+    }
+    return order.status === '未支付' ? '待支付' : order.status;
+  },
+  payOrder: async (orderId) => {
+    const ok = await dbOrders.dbUpdateOrderStatus(orderId, '已支付');
+    if (!ok) {
+      const err = new Error('订单不存在或无法更新');
+      err.code = 400;
+      throw err;
+    }
+    return { success: true, status: '已支付' };
+  }
 };

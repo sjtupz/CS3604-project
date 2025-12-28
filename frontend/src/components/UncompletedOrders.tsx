@@ -1,5 +1,6 @@
 // TODO: 实现未完成订单列表组件
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import OrderCancelConfirmModal from './OrderCancelConfirmModal';
 
 interface Order {
   orderId: string;
@@ -10,34 +11,48 @@ interface Order {
   passengerInfo?: string;
   seatInfo?: string;
   price?: number;
+  status?: string;
+  travelDate?: string;
+  fromStation?: string;
+  toStation?: string;
+  departureTime?: string;
+  ticketType?: string;
+  passengerIdTypes?: string;
+  hasNoSeat?: boolean;
 }
 
 interface UncompletedOrdersProps {
   orders?: Order[];
   onNavigateToPayment?: (orderId: string) => void;
   onNavigateToBooking?: () => void;
+  onCancelOrder?: (orderId: string, hasNoSeat?: boolean) => void | Promise<void>;
 }
 
 const UncompletedOrders: React.FC<UncompletedOrdersProps> = ({
   orders = [],
   onNavigateToPayment,
-  onNavigateToBooking
+  onNavigateToBooking,
+  onCancelOrder
 }) => {
-  const isEmpty = orders.length === 0;
+  const [displayOrders, setDisplayOrders] = useState<Order[]>(orders)
+  useEffect(() => {
+    setDisplayOrders(orders)
+  }, [orders])
+  const isEmpty = displayOrders.length === 0;
+  const [showCancel, setShowCancel] = useState(false)
+  const [cancelTarget, setCancelTarget] = useState<Order | null>(null)
 
   return (
     <div style={{ padding: '20px', border: '1px solid #e8e8e8', borderRadius: '4px' }}>
-      {/* 未完成订单主体部分 - 浅蓝色边框 */}
       <div
         style={{
           border: '1px solid #91d5ff',
           borderRadius: '4px',
           padding: '20px',
-          minHeight: '500px',
           display: 'flex',
           flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center'
+          alignItems: 'stretch',
+          justifyContent: 'flex-start'
         }}
       >
         {isEmpty ? (
@@ -80,60 +95,85 @@ const UncompletedOrders: React.FC<UncompletedOrdersProps> = ({
             </div>
           </div>
         ) : (
-        <div style={{ width: '100%' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-            <thead>
-              <tr style={{ backgroundColor: '#f0f0f0' }}>
-                <th style={{ padding: '10px', border: '1px solid #ddd', textAlign: 'left' }}>订单号</th>
-                <th style={{ padding: '10px', border: '1px solid #ddd', textAlign: 'left' }}>车次信息</th>
-                <th style={{ padding: '10px', border: '1px solid #ddd', textAlign: 'left' }}>旅客信息</th>
-                <th style={{ padding: '10px', border: '1px solid #ddd', textAlign: 'left' }}>席位信息</th>
-                <th style={{ padding: '10px', border: '1px solid #ddd', textAlign: 'left' }}>票价</th>
-                <th style={{ padding: '10px', border: '1px solid #ddd', textAlign: 'left' }}>操作</th>
-              </tr>
-            </thead>
-            <tbody>
-              {orders.map((order) => (
-                <tr key={order.orderId}>
-                  <td style={{ padding: '10px', border: '1px solid #ddd' }}>
-                    {order.orderNumber || order.orderId}
-                  </td>
-                  <td style={{ padding: '10px', border: '1px solid #ddd' }}>
-                    {order.trainNumber || order.trainInfo}
-                  </td>
-                  <td style={{ padding: '10px', border: '1px solid #ddd' }}>
-                    {order.passengerName || order.passengerInfo}
-                  </td>
-                  <td style={{ padding: '10px', border: '1px solid #ddd' }}>
-                    {order.seatInfo || '-'}
-                  </td>
-                  <td style={{ padding: '10px', border: '1px solid #ddd' }}>
-                    ¥{order.price || 0}
-                  </td>
-                  <td style={{ padding: '10px', border: '1px solid #ddd' }}>
-                    <button
-                      onClick={() => onNavigateToPayment?.(order.orderId)}
-                      style={{
-                        padding: '5px 15px',
-                        backgroundColor: '#ff4d4f',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '4px',
-                        cursor: 'pointer'
-                      }}
-                    >
-                      跳转支付
-                    </button>
-                  </td>
+          <div style={{ width: '100%' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead>
+                <tr style={{ backgroundColor: '#f0f0f0' }}>
+                  <th style={{ padding: '10px', border: '1px solid #ddd', textAlign: 'left' }}>车次信息</th>
+                  <th style={{ padding: '10px', border: '1px solid #ddd', textAlign: 'left' }}>旅客信息</th>
+                  <th style={{ padding: '10px', border: '1px solid #ddd', textAlign: 'left' }}>席位信息</th>
+                  <th style={{ padding: '10px', border: '1px solid #ddd', textAlign: 'left' }}>票价</th>
+                  <th style={{ padding: '10px', border: '1px solid #ddd', textAlign: 'left' }}>车票状态</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {displayOrders.map((order) => (
+                  <tr key={order.orderId}>
+                    <td style={{ padding: '10px', border: '1px solid #ddd' }}>
+                      <div style={{ color: '#333' }}>
+                        {(order.fromStation || '-') + ' → ' + (order.toStation || '-')}
+                        {' '}
+                        {(order.trainNumber || '-')}
+                      </div>
+                      <div style={{ color: '#666', fontSize: '13px' }}>
+                        {(order.travelDate || '-') + '    ' + (order.departureTime || '-') + ' 开'}
+                      </div>
+                    </td>
+                    <td style={{ padding: '10px', border: '1px solid #ddd' }}>
+                      <div style={{ color: '#333' }}>{order.passengerName || order.passengerInfo || '-'}</div>
+                      <div style={{ color: '#666', fontSize: '13px' }}>{order.passengerIdTypes || '-'}</div>
+                    </td>
+                    <td style={{ padding: '10px', border: '1px solid #ddd' }}>
+                      <div style={{ color: '#333' }}>{order.seatInfo || '-'}</div>
+                      <div style={{ color: '#666', fontSize: '13px' }}>{order.ticketType || '-'}</div>
+                    </td>
+                    <td style={{ padding: '10px', border: '1px solid #ddd' }}>
+                      <div style={{ color: '#333' }}>{order.ticketType || '成人票'}</div>
+                      <div style={{ color: '#666', fontSize: '13px' }}>{(order.price ?? 0) + '元'}</div>
+                    </td>
+                    <td style={{ padding: '10px', border: '1px solid #ddd' }}>
+                      <div style={{ color: '#333' }}>{order.status || '-'}</div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '16px' }}>
+              <button
+                onClick={() => {
+                  if (!displayOrders[0]) return
+                  setCancelTarget(displayOrders[0])
+                  setShowCancel(true)
+                }}
+                style={{
+                  padding: '6px 16px',
+                  backgroundColor: '#fff',
+                  color: '#000',
+                  border: '1px solid #000',
+                  borderRadius: '4px',
+                  cursor: 'pointer'
+                }}
+              >
+                取消订单
+              </button>
+              <button
+                onClick={() => displayOrders[0] && onNavigateToPayment?.(displayOrders[0].orderId)}
+                style={{
+                  padding: '6px 16px',
+                  backgroundColor: '#f60',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer'
+                }}
+              >
+                去支付
+              </button>
+            </div>
+          </div>
         )}
       </div>
 
-      {/* 温馨提示框 - 在浅蓝色边框外面 */}
       <div
         style={{
           marginTop: '30px',
@@ -167,6 +207,31 @@ const UncompletedOrders: React.FC<UncompletedOrdersProps> = ({
           </p>
         </div>
       </div>
+
+      {showCancel && (
+        <OrderCancelConfirmModal
+          cancelText="取消"
+          confirmText="确定"
+          message="在一天内3次申请车票成功后取消订单（包含无座票时取消5次计为取消1次），当日将不能在12306继续购票。"
+          onCancel={() => {
+            setShowCancel(false)
+            setCancelTarget(null)
+          }}
+          onConfirm={() => {
+            const target = cancelTarget
+            setShowCancel(false)
+            setCancelTarget(null)
+            if (target) {
+              if (target.hasNoSeat === undefined) {
+                void onCancelOrder?.(target.orderId)
+              } else {
+                void onCancelOrder?.(target.orderId, target.hasNoSeat)
+              }
+              setDisplayOrders((prev) => prev.filter((o) => o.orderId !== target.orderId))
+            }
+          }}
+        />
+      )}
     </div>
   );
 };

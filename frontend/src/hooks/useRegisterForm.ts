@@ -43,7 +43,7 @@ const calculatePasswordStrength = (password: string): PasswordStrengthLevel => {
 
 type State = RegisterFormData & { passwordStrength: PasswordStrengthLevel; usernameAvailable: boolean; usernameExceededLimit: boolean };
 
-export const useRegisterForm = (onRegisterSuccess: () => void) => {
+export const useRegisterForm = (onRegisterSuccess: () => void, showModal?: (message: string) => void) => {
   const [state, setState] = useState<State>({
     username: '',
     password: '',
@@ -263,6 +263,40 @@ export const useRegisterForm = (onRegisterSuccess: () => void) => {
     setState((prevState: State) => ({ ...prevState, isLoading: true }));
 
     try {
+      // Sequential Uniqueness Checks
+      if (state.identityNumber) {
+        const idCheck = await checkIdentityNumber(state.identityNumber);
+        if (!idCheck.isAvailable) {
+          setState((prevState: State) => ({ ...prevState, isLoading: false }));
+          if (showModal) {
+            showModal(MODAL_MESSAGES.IDENTITY_TAKEN_GUIDANCE);
+          } else {
+             // Fallback if showModal is not provided (though it should be)
+             setState((prevState: State) => ({
+                ...prevState,
+                errors: { ...prevState.errors, identityNumber: MODAL_MESSAGES.IDENTITY_TAKEN_GUIDANCE }
+             }));
+          }
+          return;
+        }
+      }
+
+      if (state.phoneNumber) {
+        const phoneCheck = await checkPhoneNumber(state.phoneNumber);
+        if (!phoneCheck.isAvailable) {
+          setState((prevState: State) => ({ ...prevState, isLoading: false }));
+          if (showModal) {
+            showModal(MODAL_MESSAGES.PHONE_TAKEN_GUIDANCE);
+          } else {
+             setState((prevState: State) => ({
+                ...prevState,
+                errors: { ...prevState.errors, phoneNumber: MODAL_MESSAGES.PHONE_TAKEN_GUIDANCE }
+             }));
+          }
+          return;
+        }
+      }
+
       await registerUser({
         username: state.username,
         password: state.password,

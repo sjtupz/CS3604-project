@@ -619,7 +619,7 @@
 
 - type: Frontend
   id: UI-OrderConfirmModal
-  description: 确认订单弹窗，包含订单详情确认与支付/取消操作。
+  description: 确认订单弹窗，包含订单信息复核与确认/返回操作。
   properties:
     - name: orderId
       type: string
@@ -633,11 +633,113 @@
   dependencies:
     - API-GET-Order-Details
     - API-POST-Order-Confirm
-    - API-POST-Order-Cancel
+    - UI-OrderProcessingModal
   acceptanceCriteria:
-    - 弹出展示订单详情，包含20分钟倒计时。
-    - 点击“网上支付”跳转至支付页面；点击“取消订单”释放席位。
-    - 点击“返回修改”关闭弹窗。
+    - 弹窗内部从上到下为：蓝色色块（#288BCC，左侧白色宋体字样“请核对以下信息”）、订单信息区域、按钮区域。
+    - 订单信息区域从上到下依次显示：列车信息（与订单填写页一致）、乘车人信息表格（列：序号、席别、票种、姓名、证件类型、证件号码，证件号仅显示前4后3）、余票信息（如“本次列车，商务座余票2张”）。
+    - 按钮区域从左到右为“返回修改”（白底黑字）与“确认”（橙底白字）。
+    - 点击“返回修改”关闭弹窗并返回订单填写页；点击“确认”后转为提示弹窗（UI-OrderProcessingModal）。
   changeLog:
     - date: "2025-12-24"
       description: "依据确认订单页面需求新增。"
+    - date: "2025-12-27"
+      description: "调整布局与交互为返回/确认，接入提示弹窗。"
+
+- type: Frontend
+  id: UI-OrderProcessingModal
+  description: 提示弹窗，显示“订单已经提交，系统正在处理中，请稍等”。
+  properties:
+    - name: orderId
+      type: string
+      description: "已确认的订单ID。"
+    - name: onTimeout
+      type: function
+      description: "处理超时后的回调。"
+  state:
+    - elapsedSeconds
+    - status
+  dependencies:
+    - API-GET-Order-Status
+    - API-POST-Order-Confirm
+  acceptanceCriteria:
+    - 弹窗内部从上到下依次为：蓝色色块（#288BCC，左侧白色宋体字样“提示”）、提示信息区域“订单已经提交，系统正在处理中，请稍等”。
+    - 当后端在3秒内成功处理（订单状态变为“待支付”）且提示已显示满3秒时，关闭弹窗并自动跳转到支付页面。
+    - 当提示显示满3秒后仍未成功处理时，继续显示，每次延长3秒并轮询状态，直到成功或超时。
+    - 当显示超过60秒仍未成功处理时，关闭弹窗并返回订单填写页，在页面中央显示“订单提交失败，请稍后再试”。
+  changeLog:
+    - date: "2025-12-27"
+      description: "新增以满足确认后的提示弹窗轮询与跳转逻辑。"
+
+- type: Frontend
+  id: UI-PaymentPage
+  description: 支付页面，展示倒计时、订单信息与支付/取消操作。
+  properties: []
+  state:
+    - orderDetails
+    - countdown
+    - isLoading
+  dependencies:
+    - UI-TopNavigationBar
+    - UI-QuickAccessMenu
+    - API-GET-Order-Details
+    - API-POST-Order-Cancel
+    - API-POST-Order-Pay
+    - UI-OrderCancelConfirmModal
+  acceptanceCriteria:
+    - 页面从上到下为：顶部导航栏、常用功能快捷入口、支付表单区域。
+    - 支付表单区域包含：倒计时区域（黑边长方形框，文案“席位已锁定...”与橙色加粗“XX分XX秒”，自20分钟开始每秒递减）、订单信息区域（蓝色色块“订单信息”，下方列车信息、乘车人信息表格：序号、姓名、证件类型、证件号码、票种、席别、车厢、席位号、票价（元））、总票价右侧显示“总票价：XX元”。
+    - 按钮区域从左到右为“取消订单”（白底黑字）与“网上支付”（橙底白字）。点击“取消订单”弹出取消确认弹窗；点击“网上支付”调用支付接口并跳转支付成功页。
+    - 下方显示温馨提示区域文案“温馨提示”。
+  changeLog:
+    - date: "2025-12-27"
+      description: "新增以满足支付页面布局与交互。"
+
+- type: Frontend
+  id: UI-OrderCancelConfirmModal
+  description: 取消订单确认弹窗，包含“取消”和“确认”两个按钮。
+  properties: []
+  state: []
+  dependencies:
+    - API-POST-Order-Cancel
+  acceptanceCriteria:
+    - 弹窗显示“您确认取消订单吗？”，包含“取消”与“确认”。
+    - 点击“取消”关闭弹窗并返回原页面；点击“确认”后将订单状态变更为“已取消”，并跳转到车次列表页。
+  changeLog:
+    - date: "2025-12-27"
+      description: "新增以满足支付页取消确认交互。"
+
+- type: Frontend
+  id: UI-PaymentSuccessPage
+  description: 支付成功页，展示成功提示与订单信息。
+  properties: []
+  state: []
+  dependencies:
+    - UI-TopNavigationBar
+    - UI-QuickAccessMenu
+    - API-GET-Order-Details
+  acceptanceCriteria:
+    - 页面从上到下为：顶部导航栏、常用功能快捷入口、支付成功区域。
+    - 支付成功提示框为绿底黑边长方形框，显示“交易已成功！感谢您选择铁路出行！您的订单号:EXXXXXXXXX”。订单号不重复。
+    - 订单信息区域表格与支付页相同，但在“票价（元）”右侧新增“订单状态”栏，显示绿色字样“已支付”。
+  changeLog:
+    - date: "2025-12-27"
+      description: "新增以满足支付成功页展示。"
+
+- type: Frontend
+  id: UI-PersonalCenterOrdersPage
+  description: 个人中心“火车票订单”页面，包含未完成与未出行订单两个区域。
+  properties: []
+  state:
+    - pendingOrders
+    - upcomingOrders
+  dependencies:
+    - API-GET-Orders
+    - API-POST-Order-Cancel
+    - UI-OrderCancelConfirmModal
+  acceptanceCriteria:
+    - “未完成订单”区域以表格展示，表头为“车次信息”、“旅客信息”、“席位信息”、“票价”、“车票状态”，状态显示为“待支付”；每行右侧显示“取消订单”和“去支付”按钮。
+    - 点击“取消订单”弹出确认弹窗，确认后取消订单并跳转车次列表页；点击“去支付”跳转到支付页面。
+    - “未出行订单”区域以表格展示，表头为“车次信息”、“旅客信息”、“席位信息”、“票价”、“订单状态”，状态显示为“已支付”，下方显示蓝色字样“退票”。
+  changeLog:
+    - date: "2025-12-27"
+      description: "新增以满足个人中心订单列表与交互。"

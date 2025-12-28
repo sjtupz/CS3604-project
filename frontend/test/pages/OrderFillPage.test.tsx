@@ -47,26 +47,7 @@ describe('OrderFillPage', () => {
   });
 
   test('Given 勾选了乘车人 When 用户点击提交订单 Then 弹出确认订单模态框', async () => {
-    const { createOrder, getOrderDetails } = await import('../../src/api/orders');
-    vi.mocked(createOrder).mockResolvedValueOnce({ data: { orderId: 'test-order-123' } });
-    vi.mocked(getOrderDetails).mockResolvedValueOnce({ 
-      data: { 
-        orderId: 'test-order-123',
-        price: 100,
-        trainInfo: {
-          date: '2025-12-24',
-          trainNumber: 'T109',
-          fromStation: '北京',
-          toStation: '上海',
-          departureTime: '20:03',
-          arrivalTime: '11:02',
-          seatType: '二等座'
-        },
-        passengerInfo: [
-          { name: '张三', idType: '中国居民身份证', idNumber: '110101199001011234', ticketType: '成人票' }
-        ]
-      } 
-    });
+    const { createOrder } = await import('../../src/api/orders');
     
     render(
       <MemoryRouter>
@@ -80,11 +61,30 @@ describe('OrderFillPage', () => {
     const submitBtn = screen.getByText('提交订单');
     fireEvent.click(submitBtn);
     
-    // 检查是否调用了 API
-    expect(createOrder).toHaveBeenCalled();
-    
-    // 检查模态框内容
-    expect(await screen.findByText(/席位已锁定/)).toBeDefined();
-    expect(screen.getByText('网上支付')).toBeDefined();
+    expect(createOrder).not.toHaveBeenCalled();
+    expect(await screen.findByText('请核对以下信息')).toBeDefined();
+    expect(screen.getByRole('button', { name: '返回修改' })).toBeDefined();
+    expect(screen.getByRole('button', { name: '确认' })).toBeDefined();
+  });
+
+  test('Given 确认订单弹窗已弹出 When 点击返回修改 Then 不应创建未完成订单', async () => {
+    const { createOrder } = await import('../../src/api/orders');
+
+    render(
+      <MemoryRouter>
+        <OrderFillPage />
+      </MemoryRouter>
+    );
+
+    const checkbox = await screen.findByLabelText('张三');
+    fireEvent.click(checkbox);
+
+    fireEvent.click(screen.getByText('提交订单'));
+
+    expect(createOrder).not.toHaveBeenCalled();
+
+    expect(await screen.findByText('请核对以下信息')).toBeDefined();
+    fireEvent.click(screen.getByRole('button', { name: '返回修改' }));
+    expect(screen.queryByText('请核对以下信息')).toBeNull();
   });
 });

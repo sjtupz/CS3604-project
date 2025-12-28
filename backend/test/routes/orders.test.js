@@ -100,4 +100,20 @@ describe('Orders API Routes', () => {
     expect(response.status).toBe(200);
     expect(response.body.message).toBe('订单已取消');
   });
+
+  test('Given 提示弹窗已弹出 When 轮询订单状态 Then 应返回待支付状态', async () => {
+    const response = await request(app)
+      .get('/api/orders/order-uuid-123/status')
+      .set('Authorization', `Bearer ${testToken}`);
+    expect(response.status).toBe(200);
+    expect(response.body.data.status).toBe('待支付');
+  });
+
+  test('Given 用户在支付页面 When 点击“网上支付”按钮 Then 返回支付成功并状态为已支付', async () => {
+    const response = await request(app)
+      .post('/api/orders/order-uuid-123/pay')
+      .set('Authorization', `Bearer ${testToken}`);
+    expect(response.status).toBe(200);
+    expect(response.body.message).toBe('支付成功');
+  });
 });

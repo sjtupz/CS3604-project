@@ -7,9 +7,19 @@ const { v4: uuidv4 } = require('uuid');
  * 在数据库中创建一个新的订单记录
  */
 async function dbCreateOrder(orderInfo) {
-  const { userId, trainId, totalAmount, status, fromStationId, toStationId, travelDate, passengers } = orderInfo;
+  const { userId, trainId, totalAmount, status, fromStationId, toStationId, travelDate, passengers, trainInfo: fullTrainInfo } = orderInfo;
   const id = uuidv4();
-  const orderNumber = 'ORD' + Date.now() + Math.floor(Math.random() * 1000);
+  // 生成 EX 开头 + 9 位数字的订单号，尽量避免冲突
+  let orderNumber;
+  for (let i = 0; i < 5; i++) {
+    const nums = Array.from({ length: 9 }, () => Math.floor(Math.random() * 10)).join('');
+    const candidate = `EX${nums}`;
+    const exists = await get('SELECT 1 FROM orders WHERE order_number = ? LIMIT 1', [candidate]);
+    if (!exists) { orderNumber = candidate; break; }
+  }
+  if (!orderNumber) {
+    orderNumber = `EX${String(Date.now()).slice(-9)}`;
+  }
   const expireAt = new Date(Date.now() + 20 * 60 * 1000).toISOString(); // 20分钟后过期
 
   const sql = `
@@ -20,7 +30,17 @@ async function dbCreateOrder(orderInfo) {
   `;
 
   // 这里的 train_info 和 passenger_info 在现有表结构中是 TEXT，我们存储 JSON 字符串
-  const trainInfo = JSON.stringify({ trainId, fromStationId, toStationId, travelDate });
+  // 优先存储来自前端的完整 trainInfo（包含站点名与时间），否则退化为最小字段
+  const trainInfoObj = fullTrainInfo && typeof fullTrainInfo === 'object'
+    ? {
+        ...fullTrainInfo,
+        trainId: fullTrainInfo.trainNumber || trainId,
+        travelDate: fullTrainInfo.travelDate || fullTrainInfo.date || travelDate,
+        fromStationId: fullTrainInfo.fromStationId || fullTrainInfo.fromStation || fromStationId,
+        toStationId: fullTrainInfo.toStationId || fullTrainInfo.toStation || toStationId,
+      }
+    : { trainId, fromStationId, toStationId, travelDate };
+  const trainInfo = JSON.stringify(trainInfoObj);
   const passengerInfo = JSON.stringify(passengers || []);
 
   await run(sql, [
@@ -51,6 +71,8 @@ async function dbGetOrderDetails(orderId) {
     } catch (e) {
       console.error('Error parsing JSON fields in order:', e);
     }
+    // 提供兼容字段 orderNo，用于支付成功页展示
+    order.orderNo = order.orderNumber;
   }
   return order;
 }

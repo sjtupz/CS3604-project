@@ -12,6 +12,8 @@ export interface CreateOrderParams {
     idType: string;
     idNumber: string;
     ticketType: string;
+    seatType?: string;
+    price?: number;
   }>;
   trainInfo: unknown;
 }
@@ -33,5 +35,15 @@ export const confirmOrder = async (orderId: string) => {
 
 export const cancelOrder = async (orderId: string) => {
   const response = await apiClient.post(`/api/orders/${orderId}/cancel`);
+  return response.data;
+};
+
+export const getOrderStatus = async (orderId: string) => {
+  const response = await apiClient.get(`/api/orders/${orderId}/status`);
+  return response.data;
+};
+
+export const payOrder = async (orderId: string) => {
+  const response = await apiClient.post(`/api/orders/${orderId}/pay`);
   return response.data;
 };

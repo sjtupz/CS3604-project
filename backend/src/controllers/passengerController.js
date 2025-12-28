@@ -37,7 +37,7 @@ const createPassenger = async (req, res) => {
     res.status(201).json(result);
   } catch (error) {
     console.error('Error creating passenger:', error);
-    if (error.message.includes('required') || error.message.includes('format') || error.message.includes('请输入') || error.message.includes('证件号码不合法')) {
+    if (error.message.includes('required') || error.message.includes('format') || error.message.includes('请输入') || error.message.includes('不合法') || error.message === '身份信息不一致！') {
       console.log('Sending 400 error:', error.message);
       res.status(400).json({ error: error.message });
     } else if (error.message.includes('exists') || error.message.includes('already')) {

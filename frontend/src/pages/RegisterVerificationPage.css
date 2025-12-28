@@ -90,7 +90,8 @@
   border-radius: 4px;
   cursor: pointer;
   font-size: 13px;
- }
+  font-family: SimSun, '宋体', 'Songti SC', serif;
+}
  .verify-submit:hover { background-color: #ff8f40; }
  .verify-submit:active { background-color: #e86f1f; }
 
