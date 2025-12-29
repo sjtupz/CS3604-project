@@ -134,11 +134,13 @@ const PersonalCenterLayout: React.FC<PersonalCenterLayoutProps> = ({
       }
       setPassengerView('list');
       setPassengerListVersion((v) => v + 1);
-    } catch (error: any) {
+    } catch (error) {
       console.error('Failed to save passenger:', error);
-      // Propagate error to PassengerForm
-      // Axios error handling to extract message
-      const message = error.response?.data?.error || error.response?.data?.message || error.message || '保存失败';
+      const err = error as {
+        response?: { data?: { error?: string; message?: string } };
+        message?: string;
+      };
+      const message = err.response?.data?.error ?? err.response?.data?.message ?? err.message ?? '保存失败';
       throw new Error(message);
     }
   };

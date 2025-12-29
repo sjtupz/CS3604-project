@@ -116,7 +116,10 @@ const PassengerForm: React.FC<PassengerFormProps> = ({
 
     // 验证证件号格式
     if (idNumber && idType && !validateIdNumber(idType, idNumber)) {
-      newErrors.idNumber = '请正确输入18位的证件号码！'; // Requirement 5.1.10.5
+      newErrors.idNumber =
+        errors.idNumber === '请正确输入18位的证件号码！'
+          ? errors.idNumber
+          : '请输入正确的证件号码！';
     }
 
     // 验证日期格式（如果需要）
@@ -147,9 +150,10 @@ const PassengerForm: React.FC<PassengerFormProps> = ({
             birthDate: needsDate ? birthDate : undefined
           });
         }
-      } catch (error: any) {
+      } catch (error) {
         // Handle server-side validation errors
-        const msg = error.response?.data?.error || error.message || error.toString();
+        const err = error as { response?: { data?: { error?: string } }; message?: string };
+        const msg = err.response?.data?.error ?? err.message ?? String(error);
         if (msg.includes('身份信息不一致') || msg.includes('证件号码')) {
           setErrors(prev => ({ ...prev, idNumber: msg }));
         } else if (msg.includes('乘车人已存在') || msg.includes('Passenger already exists')) {
@@ -173,13 +177,23 @@ const PassengerForm: React.FC<PassengerFormProps> = ({
   const needsDate = ['外国人永久居留身份证'].includes(idType);
 
   return (
-    <div style={{ padding: '20px' }}>
+    <div
+      style={{
+        padding: '20px',
+        margin: '0 auto',
+        maxWidth: '900px',
+        border: '1px solid #91d5ff',
+        backgroundColor: '#e6f7ff',
+        borderRadius: '8px',
+        textAlign: 'center'
+      }}
+    >
       <h2>{passenger ? '修改乘车人' : '添加乘车人'}</h2>
 
       {/* 基本信息部分 */}
       <div style={{ marginBottom: '20px' }}>
         <h3 style={{ fontWeight: 'bold', textAlign: 'left', marginBottom: '10px' }}>基本信息</h3>
-        <div style={{ marginBottom: '10px', textAlign: passenger ? 'center' : 'left' }}>
+        <div style={{ marginBottom: '10px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
           <label htmlFor="idType" style={{ display: 'inline-block', width: '100px', textAlign: 'right' }}>
             <span style={{ color: 'red' }}>*</span>证件类型：
           </label>
@@ -202,7 +216,7 @@ const PassengerForm: React.FC<PassengerFormProps> = ({
           )}
         </div>
 
-        <div style={{ marginBottom: '10px', textAlign: passenger ? 'center' : 'left' }}>
+        <div style={{ marginBottom: '10px', display: 'flex', justifyContent: 'center', alignItems: 'flex-start' }}>
           <label htmlFor="name" style={{ display: 'inline-block', width: '100px', textAlign: 'right' }}>
             <span style={{ color: 'red' }}>*</span>姓名：
           </label>
@@ -223,7 +237,7 @@ const PassengerForm: React.FC<PassengerFormProps> = ({
           )}
         </div>
 
-        <div style={{ marginBottom: '10px', textAlign: passenger ? 'center' : 'left', display: passenger ? 'block' : 'flex', alignItems: 'flex-start' }}>
+        <div style={{ marginBottom: '10px', display: 'flex', justifyContent: 'center', alignItems: 'flex-start' }}>
           <label htmlFor="idNumber" style={{ display: 'inline-block', width: '100px', textAlign: 'right', flexShrink: 0, paddingTop: '5px' }}>
             <span style={{ color: 'red' }}>*</span>证件号码：
           </label>
@@ -271,7 +285,7 @@ const PassengerForm: React.FC<PassengerFormProps> = ({
           联系方式
           {passenger && <span style={{ fontSize: '12px', fontWeight: 'normal', marginLeft: '10px' }}>（请提供乘车人真实有效的联系方式）</span>}
         </h3>
-        <div style={{ marginBottom: '10px', textAlign: passenger ? 'center' : 'left' }}>
+        <div style={{ marginBottom: '10px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
           <label htmlFor="phone" style={{ display: 'inline-block', width: '100px', textAlign: 'right' }}>
              {/* Add Mode: "有效电话号" ? Requirement 5.1.10.2 says "有效电话号". Edit Mode 5.1.9.3 says "居中展示手机号". */}
              {passenger ? '手机号：' : '有效电话号：'}
@@ -313,7 +327,7 @@ const PassengerForm: React.FC<PassengerFormProps> = ({
       {/* 附加信息部分 */}
       <div style={{ marginBottom: '20px' }}>
         <h3 style={{ fontWeight: 'bold', textAlign: 'left', marginBottom: '10px' }}>附加信息</h3>
-        <div style={{ marginBottom: '10px', textAlign: passenger ? 'center' : 'left' }}>
+        <div style={{ marginBottom: '10px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
           <label htmlFor="discountType" style={{ display: 'inline-block', width: '100px', textAlign: 'right' }}>
             <span style={{ color: 'red' }}>*</span>优惠类型：
           </label>
@@ -333,28 +347,32 @@ const PassengerForm: React.FC<PassengerFormProps> = ({
 
         {needsDate && (
           <>
-            <div style={{ marginBottom: '10px' }}>
-              <label htmlFor="expiryDate">有效截止日期：</label>
-              <input
-                id="expiryDate"
-                type="date"
-                value={expiryDate}
-                onChange={(e) => setExpiryDate(e.target.value)}
-                style={{ marginLeft: '10px', padding: '5px' }}
-              />
-              {errors.expiryDate && <div style={{ color: 'red', marginTop: '5px' }}>{errors.expiryDate}</div>}
+            <div style={{ marginBottom: '10px', display: 'flex', justifyContent: 'center', alignItems: 'flex-start' }}>
+              <label htmlFor="expiryDate" style={{ display: 'inline-block', width: '100px', textAlign: 'right', paddingTop: '5px' }}>有效截止日期：</label>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+                <input
+                  id="expiryDate"
+                  type="date"
+                  value={expiryDate}
+                  onChange={(e) => setExpiryDate(e.target.value)}
+                  style={{ marginLeft: '10px', padding: '5px' }}
+                />
+                {errors.expiryDate && <div style={{ color: 'red', marginTop: '5px', marginLeft: '10px' }}>{errors.expiryDate}</div>}
+              </div>
             </div>
 
-            <div style={{ marginBottom: '10px' }}>
-              <label htmlFor="birthDate">出生日期：</label>
-              <input
-                id="birthDate"
-                type="date"
-                value={birthDate}
-                onChange={(e) => setBirthDate(e.target.value)}
-                style={{ marginLeft: '10px', padding: '5px' }}
-              />
-              {errors.birthDate && <div style={{ color: 'red', marginTop: '5px' }}>{errors.birthDate}</div>}
+            <div style={{ marginBottom: '10px', display: 'flex', justifyContent: 'center', alignItems: 'flex-start' }}>
+              <label htmlFor="birthDate" style={{ display: 'inline-block', width: '100px', textAlign: 'right', paddingTop: '5px' }}>出生日期：</label>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+                <input
+                  id="birthDate"
+                  type="date"
+                  value={birthDate}
+                  onChange={(e) => setBirthDate(e.target.value)}
+                  style={{ marginLeft: '10px', padding: '5px' }}
+                />
+                {errors.birthDate && <div style={{ color: 'red', marginTop: '5px', marginLeft: '10px' }}>{errors.birthDate}</div>}
+              </div>
             </div>
           </>
         )}

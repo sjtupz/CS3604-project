@@ -1,5 +1,4 @@
 import React from 'react';
-import { MODAL_MESSAGES } from '../constants/registerForm';
 import { normalizeCJKSpaces } from '../utils/text';
 import './AlertModal.css';
 
