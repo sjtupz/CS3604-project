@@ -29,4 +29,12 @@ router.get('/:orderId/status', auth, orderController.getOrderStatus);
 // POST /api/orders/:orderId/pay
 router.post('/:orderId/pay', auth, orderController.payOrder);
 
+// GET /api/orders/:orderId/refund-preview
+// 获取退票预览信息
+router.get('/:orderId/refund-preview', auth, orderController.getRefundPreview);
+
+// POST /api/orders/:orderId/refund
+// 办理退票操作
+router.post('/:orderId/refund', auth, orderController.refundOrder);
+
 module.exports = router;

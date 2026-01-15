@@ -18,6 +18,7 @@ import DataPreviewPage from './pages/DataPreviewPage';
 import LogoExportPage from './pages/LogoExportPage';
 import PaymentPage from './pages/PaymentPage';
 import PaymentSuccessPage from './pages/PaymentSuccessPage';
+import RefundSuccessPage from './pages/RefundSuccessPage';
 
 const AppLayout = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem('authToken'));
@@ -85,6 +86,7 @@ function App() {
         <Route path="orders/new" element={<OrderFillPage />} />
         <Route path="payment" element={<PaymentPage />} />
         <Route path="payment/success" element={<PaymentSuccessPage />} />
+        <Route path="refund-success" element={<RefundSuccessPage />} />
         <Route path="preview-data" element={<DataPreviewPage />} />
         <Route path="login" element={<LoginPage />} />
         <Route path="register" element={<RegisterPage />} />

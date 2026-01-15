@@ -24,6 +24,9 @@ export const RegisterPage: React.FC = () => {
       }}>
         用户注册
       </h1>
+      <div style={{ width: '960px', margin: '10px auto 0', fontSize: '12px', color: '#000', fontFamily: 'SimSun, "宋体", serif' }}>
+        您现在的位置：客运首页 &gt; 注册
+      </div>
       <RegisterForm onRegisterSuccess={handleRegisterSuccess} />
     </div>
   );

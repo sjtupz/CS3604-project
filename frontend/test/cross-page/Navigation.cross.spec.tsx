@@ -135,8 +135,9 @@ describe('E2E Scenario: Cross-Page Booking Flow (Red Stage)', () => {
     renderApp();
 
     // 1. Select Round Trip
-    const roundTripRadio = screen.getByLabelText(/往返/i);
-    fireEvent.click(roundTripRadio);
+    const homePage = screen.getByTestId('home-page');
+    const roundTripTab = within(homePage).getByText('往返');
+    fireEvent.click(roundTripTab);
 
     // 2. Fill inputs
     await selectStation(/出发地/i, '上海');

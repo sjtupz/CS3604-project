@@ -18,6 +18,14 @@ interface Order {
   price?: number;
   status?: string;
   ticketType?: string;
+  passengers?: {
+    name?: string;
+    idType?: string;
+    seatInfo?: string;
+    ticketType?: string;
+    price?: number;
+    status?: string;
+  }[];
 }
 
 interface UpcomingOrdersProps {
@@ -39,9 +47,11 @@ const UpcomingOrders: React.FC<UpcomingOrdersProps> = ({
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
   useEffect(() => {
-    const end = new Date();
     const start = new Date();
-    start.setDate(end.getDate() - 30);
+    start.setDate(start.getDate() - 30);
+    
+    const end = new Date();
+    end.setDate(end.getDate() + 90); // 默认显示未来90天的订单
 
     const formatDate = (date: Date) => {
       const year = date.getFullYear();
@@ -59,13 +69,51 @@ const UpcomingOrders: React.FC<UpcomingOrdersProps> = ({
 
     // 按日期筛选
     if (startDate && endDate) {
-      filtered = filtered.filter(order => {
-        const rawDate = queryType === '按订票日期' ? order.bookingDate : order.travelDate;
-        if (!rawDate) return false;
-        const dateField = rawDate.replace(/\//g, '-');
-        return dateField >= startDate && dateField <= endDate;
-      });
+      // 检查日期筛选逻辑
+      // 如果日期范围未设置或默认值，是否应该过滤？
+      // 目前逻辑：必须有 start 和 end 才会过滤
+      // 但是默认值是过去30天到今天。
+      // 对于未出行订单，travelDate 应该是未来的。
+      // 如果默认范围是过去30天到今天，那么未来的订单就会被过滤掉！
+      // 修复：未出行订单不应受默认“过去30天”的限制，或者默认范围应该覆盖未来。
+      // 12306 默认显示所有未出行订单，查询条件可能只是辅助。
+      // 这里我们暂时放宽筛选，或者修改默认日期范围。
+      // Better fix: 对于“未出行订单”，默认显示全部，只有当用户手动点击查询时才应用筛选？
+      // 或者调整默认 endDate 为未来足够远的时间。
+      // 让我们调整 endDate 为未来 30 天，或者不进行日期过滤除非用户指定。
+      // 鉴于 12306 逻辑，未出行订单通常默认全显。
+      // 让我们暂时移除默认的日期过滤，或者修正默认 endDate。
+      // 但是代码里 useEffect 设置了默认值。
+      
+      // Fix: 仅仅当 queryType 是 '按订票日期' 时，或者 travelDate 在范围内。
+      // 但是 refund 后，状态变了，但它仍然在 orders 列表中（由父组件传入）。
+      // 问题是 filteredOrders 逻辑把它们过滤掉了吗？
+      // 如果退票了，它还是“未出行”吗？在 12306 中，“未出行”通常指“已支付且未过期且未退票”？
+      // 不，用户说“应当以灰色显示”，意味着它应该在列表中。
+      
+      // 关键问题：默认日期范围是过去30天 (start) 到今天 (end)。
+      // 未出行订单的 travelDate 通常是**明天或未来**。
+      // 所以默认的 endDate = new Date() 会把所有未来的订单都过滤掉！
+      // 这解释了为什么订单会“消失”（不仅仅是退票的，所有未出行的都可能消失，除非 bookingDate 在范围内且 queryType 是按订票日期）。
+      // 默认 queryType 是 '按订票日期'。bookingDate 通常是过去或今天。
+      // 如果我今天买的票（bookingDate = 今天），它在范围内。
+      // 如果我昨天买的票，也在范围内。
+      // 那么为什么退票后消失了？
+      // 也许退票操作更新了订单的某些属性，导致筛选失败？
+      // 或者退票后，orders 列表变了？
+      
+      // 让我们先修复日期范围问题，确保未来订单可见。
+      // 修改 useEffect 中的 endDate 为未来 30 天。
     }
+
+    filtered = filtered.filter(order => {
+        if (!startDate || !endDate) return true;
+        const rawDate = queryType === '按订票日期' ? order.bookingDate : order.travelDate;
+        if (!rawDate) return true; // Keep if no date
+        const dateField = rawDate.replace(/\//g, '-');
+        // 简单的字符串比较 YYYY-MM-DD
+        return dateField >= startDate && dateField <= endDate;
+    });
 
     // 按订单号/车次/姓名筛选
     if (searchText) {
@@ -211,49 +259,79 @@ const UpcomingOrders: React.FC<UpcomingOrdersProps> = ({
                 </tr>
               </thead>
               <tbody>
-                {filteredOrders.map((order) => (
-                  <tr key={order.orderId}>
-                    <td style={{ padding: '10px', border: '1px solid #ddd' }}>
-                      <div style={{ color: '#333' }}>
-                        {(order.fromStation || '-') + '→' + (order.toStation || '-') + ' ' + (order.trainNumber || '-')}
-                      </div>
-                      <div style={{ color: '#666', fontSize: '13px' }}>
-                        <span>{(order.travelDate || order.bookingDate || '-').replace(/\//g, '-')}</span>
-                        <span>{'\u00A0\u00A0\u00A0\u00A0'}</span>
-                        <span>{(order.departureTime || '-') + '\u00A0开'}</span>
-                      </div>
-                    </td>
-                    <td style={{ padding: '10px', border: '1px solid #ddd' }}>
-                      <div style={{ color: '#333' }}>{order.passengerName || order.passengerInfo || '-'}</div>
-                      <div style={{ color: '#666', fontSize: '13px' }}>{order.passengerIdTypes || '-'}</div>
-                    </td>
-                    <td style={{ padding: '10px', border: '1px solid #ddd' }}>
-                      {order.seatInfo || '-'}
-                    </td>
-                    <td style={{ padding: '10px', border: '1px solid #ddd' }}>
-                      <div style={{ color: '#333' }}>{order.ticketType || '成人票'}</div>
-                      <div style={{ color: '#666', fontSize: '13px' }}>{(order.price ?? 0) + '元'}</div>
-                    </td>
-                    <td style={{ padding: '10px', border: '1px solid #ddd' }}>
-                      <div style={{ color: '#333' }}>已支付</div>
-                      <button
-                        type="button"
-                        onClick={() => onRefund?.(order.orderId)}
-                        style={{
-                          padding: 0,
-                          border: 'none',
-                          backgroundColor: 'transparent',
-                          color: '#1890ff',
-                          cursor: 'pointer',
-                          textDecoration: 'underline',
-                          fontSize: '13px'
-                        }}
-                      >
-                        退票
-                      </button>
-                    </td>
-                  </tr>
-                ))}
+                {filteredOrders.map((order) => {
+                  const passengers = Array.isArray(order.passengers) && order.passengers.length > 0
+                    ? order.passengers
+                    : [
+                        {
+                          name: order.passengerName || order.passengerInfo,
+                          idType: order.passengerIdTypes,
+                          seatInfo: order.seatInfo,
+                          ticketType: order.ticketType,
+                          price: order.price,
+                          status: order.status ?? '已支付',
+                        },
+                      ];
+
+                  const dateText = (order.travelDate || order.bookingDate || '-').replace(/\//g, '-');
+                  const timeText = (order.departureTime || '-') + '\u00A0开';
+                  
+                  // 判断整个订单是否已退票（如果所有乘客都退票了）
+                  // 这里简单根据乘客状态判断显示
+                  
+                  return passengers.map((p, index) => {
+                    const isRefunded = p.status?.includes('退') || order.status?.includes('退');
+                    const textColor = isRefunded ? '#999' : '#333';
+                    const subTextColor = isRefunded ? '#ccc' : '#666';
+
+                    return (
+                    <tr key={`${order.orderId}-${index}`}>
+                      {index === 0 && (
+                        <td rowSpan={passengers.length} style={{ padding: '10px', border: '1px solid #ddd' }}>
+                          <div style={{ color: textColor }}>
+                            {(order.fromStation || '-') + '→' + (order.toStation || '-') + ' ' + (order.trainNumber || '-')}
+                          </div>
+                          <div style={{ color: subTextColor, fontSize: '13px' }}>
+                            <span>{dateText}</span>
+                            <span>{'\u00A0\u00A0\u00A0\u00A0'}</span>
+                            <span>{timeText}</span>
+                          </div>
+                        </td>
+                      )}
+                      <td style={{ padding: '10px', border: '1px solid #ddd' }}>
+                        <div style={{ color: textColor }}>{p.name || order.passengerName || order.passengerInfo || '-'}</div>
+                        <div style={{ color: subTextColor, fontSize: '13px' }}>{p.idType || order.passengerIdTypes || '-'}</div>
+                      </td>
+                      <td style={{ padding: '10px', border: '1px solid #ddd' }}>
+                        <span style={{ color: textColor }}>{p.seatInfo || order.seatInfo || '-'}</span>
+                      </td>
+                      <td style={{ padding: '10px', border: '1px solid #ddd' }}>
+                        <div style={{ color: textColor }}>{p.ticketType || order.ticketType || '成人票'}</div>
+                        <div style={{ color: subTextColor, fontSize: '13px' }}>{((p.price ?? order.price) ?? 0) + '元'}</div>
+                      </td>
+                      <td style={{ padding: '10px', border: '1px solid #ddd' }}>
+                        <div style={{ color: textColor }}>{p.status || order.status || '已支付'}</div>
+                        {!isRefunded && (
+                        <button
+                          type="button"
+                          onClick={() => onRefund?.(order.orderId)}
+                          style={{
+                            padding: 0,
+                            border: 'none',
+                            backgroundColor: 'transparent',
+                            color: '#1890ff',
+                            cursor: 'pointer',
+                            textDecoration: 'underline',
+                            fontSize: '13px'
+                          }}
+                        >
+                          退票
+                        </button>
+                        )}
+                      </td>
+                    </tr>
+                  )});
+                })}
               </tbody>
             </table>
           </div>

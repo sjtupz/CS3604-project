@@ -836,7 +836,7 @@
   input:
     type: QueryParams
     params:
-      status: string (optional, values: 待支付,已支付)
+      status: string (optional, values: 待支付,已支付,已退票)
       page: number (optional, default: 1)
       pageSize: number (optional, default: 20)
   output:
@@ -870,7 +870,117 @@
     - DB-ListUserOrdersByStatus
   acceptanceCriteria:
     - 返回指定状态的订单列表；未指定时返回全部或默认“待支付”。
-    - 列表项字段满足“个人中心订单”页面展示需求。
+    - 列表项字段满足“个人中心订单”页面展示需求，包括“未完成订单”和“未出行订单”两类。
+    - 当订单已退票时，status 字段应返回“已退票”，并携带该订单的票价、退票手续费与应退金额字段以供前端灰色展示。
   changeLog:
     - date: "2025-12-27"
       description: "新增，用于个人中心订单的状态筛选列表。"
+    - date: "2026-01-15"
+      description: "扩展状态筛选支持已退票订单，并补充退款字段返回要求。"
+
+- type: Backend
+  id: API-GET-Order-Refund-Preview
+  route: GET /api/orders/{id}/refund-preview
+  description: 获取指定订单的退票费用预估与应退金额，用于确认退票弹窗展示。
+  version: v1
+  auth: JWT
+  input:
+    type: Path
+    params:
+      id: string (orderId)
+  output:
+    success:
+      statusCode: 200
+      body:
+        code: 200
+        data:
+          orderId: "uuid"
+          orderNo: "EX123456789"
+          originalPrice: 100.0
+          refundFee: 5.0
+          refundFeeRate: 5
+          refundAmount: 95.0
+    error:
+      - statusCode: 400
+        body: { code: 40006, message: "当前订单不支持退票或已过退票时间" }
+      - statusCode: 404
+        body: { code: 40403, message: "订单不存在" }
+      - statusCode: 409
+        body: { code: 40903, message: "订单已退票或正在退票处理中" }
+      - statusCode: 500
+        body: { code: 50010, message: "退票费用预估失败，请稍后重试" }
+  errorCodes:
+    - code: 40006
+      message: 当前订单不支持退票或已过退票时间
+    - code: 40403
+      message: 订单不存在
+    - code: 40903
+      message: 订单已退票或正在退票处理中
+    - code: 50010
+      message: 退票费用预估失败，请稍后重试
+  dependencies:
+    - DB-GetOrderDetails
+    - DB-CalculateRefundFee
+  acceptanceCriteria:
+    - 仅允许对状态为“已支付”且开车时间尚未到达的订单进行退票费用预估；否则返回40006。
+    - 退票手续费与应退金额按 DB-CalculateRefundFee 规则计算，并返回原价、手续费、费率与应退金额，金额均保留一位小数。
+    - 将作为确认退票弹窗中的“共计退款”、“手续费用”、“车票票价”、“应退票款”展示数据来源。
+  changeLog:
+    - date: "2026-01-15"
+      description: "新增，用于确认退票弹窗的费用与金额预估。"
+
+- type: Backend
+  id: API-POST-Order-Refund
+  route: POST /api/orders/{id}/refund
+  description: 办理退票操作，更新订单状态为“已退票”并释放席位。
+  version: v1
+  auth: JWT
+  input:
+    type: Path
+    params:
+      id: string (orderId)
+  output:
+    success:
+      statusCode: 200
+      body:
+        code: 200
+        message: "退票成功"
+        data:
+          orderId: "uuid"
+          travelDate: "2025-12-25"
+          trainNumber: "G108"
+          originalPrice: 100.0
+          refundFee: 5.0
+          refundFeeRate: 5
+          refundAmount: 95.0
+    error:
+      - statusCode: 400
+        body: { code: 40006, message: "当前订单不支持退票或已过退票时间" }
+      - statusCode: 404
+        body: { code: 40403, message: "订单不存在" }
+      - statusCode: 409
+        body: { code: 40903, message: "订单已退票或正在退票处理中" }
+      - statusCode: 500
+        body: { code: 50011, message: "退票失败，请稍后重试" }
+  errorCodes:
+    - code: 40006
+      message: 当前订单不支持退票或已过退票时间
+    - code: 40403
+      message: 订单不存在
+    - code: 40903
+      message: 订单已退票或正在退票处理中
+    - code: 50011
+      message: 退票失败，请稍后重试
+  dependencies:
+    - DB-GetOrderDetails
+    - DB-CalculateRefundFee
+    - DB-UpdateOrderStatus
+    - DB-ReleaseSeats
+  acceptanceCriteria:
+    - 仅允许对状态为“已支付”且尚未出行的订单执行退票；否则返回40006。
+    - 按 DB-CalculateRefundFee 规则计算退票手续费与应退金额，并将状态更新为“已退票”，同时写入退款相关字段。
+    - 调用 DB-ReleaseSeats 释放该订单占用的所有席位。
+    - 响应数据中的乘车日期、车次号、原价、手续费、费率与应退金额用于退票成功页展示，金额均保留一位小数。
+  changeLog:
+    - date: "2026-01-15"
+      description: "新增，用于个人中心退票确认后的退票处理与席位释放。"

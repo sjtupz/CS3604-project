@@ -25,8 +25,8 @@ async function dbCreateOrder(orderInfo) {
   const sql = `
     INSERT INTO orders (
       id, user_id, order_number, train_number, price, status, 
-      train_info, passenger_info, created_at, updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+      train_info, passenger_info, created_at, updated_at, travel_date
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, ?)
   `;
 
   // 这里的 train_info 和 passenger_info 在现有表结构中是 TEXT，我们存储 JSON 字符串
@@ -45,7 +45,7 @@ async function dbCreateOrder(orderInfo) {
 
   await run(sql, [
     id, userId, orderNumber, trainId, totalAmount, status || '待确认',
-    trainInfo, passengerInfo
+    trainInfo, passengerInfo, trainInfoObj.travelDate || travelDate
   ]);
 
   return { id, orderNumber, expireAt };
@@ -58,7 +58,7 @@ async function dbGetOrderDetails(orderId) {
   const sql = `
     SELECT id, user_id as userId, order_number as orderNumber, train_number as trainNumber, 
            price, status, train_info as trainInfo, passenger_info as passengerInfo, 
-           created_at as createdAt
+           created_at as createdAt, travel_date as travelDate
     FROM orders
     WHERE id = ?
   `;
@@ -68,6 +68,18 @@ async function dbGetOrderDetails(orderId) {
     try {
       order.trainInfo = JSON.parse(order.trainInfo);
       order.passengerInfo = JSON.parse(order.passengerInfo);
+      
+      // Flatten important fields for frontend convenience
+      if (order.trainInfo) {
+          order.departureTime = order.trainInfo.departureTime || order.trainInfo.startTime || order.trainInfo.start_time || order.trainInfo.departure_time;
+          order.startStation = order.trainInfo.fromStationName || order.trainInfo.fromStation || order.trainInfo.startStation;
+          order.endStation = order.trainInfo.toStationName || order.trainInfo.toStation || order.trainInfo.endStation;
+          order.travelDate = order.trainInfo.travelDate || order.trainInfo.date || order.trainInfo.trainDate;
+          
+          if (!order.trainNumber && order.trainInfo.trainNumber) {
+              order.trainNumber = order.trainInfo.trainNumber;
+          }
+      }
     } catch (e) {
       console.error('Error parsing JSON fields in order:', e);
     }
@@ -80,13 +92,33 @@ async function dbGetOrderDetails(orderId) {
 /**
  * 更新订单状态
  */
-async function dbUpdateOrderStatus(orderId, status) {
-  const sql = `
+async function dbUpdateOrderStatus(orderId, status, refundDetails = {}) {
+  let sql = `
     UPDATE orders 
     SET status = ?, updated_at = CURRENT_TIMESTAMP
-    WHERE id = ?
   `;
-  const result = await run(sql, [status, orderId]);
+  const params = [status];
+
+  if (refundDetails.refundFee !== undefined) {
+    sql += `, refund_fee = ?`;
+    params.push(refundDetails.refundFee);
+  }
+  if (refundDetails.refundAmount !== undefined) {
+    sql += `, refund_amount = ?`;
+    params.push(refundDetails.refundAmount);
+  }
+  if (refundDetails.refundRate !== undefined) {
+    sql += `, refund_rate = ?`;
+    params.push(refundDetails.refundRate);
+  }
+  if (status === '已退票' || refundDetails.refundDate) {
+     sql += `, refund_date = CURRENT_TIMESTAMP`;
+  }
+
+  sql += ` WHERE id = ?`;
+  params.push(orderId);
+
+  const result = await run(sql, params);
   return result.changes > 0;
 }
 
@@ -179,9 +211,9 @@ async function dbReleaseSeats(trainId, date, fromStationId, toStationId, seatTyp
  */
 async function dbGetOrdersByUser(userId, statusList = [], searchQuery = null) {
   let sql = `
-    SELECT id, user_id as userId, order_number as orderNumber, train_number as trainNumber, 
-           price, status, train_info as trainInfo, passenger_info as passengerInfo, 
-           created_at as createdAt, travel_date as travelDate
+    SELECT id, id as orderId, user_id as userId, order_number as orderNumber, train_number as trainNumber, 
+    price, status, train_info as trainInfo, passenger_info as passengerInfo, 
+    created_at as createdAt, travel_date as travelDate
     FROM orders
     WHERE user_id = ?
   `;
@@ -211,6 +243,28 @@ async function dbGetOrdersByUser(userId, statusList = [], searchQuery = null) {
       if (typeof order.passengerInfo === 'string') {
         order.passengerInfo = JSON.parse(order.passengerInfo);
       }
+      
+      // Flatten important fields for frontend convenience
+      if (order.trainInfo) {
+          order.departureTime = order.trainInfo.departureTime || order.trainInfo.startTime || order.trainInfo.start_time || order.trainInfo.departure_time;
+          order.startStation = order.trainInfo.fromStationName || order.trainInfo.fromStation || order.trainInfo.startStation;
+          order.endStation = order.trainInfo.toStationName || order.trainInfo.toStation || order.trainInfo.endStation;
+          order.travelDate = order.trainInfo.travelDate || order.trainInfo.date || order.trainInfo.trainDate;
+          
+          // Ensure trainNumber is available (it is already in top level from SQL, but just in case)
+          if (!order.trainNumber && order.trainInfo.trainNumber) {
+              order.trainNumber = order.trainInfo.trainNumber;
+          }
+      }
+      
+      // If still no passengerName (top level doesn't have it in SQL SELECT), take first passenger
+      if (order.passengerInfo && Array.isArray(order.passengerInfo) && order.passengerInfo.length > 0) {
+          order.passengerName = order.passengerInfo[0].name || order.passengerInfo[0].passengerName;
+          order.seatType = order.passengerInfo[0].seatType;
+          order.seatNumber = order.passengerInfo[0].seatNumber || order.passengerInfo[0].seatNo;
+          order.carriageNumber = order.passengerInfo[0].carriageNumber || order.passengerInfo[0].carriageNo;
+      }
+
     } catch (e) {
       console.error('Error parsing JSON fields in order:', e);
     }

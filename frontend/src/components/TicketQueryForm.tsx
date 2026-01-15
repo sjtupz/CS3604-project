@@ -25,6 +25,7 @@ type TicketQueryFormProps = {
 
 export const TicketQueryForm: React.FC<TicketQueryFormProps> = ({ initialDate }) => {
   const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState('ticket');
 
   const [formValues, setFormValues] = useState<FormValues>({
     fromStation: '',
@@ -109,117 +110,142 @@ export const TicketQueryForm: React.FC<TicketQueryFormProps> = ({ initialDate })
 
   return (
     <div className="form-container">
-      <div className="tabs">
-        <div className="tab active">车票</div>
+      <div className="form-sidebar">
+        <div 
+          className={`sidebar-item ${activeTab === 'ticket' ? 'active' : ''}`}
+          onClick={() => setActiveTab('ticket')}
+        >
+          <span className="sidebar-icon sidebar-icon-ticket" aria-hidden="true" />
+          <span className="sidebar-label">车票</span>
+        </div>
+        <div 
+          className={`sidebar-item ${activeTab === 'common' ? 'active' : ''}`}
+        >
+          <span className="sidebar-icon sidebar-icon-common" aria-hidden="true" />
+          <span className="sidebar-label">常用查询</span>
+        </div>
+        <div 
+          className={`sidebar-item ${activeTab === 'food' ? 'active' : ''}`}
+        >
+          <span className="sidebar-icon sidebar-icon-food" aria-hidden="true" />
+          <span className="sidebar-label">订餐</span>
+        </div>
       </div>
-      <div className="form-content">
-        <div className="form-row" style={{ marginBottom: '15px' }}>
-           <label style={{ marginRight: '15px', display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
-             <input 
-               type="radio" 
-               name="tripType" 
-               checked={formValues.tripType === 'one-way'} 
-               onChange={() => setFormValues(prev => ({ ...prev, tripType: 'one-way' }))}
-               style={{ marginRight: '5px' }}
-             /> 单程
-           </label>
-           <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
-             <input 
-               type="radio" 
-               name="tripType" 
-               checked={formValues.tripType === 'round-trip'} 
-               onChange={() => setFormValues(prev => ({ ...prev, tripType: 'round-trip' }))}
-               style={{ marginRight: '5px' }}
-             /> 往返
-           </label>
-        </div>
-        <div className="form-row-vertical">
-          <label htmlFor="fromStation">出发地</label>
-          <div className="input-group">
-            <StationDropdown
-              id="fromStation"
-              selectCityAsFinal
-              onSelectStation={(station) => {
-                setFormValues((prev: FormValues) => ({ ...prev, fromStation: station }));
-                setErrors((prev: FormErrors) => ({ ...prev, fromStation: '' }));
-              }}
-              onInputChange={(term) => {
-                setFormValues((prev: FormValues) => ({ ...prev, fromStation: term }));
-                setErrors((prev: FormErrors) => ({ ...prev, fromStation: '' }));
-              }}
-              value={formValues.fromStation}
-            />
-            {errors.fromStation && <span className="error-span">{errors.fromStation}</span>}
-          </div>
-        </div>
-        <div className="form-row-vertical">
-          <label htmlFor="toStation">到达地</label>
-          <div className="input-group">
-            <StationDropdown
-              id="toStation"
-              selectCityAsFinal
-              onSelectStation={(station) => {
-                setFormValues((prev: FormValues) => ({ ...prev, toStation: station }));
-                setErrors((prev: FormErrors) => ({ ...prev, toStation: '' }));
-              }}
-              onInputChange={(term) => {
-                setFormValues((prev: FormValues) => ({ ...prev, toStation: term }));
-                setErrors((prev: FormErrors) => ({ ...prev, toStation: '' }));
-              }}
-              value={formValues.toStation}
-            />
-            {errors.toStation && <span className="error-span">{errors.toStation}</span>}
-          </div>
-        </div>
-        <div className="form-row-vertical">
-          <label htmlFor="selectedDate">出发日期</label>
-          <div className="input-group">
-            <DatePicker
-              id="selectedDate"
-              onDateSelect={(date) =>
-                setFormValues((prev: FormValues) => {
-                   const updates: Partial<FormValues> = { selectedDate: date };
-                   if (prev.tripType === 'round-trip' && date > prev.returnDate) {
-                     updates.returnDate = date;
-                   }
-                   return { ...prev, ...updates };
-                })
-              }
-              value={formValues.selectedDate}
-            />
-            {errors.selectedDate && <span className="error-span">{errors.selectedDate}</span>}
-          </div>
-        </div>
-        {formValues.tripType === 'round-trip' && (
-          <div className="form-row-vertical">
-            <label htmlFor="returnDate">返程日期</label>
-            <div className="input-group">
-              <DatePicker
-                id="returnDate"
-                onDateSelect={(date) =>
-                  setFormValues((prev: FormValues) => ({ ...prev, returnDate: date }))
-                }
-                value={formValues.returnDate}
-                minDate={formValues.selectedDate}
-              />
-              {errors.returnDate && <span className="error-span">{errors.returnDate}</span>}
+      <div className="form-main">
+        <div className="form-content">
+          <div className="trip-type-tabs">
+            <div 
+              className={`trip-type-tab ${formValues.tripType === 'one-way' ? 'active' : ''}`}
+              onClick={() => setFormValues(prev => ({ ...prev, tripType: 'one-way' }))}
+            >
+              单程
+            </div>
+            <div 
+              className={`trip-type-tab ${formValues.tripType === 'round-trip' ? 'active' : ''}`}
+              onClick={() => setFormValues(prev => ({ ...prev, tripType: 'round-trip' }))}
+            >
+              往返
+            </div>
+            <div className="trip-type-tab">
+              中程换乘
+            </div>
+            <div className="trip-type-tab">
+              退改签
             </div>
           </div>
-        )}
-        <button onClick={handleSwap} className="swap-button" title="交换出发地和目的地">
-          ↔
-        </button>
-        <div className="form-row">
-          <div className="checkbox-group">
-            <label>
-              <input type="checkbox" /> 高铁/动车
-            </label>
+          <div className="form-row-vertical">
+            <label htmlFor="fromStation">出发地</label>
+            <div className="input-group">
+              <StationDropdown
+                id="fromStation"
+                selectCityAsFinal
+                onSelectStation={(station) => {
+                  setFormValues((prev: FormValues) => ({ ...prev, fromStation: station }));
+                  setErrors((prev: FormErrors) => ({ ...prev, fromStation: '' }));
+                }}
+                onInputChange={(term) => {
+                  setFormValues((prev: FormValues) => ({ ...prev, fromStation: term }));
+                  setErrors((prev: FormErrors) => ({ ...prev, fromStation: '' }));
+                }}
+                value={formValues.fromStation}
+              />
+              {errors.fromStation && <span className="error-span">{errors.fromStation}</span>}
+            </div>
           </div>
-        </div>
-        <div className="form-row">
-          <button onClick={handleQuery} className="query-button">
-            查询
-          </button>
+          <div className="form-row-vertical">
+            <label htmlFor="toStation">到达地</label>
+            <div className="input-group">
+              <StationDropdown
+                id="toStation"
+                selectCityAsFinal
+                onSelectStation={(station) => {
+                  setFormValues((prev: FormValues) => ({ ...prev, toStation: station }));
+                  setErrors((prev: FormErrors) => ({ ...prev, toStation: '' }));
+                }}
+                onInputChange={(term) => {
+                  setFormValues((prev: FormValues) => ({ ...prev, toStation: term }));
+                  setErrors((prev: FormErrors) => ({ ...prev, toStation: '' }));
+                }}
+                value={formValues.toStation}
+              />
+              {errors.toStation && <span className="error-span">{errors.toStation}</span>}
+            </div>
+          </div>
+          <div className="form-row-vertical">
+            <label htmlFor="selectedDate">出发日期</label>
+            <div className="input-group">
+              <DatePicker
+                id="selectedDate"
+                onDateSelect={(date) =>
+                  setFormValues((prev: FormValues) => {
+                     const updates: Partial<FormValues> = { selectedDate: date };
+                     if (prev.tripType === 'round-trip' && date > prev.returnDate) {
+                       updates.returnDate = date;
+                     }
+                     return { ...prev, ...updates };
+                  })
+                }
+                value={formValues.selectedDate}
+              />
+              {errors.selectedDate && <span className="error-span">{errors.selectedDate}</span>}
+            </div>
+          </div>
+          
+          {formValues.tripType === 'round-trip' && (
+            <div className="form-row-vertical">
+              <label htmlFor="returnDate">返程日期</label>
+              <div className="input-group">
+                <DatePicker
+                  id="returnDate"
+                  onDateSelect={(date) =>
+                    setFormValues((prev: FormValues) => ({ ...prev, returnDate: date }))
+                  }
+                  value={formValues.returnDate}
+                  minDate={formValues.selectedDate}
+                />
+                {errors.returnDate && <span className="error-span">{errors.returnDate}</span>}
+              </div>
+            </div>
+          )}
+
+          <img
+            src="/assets/ui/swap_icon.png"
+            alt="交换出发地和目的地"
+            className="swap-button"
+            onClick={handleSwap}
+          />
+          <div className="form-row" style={{ marginTop: '0' }}>
+            <div className="checkbox-group">
+              <label>
+                <input type="checkbox" /> 高铁/动车
+              </label>
+            </div>
+          </div>
+          <div className="form-row">
+            <button onClick={handleQuery} className="query-button">
+              查询
+            </button>
+          </div>
         </div>
       </div>
     </div>
