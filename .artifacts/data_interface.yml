@@ -267,6 +267,21 @@
       description: "新增以覆盖票价计算规则。"
 
 - type: Database
+  id: DB-CalculateRefundFee
+  description: 根据退票时间与票面价格计算退票手续费及应退金额。
+  dependencies:
+    - DB-GetOrderDetails
+  acceptanceCriteria:
+    - 输入：ticketPrice(票面原价，元，number>=0)、departureDateTime(datetime)、refundRequestedAt(datetime)。
+    - 若 refundRequestedAt 在 departureDateTime 前8天（含）以上，不收取退票费，fee=0，refundAmount=ticketPrice，feeRate=0%。
+    - 若在开车时间前48小时（含）以上但不足8天，按票价5%计退票费；前24小时（含）以上但不足48小时按票价10%计；不足24小时按票价20%计。
+    - 手续费计算尾数以0.5元为单位：尾数小于2.5角舍去；2.5角（含）以上且小于7.5角计为0.5元；7.5角（含）以上进为1元。
+    - 手续费最低按2元计收（当fee>0时）；计算后返回 fee（手续费）、feeRate（费率百分比）、refundAmount（应退票款，保留一位小数）。
+  changeLog:
+    - date: "2026-01-15"
+      description: "新增，用于实现退票手续费与应退金额的统一计算规则。"
+
+- type: Database
   id: DB-UpdateSeatStatusOnReservation
   description: 预定成功后，更新对应车次/车厢/座位在相关站段的座位状态为“已被预定”。
   dependencies:
@@ -374,10 +389,14 @@
   dependencies:
     - none
   acceptanceCriteria:
-    - 更新订单状态为指定值（如 '待支付'、'已取消'）。
+    - 更新订单状态为指定值（如 '待支付'、'已支付'、'已取消'、'已退票'）。
+    - 当状态更新为“已退票”时，应同时写入或更新退款相关字段（refundFee、refundAmount、refundRate）以及状态更新时间戳。
+    - 只能更新当前登录用户所属的订单记录。
   changeLog:
     - date: "2025-12-24"
       description: "依据订单确认与取消需求新增。"
+    - date: "2026-01-15"
+      description: "扩展状态枚举以支持退票，并补充退款字段写入要求。"
 
 - type: Database
   id: DB-LockSeats
@@ -398,10 +417,12 @@
     - DB-DefineTrainSchema
   acceptanceCriteria:
     - 对应车次、日期、区间的指定席别票数增加 N。
-    - 用于订单取消或支付超时。
+    - 用于订单取消、支付超时或退票场景释放席位。
   changeLog:
     - date: "2025-12-24"
       description: "依据订单取消或超时释放席位需求新增。"
+    - date: "2026-01-15"
+      description: "补充退票场景下的席位释放用途。"
 
 - type: Database
   id: DB-ListUserOrdersByStatus
@@ -409,9 +430,12 @@
   dependencies:
     - none
   acceptanceCriteria:
-    - 输入：userId(required)、status(enum: 待支付/已支付)、page(optional, default 1)、pageSize(optional, default 20)。
+    - 输入：userId(required)、status(enum: 待支付/已支付/已退票)、page(optional, default 1)、pageSize(optional, default 20)。
     - 输出：items 数组与分页元数据；每条记录包含 orderId、orderNo、trainNumber、departureStation、arrivalStation、seatInfo(每人席别/车厢/席位号)、totalAmount、status。
     - 当无记录时返回 items 空数组、total=0。
+    - 当订单状态为“已退票”时，status 字段应返回“已退票”，并包含该订单的票价、退票手续费与应退金额等字段，以供前端以灰色样式展示。
   changeLog:
     - date: "2025-12-27"
       description: "新增，用于个人中心订单列表按状态查询。"
+    - date: "2026-01-15"
+      description: "扩展状态枚举以支持已退票订单展示，并补充退款字段返回要求。"

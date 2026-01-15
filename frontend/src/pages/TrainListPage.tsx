@@ -123,7 +123,7 @@ export const TrainListPage: React.FC<TrainListPageProps> = ({ isLoading, error }
          }
        });
     }
-  }, [handleQuery, location.search]);
+  }, [location.search]); // Remove handleQuery from dependency to prevent reset loop
 
   useEffect(() => {
     if (from) setSelectedFromStations(undefined)
@@ -273,6 +273,17 @@ export const TrainListPage: React.FC<TrainListPageProps> = ({ isLoading, error }
     setFrom(to)
     setTo(temp)
     setHasInteracted(true)
+    
+    // Trigger query with swapped values
+    void handleQuery({ 
+      force: true, 
+      source: 'button',
+      params: {
+        from: to, // Use 'to' as new from
+        to: temp  // Use old 'from' as new to
+      }
+    })
+    
     setTimeout(() => setIsSwapping(false), 300)
   }
 

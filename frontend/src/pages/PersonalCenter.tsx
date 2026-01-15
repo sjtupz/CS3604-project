@@ -54,8 +54,11 @@ type RawPassenger = {
   birthDate?: string;
 };
 
+import { RefundConfirmModal } from '../components/RefundConfirmModal';
+
 const PersonalCenter: React.FC<PersonalCenterProps> = () => {
   const navigate = useNavigate();
+  const [selectedRefundOrderId, setSelectedRefundOrderId] = useState<string | null>(null);
   const isTestEnv =
     typeof import.meta !== 'undefined' &&
     (import.meta as unknown as { env?: { MODE?: string } }).env?.MODE === 'test';
@@ -89,6 +92,46 @@ const PersonalCenter: React.FC<PersonalCenterProps> = () => {
     }
   };
 
+  const fetchOrders = async () => {
+    try {
+      // 并行获取各种状态的订单，确保不遗漏
+      const [pendingRes, paidRes, refundedRes, completedRes, cancelledRes] = await Promise.all([
+        getOrders({ status: '待支付' }),
+        getOrders({ status: '已支付' }),
+        getOrders({ status: '已退票' }),
+        getOrders({ status: '已完成' }),
+        getOrders({ status: '已取消' })
+      ]);
+
+      const extractList = (res: any) => {
+        // 兼容不同的返回结构
+        const items = res?.data?.items || res?.items || res?.data || res?.orders || [];
+        return Array.isArray(items) ? items : [];
+      };
+
+      const pendingList = extractList(pendingRes);
+      const paidList = extractList(paidRes);
+      const refundedList = extractList(refundedRes);
+      const completedList = extractList(completedRes);
+      const cancelledList = extractList(cancelledRes);
+
+      // 合并并去重 (以 orderId 为准)
+      const allOrders = [...pendingList, ...paidList, ...refundedList, ...completedList, ...cancelledList];
+      const uniqueMap = new Map();
+      allOrders.forEach((order: any) => {
+        if (order.orderId) {
+          uniqueMap.set(order.orderId, order);
+        }
+      });
+      
+      const uniqueList = Array.from(uniqueMap.values());
+      setOrders(uniqueList as PersonalCenterOrder[]);
+    } catch (error) {
+      console.error('Error fetching orders:', error);
+      setOrders([]);
+    }
+  };
+
   const location = useLocation();
 
   useEffect(() => {
@@ -98,25 +141,25 @@ const PersonalCenter: React.FC<PersonalCenterProps> = () => {
       return;
     }
 
-    if (isTestEnv) {
-      setCurrentUser({
-        username: 'testuser',
-        realName: '张三',
-        country: '中国',
-        idType: '身份证',
-        idNumber: '110101199001011234',
-        verificationStatus: '已通过',
-        phoneNumber: '13800138000',
-        email: 'zhangsan@example.com',
-        phoneVerified: true,
-        discountType: '成人',
-        gender: 'male'
-      });
-      setOrders([]);
-      setPassengers([]);
-      setLoading(false);
-      return;
-    }
+    // if (isTestEnv) {
+    //   setCurrentUser({
+    //     username: 'testuser',
+    //     realName: '张三',
+    //     country: '中国',
+    //     idType: '身份证',
+    //     idNumber: '110101199001011234',
+    //     verificationStatus: '已通过',
+    //     phoneNumber: '13800138000',
+    //     email: 'zhangsan@example.com',
+    //     phoneVerified: true,
+    //     discountType: '成人',
+    //     gender: 'male'
+    //   });
+    //   setOrders([]);
+    //   setPassengers([]);
+    //   setLoading(false);
+    //   return;
+    // }
 
     const fetchData = async () => {
       try {
@@ -140,27 +183,8 @@ const PersonalCenter: React.FC<PersonalCenterProps> = () => {
           gender: (userInfo.gender === 'female' ? 'female' : 'male') as 'male' | 'female'
         });
 
-        try {
-          const ordersData = await getOrders();
-          const dataField = (ordersData as { data?: unknown }).data;
-          const ordersField = (ordersData as { orders?: unknown }).orders;
-          const list = Array.isArray(dataField)
-            ? dataField
-            : (Array.isArray(ordersField) ? ordersField : []);
-          setOrders(list as PersonalCenterOrder[]);
-        } catch (error) {
-          console.error('Error fetching orders:', error);
-          setOrders([]);
-        }
-
-        try {
-          const passengersData = await getPassengers();
-          const list = (passengersData.passengers || []) as RawPassenger[];
-          setPassengers(list.map(normalizePassenger));
-        } catch (error) {
-          console.error('Error fetching passengers:', error);
-          setPassengers([]);
-        }
+        await fetchOrders();
+        await refreshPassengers();
       } catch (error) {
         console.error('Error fetching user info:', error);
         setCurrentUser({
@@ -261,7 +285,45 @@ const PersonalCenter: React.FC<PersonalCenterProps> = () => {
 
   const handleRefund = (orderId: string) => {
     console.log('Refund order:', orderId);
+    if (!orderId) {
+        alert('订单ID缺失，无法操作');
+        return;
+    }
+    // 强制状态更新
+    setSelectedRefundOrderId(null);
+    setTimeout(() => {
+        setSelectedRefundOrderId(orderId);
+    }, 0);
   };
+
+  // 添加监听：当 selectedRefundOrderId 变化时，如果变为 null（即弹窗关闭），则刷新订单列表
+  useEffect(() => {
+    if (selectedRefundOrderId === null) {
+      // 弹窗关闭后，刷新订单
+      // 1. 获取已支付订单
+      // 2. 获取已退票订单
+      // 3. 更新 orders 状态
+      // 由于 PersonalCenter 之前使用 getOrders() 获取全部，这里我们简单重新调用一次全量获取
+      // 但 PersonalCenter 的 fetchOrders 逻辑比较复杂，我们直接调用一次 fetchOrders 即可？
+      // 但 fetchOrders 在 useEffect 内部，无法直接调用。
+      // 我们可以在这里简单实现刷新逻辑，或者将 fetchOrders 提取出来。
+      // 为了简单起见，我们在这里重新获取一次数据
+      const refresh = async () => {
+          try {
+            const ordersData = await getOrders();
+            const dataField = (ordersData as { data?: unknown }).data;
+            const ordersField = (ordersData as { orders?: unknown }).orders;
+            const list = Array.isArray(dataField)
+              ? dataField
+              : (Array.isArray(ordersField) ? ordersField : []);
+            setOrders(list as PersonalCenterOrder[]);
+          } catch (error) {
+            console.error('Error refreshing orders after refund:', error);
+          }
+      };
+      refresh();
+    }
+  }, [selectedRefundOrderId]);
 
   const handleModify = (orderId: string) => {
     console.log('Modify order:', orderId);
@@ -339,6 +401,12 @@ const PersonalCenter: React.FC<PersonalCenterProps> = () => {
         onUpdateDiscountType={handleUpdateDiscountType}
         onRefreshPassengers={refreshPassengers}
       />
+      {selectedRefundOrderId && (
+        <RefundConfirmModal
+          orderId={selectedRefundOrderId}
+          onClose={() => setSelectedRefundOrderId(null)}
+        />
+      )}
     </div>
   );
 };

@@ -267,6 +267,35 @@ const PersonalCenterLayout: React.FC<PersonalCenterLayoutProps> = ({
                 const hasNoSeat = typeof o.seatInfo === 'string' ? o.seatInfo.includes('无座') : undefined;
                 const rawStatus = String(o.status ?? '');
                 const status = rawStatus === '未支付' || rawStatus === '待确认' ? '待支付' : rawStatus;
+                const passengersForOrder = passengerInfoParsed.length > 0
+                  ? passengerInfoParsed.map((p) => {
+                      const rec = p as {
+                        name?: string;
+                        idType?: string;
+                        seatInfo?: string;
+                        ticketType?: string;
+                        price?: number;
+                        status?: string;
+                      };
+                      return {
+                        name: rec.name,
+                        idType: rec.idType,
+                        seatInfo: rec.seatInfo ?? o.seatInfo,
+                        ticketType: rec.ticketType ?? '成人票',
+                        price: typeof rec.price === 'number' ? rec.price : o.price ?? 0,
+                        status,
+                      };
+                    })
+                  : [
+                      {
+                        name: passengerName,
+                        idType: passengerIdTypes,
+                        seatInfo: o.seatInfo,
+                        ticketType: '成人票',
+                        price: o.price ?? 0,
+                        status,
+                      },
+                    ];
                 return {
                   orderId: o.id ?? o.orderId ?? '',
                   orderNumber: o.orderNumber ?? o.orderNo,
@@ -283,11 +312,12 @@ const PersonalCenterLayout: React.FC<PersonalCenterLayoutProps> = ({
                   ticketType: '成人票',
                   passengerIdTypes,
                   hasNoSeat,
+                  passengers: passengersForOrder,
                 };
               });
 
               const uncompleted = normalized.filter((x) => ['待支付'].includes(String(x.status)));
-              const upcoming = normalized.filter((x) => ['已支付', '未出行'].includes(String(x.status)));
+              const upcoming = normalized.filter((x) => ['已支付', '未出行', '已退票'].includes(String(x.status)));
               const history = normalized.filter((x) => ['已完成', '已退票', '已取消', '历史订单'].includes(String(x.status)));
 
               return (

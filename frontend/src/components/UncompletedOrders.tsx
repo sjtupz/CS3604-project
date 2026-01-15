@@ -19,6 +19,14 @@ interface Order {
   ticketType?: string;
   passengerIdTypes?: string;
   hasNoSeat?: boolean;
+  passengers?: {
+    name?: string;
+    idType?: string;
+    seatInfo?: string;
+    ticketType?: string;
+    price?: number;
+    status?: string;
+  }[];
 }
 
 interface UncompletedOrdersProps {
@@ -107,35 +115,52 @@ const UncompletedOrders: React.FC<UncompletedOrdersProps> = ({
                 </tr>
               </thead>
               <tbody>
-                {displayOrders.map((order) => (
-                  <tr key={order.orderId}>
-                    <td style={{ padding: '10px', border: '1px solid #ddd' }}>
-                      <div style={{ color: '#333' }}>
-                        {(order.fromStation || '-') + ' → ' + (order.toStation || '-')}
-                        {' '}
-                        {(order.trainNumber || '-')}
-                      </div>
-                      <div style={{ color: '#666', fontSize: '13px' }}>
-                        {(order.travelDate || '-') + '    ' + (order.departureTime || '-') + ' 开'}
-                      </div>
-                    </td>
-                    <td style={{ padding: '10px', border: '1px solid #ddd' }}>
-                      <div style={{ color: '#333' }}>{order.passengerName || order.passengerInfo || '-'}</div>
-                      <div style={{ color: '#666', fontSize: '13px' }}>{order.passengerIdTypes || '-'}</div>
-                    </td>
-                    <td style={{ padding: '10px', border: '1px solid #ddd' }}>
-                      <div style={{ color: '#333' }}>{order.seatInfo || '-'}</div>
-                      <div style={{ color: '#666', fontSize: '13px' }}>{order.ticketType || '-'}</div>
-                    </td>
-                    <td style={{ padding: '10px', border: '1px solid #ddd' }}>
-                      <div style={{ color: '#333' }}>{order.ticketType || '成人票'}</div>
-                      <div style={{ color: '#666', fontSize: '13px' }}>{(order.price ?? 0) + '元'}</div>
-                    </td>
-                    <td style={{ padding: '10px', border: '1px solid #ddd' }}>
-                      <div style={{ color: '#333' }}>{order.status || '-'}</div>
-                    </td>
-                  </tr>
-                ))}
+                {displayOrders.map((order) => {
+                  const passengers = Array.isArray(order.passengers) && order.passengers.length > 0
+                    ? order.passengers
+                    : [
+                        {
+                          name: order.passengerName || order.passengerInfo,
+                          idType: order.passengerIdTypes,
+                          seatInfo: order.seatInfo,
+                          ticketType: order.ticketType,
+                          price: order.price,
+                          status: order.status,
+                        },
+                      ];
+
+                  return passengers.map((p, index) => (
+                    <tr key={`${order.orderId}-${index}`}>
+                      {index === 0 && (
+                        <td rowSpan={passengers.length} style={{ padding: '10px', border: '1px solid #ddd' }}>
+                          <div style={{ color: '#333' }}>
+                            {(order.fromStation || '-') + ' → ' + (order.toStation || '-')}
+                            {' '}
+                            {(order.trainNumber || '-')}
+                          </div>
+                          <div style={{ color: '#666', fontSize: '13px' }}>
+                            {(order.travelDate || '-') + '    ' + (order.departureTime || '-') + ' 开'}
+                          </div>
+                        </td>
+                      )}
+                      <td style={{ padding: '10px', border: '1px solid #ddd' }}>
+                        <div style={{ color: '#333' }}>{p.name || order.passengerName || order.passengerInfo || '-'}</div>
+                        <div style={{ color: '#666', fontSize: '13px' }}>{p.idType || order.passengerIdTypes || '-'}</div>
+                      </td>
+                      <td style={{ padding: '10px', border: '1px solid #ddd' }}>
+                        <div style={{ color: '#333' }}>{p.seatInfo || order.seatInfo || '-'}</div>
+                        <div style={{ color: '#666', fontSize: '13px' }}>{p.ticketType || order.ticketType || '-'}</div>
+                      </td>
+                      <td style={{ padding: '10px', border: '1px solid #ddd' }}>
+                        <div style={{ color: '#333' }}>{p.ticketType || order.ticketType || '成人票'}</div>
+                        <div style={{ color: '#666', fontSize: '13px' }}>{((p.price ?? order.price) ?? 0) + '元'}</div>
+                      </td>
+                      <td style={{ padding: '10px', border: '1px solid #ddd' }}>
+                        <div style={{ color: '#333' }}>{p.status || order.status || '-'}</div>
+                      </td>
+                    </tr>
+                  ));
+                })}
               </tbody>
             </table>
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '16px' }}>

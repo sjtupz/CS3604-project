@@ -1,0 +1,172 @@
+.refund-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 10000;
+}
+
+.refund-modal-content {
+  background: white;
+  width: 600px;
+  /* Height increased by 1.1x from typical default, or controlled by content.
+     If user wants modal height specifically increased, min-height is a good way.
+     Assuming original content height was around 600px? Let's add min-height. */
+  min-height: 660px; 
+  border-radius: 4px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.refund-modal-header {
+  background-color: #3B99FC;
+  color: white;
+  padding: 10px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.refund-close-btn {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 24px;
+  cursor: pointer;
+}
+
+.refund-info-section {
+  padding: 20px;
+  border-bottom: 1px solid #eee;
+  text-align: left;
+  flex: 1; /* Allow expansion */
+}
+
+.refund-confirm-text {
+  font-size: 16px;
+  margin-bottom: 20px;
+  font-weight: bold;
+  text-align: left;
+}
+
+.refund-total-amount {
+  font-size: 14px;
+  color: #333;
+  font-weight: normal;
+  margin-bottom: 20px;
+  text-align: left;
+  border-top: 1px solid #e0e0e0;
+  border-bottom: 1px solid #e0e0e0;
+  padding: 10px 0;
+  padding-left: 20px;
+}
+
+.orange-text-large {
+    color: #ff8c00;
+    font-size: 18px;
+    font-weight: bold;
+}
+
+.warning-icon-yellow {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: #FFB800;
+  color: white;
+  font-weight: bold;
+  font-size: 28px;
+  margin-right: 15px;
+  flex-shrink: 0;
+}
+
+.info-icon-gray {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 1px solid #999;
+  color: #999;
+  text-align: center;
+  line-height: 14px;
+  margin-right: 5px;
+  font-size: 12px;
+  flex-shrink: 0;
+}
+
+.refund-details-column {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    /* Align items to the left as per requirement */
+    align-items: flex-start; 
+    font-size: 14px;
+    color: #666;
+    padding-left: 20px; /* Add some padding so it's not stuck to the edge */
+}
+
+.detail-item {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 5px;
+}
+
+.orange-text {
+    color: #ff8c00;
+    font-size: 16px; /* Larger font for amounts */
+    font-weight: bold;
+}
+
+.refund-tip-section {
+  padding: 15px 20px;
+  background-color: #fff;
+  font-size: 12px;
+  color: #999; /* Grey font */
+  border-bottom: 1px solid #eee;
+  line-height: 1.5;
+}
+
+.refund-button-section {
+  padding: 20px;
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+}
+
+.refund-btn-cancel {
+  padding: 8px 30px;
+  background-color: #fff;
+  border: 1px solid #ccc;
+  color: #333;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.refund-btn-confirm {
+  padding: 8px 30px;
+  background-color: #ff8c00;
+  border: none;
+  color: white;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.refund-rules-section {
+  padding: 15px 20px;
+  background-color: #f9f9f9;
+  font-size: 12px;
+  color: #666;
+  line-height: 1.6;
+  /* Removed max-height and overflow-y to show full content */
+}

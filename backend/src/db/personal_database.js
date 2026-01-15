@@ -84,6 +84,8 @@ const initializeDatabase = () => {
           price REAL,
           status TEXT DEFAULT '未完成',
           refund_fee REAL,
+          refund_amount REAL,
+          refund_rate REAL,
           refund_date DATE,
           created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
           updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,

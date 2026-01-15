@@ -11,3 +11,12 @@ test('Given the HomePage is rendered, Then it should display the main components
   
   expect(screen.getByText('TicketQueryForm')).toBeInTheDocument();
 });
+
+test('Given the HomePage is rendered, Then it should display the main visual image', () => {
+  render(<HomePage />);
+  
+  const img = screen.getByAltText('首页视觉展示');
+  expect(img).toBeInTheDocument();
+  // We can't strictly check the src path because Vite/Vitest transforms it, 
+  // but we can check existence and alt text which confirms it's our image tag.
+});

@@ -581,7 +581,9 @@ export const StationDropdown: React.FC<StationDropdownProps> = ({
                             UVWXYZ: ['W', 'X', 'Y', 'Z'],  // 跳过 U、V
                           };
                           const letters = ranges[filterKey as 'ABCDE' | 'FGHIJ' | 'KLMNO' | 'PQRST' | 'UVWXYZ'] || [];
-                          const allStations = cities.flatMap((c) => c.stations);
+                          const allStations = cities
+                            .filter(c => c.name !== '老挝' && (c.pinyin || '').toLowerCase() !== 'laowo')
+                            .flatMap((c) => c.stations);
                           return letters.map((L) => {
                             const list = allStations
                               .filter((s) => String(s.code || '').charAt(0).toUpperCase() === L)

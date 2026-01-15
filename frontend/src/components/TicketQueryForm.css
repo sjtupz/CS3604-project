@@ -1,48 +1,234 @@
 .form-container {
+    display: flex;
     background-color: white;
-    padding: 20px 30px;
+    padding: 0;
     border-radius: 0;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    width: 430px; 
+    width: 522px; /* Reduced from 550px (550 * 0.95 = 522.5) */
+    height: 350px; /* Fixed height to accommodate round-trip layout */
+    /* overflow: hidden; Removed to allow dropdowns to overflow */
 }
 
-.tabs {
+.form-sidebar {
+    width: 100px;
+    background-color: #3B99FC;
     display: flex;
-    margin-bottom: 20px;
+    flex-direction: column;
+    flex-shrink: 0;
 }
 
-.tab {
-    padding: 10px 20px;
+.sidebar-item {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    padding-left: 8px;
+    color: white;
     cursor: pointer;
-    border-bottom: 2px solid transparent;
+    font-size: 16px;
+    transition: all 0.2s;
+    user-select: none;
+}
+
+.sidebar-item:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.sidebar-item.active {
+    background-color: white;
+    color: #3B99FC;
+    font-weight: bold;
+}
+
+.sidebar-icon {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: 2px solid #ffffff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 6px;
+    box-sizing: border-box;
+}
+
+.sidebar-item.active .sidebar-icon {
+    border-color: #3B99FC;
+}
+
+.sidebar-label {
     font-size: 16px;
 }
 
-.tab.active {
-    color: #007bff;
-    border-bottom: 2px solid #007bff;
-    font-weight: bold;
+.sidebar-icon-ticket {
+    position: relative;
+    border: none;
+}
+
+.sidebar-item.active .sidebar-icon-ticket {
+    border: none;
+}
+
+.sidebar-icon-ticket::before {
+    content: '';
+    position: absolute;
+    left: 3px;
+    right: 3px;
+    top: 2px;
+    bottom: 2px;
+    border-radius: 6px 6px 10px 10px;
+    border: 2px solid #ffffff;
+    box-sizing: border-box;
+}
+
+.sidebar-icon-ticket::after {
+    content: '';
+    position: absolute;
+    left: 4px;
+    right: 4px;
+    bottom: 3px;
+    border-top: 2px solid #ffffff;
+}
+
+.sidebar-item.active .sidebar-icon-ticket::before {
+    border-color: #3B99FC;
+}
+
+.sidebar-item.active .sidebar-icon-ticket::after {
+    border-top-color: #3B99FC;
+}
+
+.sidebar-icon-common {
+    position: relative;
+    border: none;
+}
+
+.sidebar-item.active .sidebar-icon-common {
+    border: none;
+}
+
+.sidebar-icon-common::before {
+    content: '';
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    border: 2px solid #ffffff;
+    top: 2px;
+    left: 2px;
+    box-sizing: border-box;
+}
+
+.sidebar-icon-common::after {
+    content: '';
+    position: absolute;
+    width: 8px;
+    height: 2px;
+    background-color: #ffffff;
+    top: 9px;
+    left: 9px;
+    transform: rotate(45deg);
+    transform-origin: left center;
+}
+
+.sidebar-item.active .sidebar-icon-common::before {
+    border-color: #3B99FC;
+}
+
+.sidebar-item.active .sidebar-icon-common::after {
+    background-color: #3B99FC;
+}
+
+.sidebar-icon-food {
+    position: relative;
+    border: none;
+}
+
+.sidebar-item.active .sidebar-icon-food {
+    border: none;
+}
+
+.sidebar-icon-food::before {
+    content: '';
+    position: absolute;
+    left: 3px;
+    right: 3px;
+    top: 3px;
+    bottom: 5px;
+    border-radius: 50%;
+    border: 2px solid #ffffff;
+    box-sizing: border-box;
+}
+
+.sidebar-icon-food::after {
+    content: '';
+    position: absolute;
+    left: 4px;
+    right: 4px;
+    bottom: 2px;
+    border-top: 2px solid #ffffff;
+}
+
+.sidebar-item.active .sidebar-icon-food::before {
+    border-color: #3B99FC;
+}
+
+.sidebar-item.active .sidebar-icon-food::after {
+    border-top-color: #3B99FC;
+}
+
+.form-main {
+    flex: 1;
+    padding: 20px 30px;
+    background-color: white;
 }
 
 .form-content {
     display: flex;
     flex-direction: column;
-    position: relative; /* For swap button positioning */
+    position: relative;
+}
+
+/* Trip Type Tabs Styles */
+.trip-type-tabs {
+    display: flex;
+    align-items: center;
+    margin-top: 15px; /* Added top margin for visual spacing */
+    margin-bottom: 30px; /* Increased from 15px to create more gap */
+    width: 100%;
+}
+
+.trip-type-tab {
+    flex: 1;
+    text-align: center;
+    cursor: pointer;
+    font-size: 14px;
+    color: #999;
+    padding-bottom: 5px;
+    border-bottom: 2px solid #ccc;
+    user-select: none;
+}
+
+.trip-type-tab.active {
+    color: #3B99FC;
+    border-bottom: 2px solid #3B99FC;
+    font-weight: bold;
 }
 
 .form-row-vertical {
     display: flex;
     align-items: center;
-    margin-bottom: 20px; /* Increased spacing */
+    margin-bottom: 12px;
 }
 
 .form-row-vertical label {
-    width: 70px; /* Label width */
-    font-weight: normal; /* Black text, not bold */
+    width: 60px; /* Increased from 52px to prevent wrapping of '出发日期' */
+    font-weight: normal;
     color: #000;
-    padding-right: 5px;
-    text-align: left;
+    padding-right: 5px; /* Increased padding for visual separation */
+    text-align: right; /* Changed from left to right alignment */
     font-size: 14px;
+    white-space: nowrap; /* Force single line */
 }
 
 .form-row {
@@ -56,26 +242,71 @@
     display: flex;
     flex-direction: column;
     position: relative;
-    width: 280px;
+    width: 220px; /* Reduced from 250px to fit narrower container */
+    margin-left: 25px; /* Increased from 10px to shift inputs right */
+}
+
+/* Force styles on inputs to unify dimensions and style */
+.input-group input {
+    width: 100% !important;
+    height: 28px !important; /* 26.6px * 1.05 = 27.93px */
+    padding: 5px 8px !important;
+    box-sizing: border-box !important;
+    font-size: 14px !important;
+    border: 1px solid #d9d9d9 !important;
+    border-radius: 0 !important;
+}
+
+/* Placeholder for From/To/Date inputs */
+.input-group input::placeholder {
+    font-size: 14px;
+}
+
+/* Styles for split date row */
+.date-row-container {
+    display: flex;
+    align-items: center;
+    margin-bottom: 12px;
+    width: 100%;
+}
+
+.date-row-item {
+    flex: 1;
+    display: flex;
+    align-items: center;
+}
+
+.date-row-item .input-group {
+    width: auto;
+    flex: 1;
+    margin-left: 10px;
+}
+
+.date-row-item label {
+    width: 60px;
+    text-align: right;
+    padding-right: 5px;
+    font-size: 14px;
+    white-space: nowrap;
+}
+
+/* Ensure consistent height for date inputs in split row */
+.date-row-item .input-group input {
+    height: 26.6px !important;
 }
 
 .swap-button {
-    background-color: #ff8c00;
+    background: none;
     border: none;
-    border-radius: 50%;
-    width: 36px;
-    height: 36px;
+    width: 65px; /* Increased from 44px */
+    height: 65px; /* Increased from 44px */
     cursor: pointer;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    color: white;
-    font-size: 20px;
     position: absolute;
-    right: 15px;
-    top: 58px; /* Position between the two inputs */
+    right: 5px; /* Reduced from 15px to move right */
+    top: 100px;
     transform: translateY(-50%);
     z-index: 2;
+    object-fit: contain; /* Ensure image fits nicely */
 }
 
 .error-span {

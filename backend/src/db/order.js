@@ -18,6 +18,8 @@ const getOrdersByStatus = async (userId, status) => {
         price,
         status,
         refund_fee as refundFee,
+        refund_amount as refundAmount,
+        refund_rate as refundRate,
         refund_date as refundDate
       FROM orders
       WHERE user_id = ? AND status = ?

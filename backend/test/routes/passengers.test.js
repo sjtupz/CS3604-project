@@ -61,7 +61,7 @@ describe('API-Passengers Management', () => {
         .send(newPassenger);
 
       expect(res.statusCode).toBe(400);
-      expect(res.body.error).toBe('请输入正确的证件号码');
+      expect(res.body.error).toBe('请正确输入18位的证件号码！');
     });
 
     test('Given passenger name matches an existing user and ID number matches When adding passenger Then returns 201', async () => {
@@ -106,7 +106,7 @@ describe('API-Passengers Management', () => {
         .send(newPassenger);
 
       expect(res.statusCode).toBe(400);
-      expect(res.body.error).toContain('证件号码不合法');
+      expect(res.body.error).toContain('请正确输入18位的证件号码！');
     });
 
     test('Given passenger name does not match any user and ID number is valid When adding passenger Then returns 201', async () => {
