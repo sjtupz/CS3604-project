@@ -36,7 +36,7 @@ const PersonalCenterOrdersPage: React.FC = () => {
         if (!token) return;
 
         // Fetch Unfinished (Pending Payment)
-        const pendingRes = await getOrders({ status: '待支付' });
+        const pendingRes = (await getOrders({ status: '待支付' })) as { data?: { items?: Order[] }, items?: Order[] };
         if (pendingRes && pendingRes.data && pendingRes.data.items) {
              setUnfinishedOrders(pendingRes.data.items);
         } else if (pendingRes && pendingRes.items) {
@@ -48,7 +48,7 @@ const PersonalCenterOrdersPage: React.FC = () => {
         // 为了确保能获取到所有未出行（包括已支付和已退票，如果业务定义如此），我们需要明确请求参数
         
         // 1. 获取已支付订单
-        const paidRes = await getOrders({ status: '已支付' });
+        const paidRes = (await getOrders({ status: '已支付' })) as { data?: { items?: Order[] }, items?: Order[] };
         let paidItems: Order[] = [];
         if (paidRes && paidRes.data && paidRes.data.items) {
             paidItems = paidRes.data.items;
@@ -57,7 +57,7 @@ const PersonalCenterOrdersPage: React.FC = () => {
         }
 
         // 2. 获取已退票订单
-        const refundedRes = await getOrders({ status: '已退票' });
+        const refundedRes = (await getOrders({ status: '已退票' })) as { data?: { items?: Order[] }, items?: Order[] };
         let refundedItems: Order[] = [];
         if (refundedRes && refundedRes.data && refundedRes.data.items) {
             refundedItems = refundedRes.data.items;
@@ -67,14 +67,14 @@ const PersonalCenterOrdersPage: React.FC = () => {
 
         console.log('Fetched orders:', { paid: paidItems, refunded: refundedItems });
 
-        setUnusedOrders((prev) => {
+        setUnusedOrders(() => {
             // 合并并去重
             const all = [...paidItems, ...refundedItems];
             const unique = new Map();
             all.forEach(item => {
                 const processedItem = {
                     ...item,
-                    orderId: item.orderId || (item as any).id
+                    orderId: item.orderId || (item as { id?: string }).id || ''
                 };
                 if (processedItem.orderId) {
                     unique.set(processedItem.orderId, processedItem);

@@ -202,62 +202,81 @@ export const useRegisterForm = (onRegisterSuccess: () => void, showModal?: (mess
     }));
   };
 
-  const validateForm = (): RegisterFormErrors => {
+  const validateAllFields = (): RegisterFormErrors => {
     const errors: RegisterFormErrors = {};
-    if (!state.agreeToTerms)
-      errors.agreeToTerms = ERROR_MESSAGES.AGREE_TO_TERMS;
-    if (!state.phoneNumber)
-      errors.phoneNumber = ERROR_MESSAGES.PHONE_NUMBER_REQUIRED;
-    const canValidateDetailFields = !!state.phoneNumber && !!state.agreeToTerms;
-    if (canValidateDetailFields) {
-      if (!state.username) {
-        errors.username = ERROR_MESSAGES.USERNAME_REQUIRED;
-      } else {
-        const usernameError = validateUsername(state.username);
-        if (usernameError) errors.username = usernameError;
-      }
-      if (!state.password) {
-        errors.password = ERROR_MESSAGES.PASSWORD_REQUIRED;
-      } else {
-        const passwordError = validatePassword(state.password);
-        if (passwordError) errors.password = passwordError;
-      }
-      if (!state.confirmPassword) {
-        errors.confirmPassword = ERROR_MESSAGES.CONFIRM_PASSWORD_REQUIRED;
-      } else {
-        const confirmError = validateConfirmPassword(state.password, state.confirmPassword);
-        if (confirmError) errors.confirmPassword = confirmError;
-      }
-      if (!state.fullName) {
-        errors.fullName = ERROR_MESSAGES.FULL_NAME_INVALID;
-      } else {
-        const fullNameError = validateFullName(state.fullName);
-        if (fullNameError) errors.fullName = fullNameError;
-      }
-      if (!state.identityNumber) {
-        errors.identityNumber = ERROR_MESSAGES.ID_NUMBER_REQUIRED;
-      } else {
-        const idNumberError = validateIdentityNumber(state.identityNumber);
-        if (idNumberError) errors.identityNumber = idNumberError;
-      }
-      const passengerTypeError = validatePassengerType(state.passengerType);
-      if (passengerTypeError) errors.passengerType = passengerTypeError;
-      const identityTypeError = validateIdentityType(state.identityType);
-      if (identityTypeError) errors.identityType = identityTypeError;
+
+    if (!state.username) {
+      errors.username = ERROR_MESSAGES.USERNAME_REQUIRED;
+    } else {
+      const usernameError = validateUsername(state.username);
+      if (usernameError) errors.username = usernameError;
     }
+
+    if (!state.password) {
+      errors.password = ERROR_MESSAGES.PASSWORD_REQUIRED;
+    } else {
+      const passwordError = validatePassword(state.password);
+      if (passwordError) errors.password = passwordError;
+    }
+
+    if (!state.confirmPassword) {
+      errors.confirmPassword = ERROR_MESSAGES.CONFIRM_PASSWORD_REQUIRED;
+    } else {
+      const confirmError = validateConfirmPassword(state.password, state.confirmPassword);
+      if (confirmError) errors.confirmPassword = confirmError;
+    }
+
+    if (!state.fullName) {
+      errors.fullName = ERROR_MESSAGES.FULL_NAME_INVALID;
+    } else {
+      const fullNameError = validateFullName(state.fullName);
+      if (fullNameError) errors.fullName = fullNameError;
+    }
+
+    if (!state.identityNumber) {
+      errors.identityNumber = ERROR_MESSAGES.ID_NUMBER_REQUIRED;
+    } else {
+      const idNumberError = validateIdentityNumber(state.identityNumber);
+      if (idNumberError) errors.identityNumber = idNumberError;
+    }
+
+    if (!state.phoneNumber) {
+      errors.phoneNumber = ERROR_MESSAGES.PHONE_NUMBER_REQUIRED;
+    } else {
+        const phoneError = validatePhoneNumber(state.phoneNumber);
+        if (phoneError) errors.phoneNumber = phoneError;
+    }
+
+    const passengerTypeError = validatePassengerType(state.passengerType);
+    if (passengerTypeError) errors.passengerType = passengerTypeError;
+
+    const identityTypeError = validateIdentityType(state.identityType);
+    if (identityTypeError) errors.identityType = identityTypeError;
+
+    if (state.email) {
+      const emailError = validateEmail(state.email);
+      if (emailError) errors.email = emailError;
+    }
+
     return errors;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const validationErrors = validateForm();
+    const validationErrors = validateAllFields();
     if (Object.keys(validationErrors).length > 0) {
       setState((prevState: State) => ({
         ...prevState,
         errors: { ...prevState.errors, ...validationErrors },
       }));
       return;
+    }
+
+    // Check Terms (Should be handled by component before calling handleSubmit, but double check here)
+    if (!state.agreeToTerms) {
+       // Ideally this path is not reached if component logic is correct
+       return;
     }
 
     setState((prevState: State) => ({ ...prevState, isLoading: true }));
@@ -336,6 +355,17 @@ export const useRegisterForm = (onRegisterSuccess: () => void, showModal?: (mess
     handleCheckboxChange,
     handleBlur,
     handleSubmit,
+    validateAllFields: () => {
+      const errors = validateAllFields();
+      if (Object.keys(errors).length > 0) {
+        setState((prevState: State) => ({
+          ...prevState,
+          errors: { ...prevState.errors, ...errors },
+        }));
+        return false;
+      }
+      return true;
+    },
     clearFormError: () => {
       setState((prevState: State) => ({
         ...prevState,

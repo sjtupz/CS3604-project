@@ -1,5 +1,5 @@
 // frontend/src/components/RegisterForm.tsx
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Navigate, useInRouterContext, Link } from 'react-router-dom';
 import { useRegisterForm } from '../hooks/useRegisterForm';
 import './RegisterForm.css'; // 引入样式文件
@@ -21,6 +21,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onRegisterSuccess })
 
   const [modalVisible, setModalVisible] = useState(false);
   const [modalMessage, setModalMessage] = useState('');
+  const phoneInputRef = useRef<HTMLInputElement>(null);
 
   const showModal = (message: string) => {
     setModalMessage(message);
@@ -33,18 +34,35 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onRegisterSuccess })
     handleCheckboxChange,
     handleBlur,
     handleSubmit,
+    validateAllFields,
     clearFormError,
   } = useRegisterForm(onSuccess, showModal);
 
   const handleSubmitWithModal = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!state.phoneNumber) {
+    
+    // Step 1: Validate all fields
+    const isValid = validateAllFields();
+    
+    // Special Check: Phone Number Empty -> Modal
+    if (!state.phoneNumber || !state.phoneNumber.trim()) {
       setModalMessage(MODAL_MESSAGES.PHONE_REQUIRED);
       setModalVisible(true);
-    } else if (!state.agreeToTerms) {
+      return;
+    }
+
+    // Step 2: If fields are invalid, errors are already set in state, just return
+    if (!isValid) {
+      return;
+    }
+
+    // Step 3: Check Terms
+    if (!state.agreeToTerms) {
+      // Step 4: Popup
       setModalMessage(MODAL_MESSAGES.CONFIRM_TERMS);
       setModalVisible(true);
     } else {
+      // Step 4: Submit
       handleSubmit(e);
     }
   };
@@ -187,6 +205,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onRegisterSuccess })
         <label htmlFor="phoneNumber">手机号码</label>
         <input
           id="phoneNumber"
+          ref={phoneInputRef}
           type="text"
           name="phoneNumber"
           placeholder={PLACEHOLDERS.PHONE_NUMBER}
@@ -245,6 +264,9 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onRegisterSuccess })
         message={modalVisible ? modalMessage : state.errors.form || ''}
         onClose={() => {
           setModalVisible(false);
+          if (modalMessage === MODAL_MESSAGES.PHONE_REQUIRED) {
+            phoneInputRef.current?.focus();
+          }
           clearFormError();
         }}
       />

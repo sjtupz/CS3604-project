@@ -1,5 +1,5 @@
 // 顶部导航栏组件
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { QuickAccessMenu } from './QuickAccessMenu';
 import logoImg from '../assets/good_logo.png';
@@ -21,8 +21,66 @@ export const TopNavigationBar: React.FC<TopNavigationBarProps> = ({
   onLogout
 }) => {
   const [searchValue, setSearchValue] = useState('');
+  const [isTicketsDropdownOpen, setIsTicketsDropdownOpen] = useState(false);
+  const [ticketsDropdownLeft, setTicketsDropdownLeft] = useState<number | null>(null);
+  const navMainRef = useRef<HTMLDivElement | null>(null);
   const navigate = useNavigate();
   const location = useLocation();
+
+  const handleNavMouseOver = (e: React.MouseEvent<HTMLDivElement>) => {
+    const target = e.target as HTMLElement | null;
+    const btn = target?.closest?.('button.menu-item') as HTMLButtonElement | null;
+    if (!btn) return;
+
+    const label = (btn.textContent || '').trim();
+    if (label !== '车票') {
+      if (isTicketsDropdownOpen) {
+        setIsTicketsDropdownOpen(false);
+      }
+      return;
+    }
+
+    const navRect = navMainRef.current?.getBoundingClientRect();
+    const btnRect = btn.getBoundingClientRect();
+    if (navRect) {
+      setTicketsDropdownLeft(btnRect.left - navRect.left + btnRect.width / 2);
+    } else {
+      setTicketsDropdownLeft(null);
+    }
+    if (!isTicketsDropdownOpen) {
+      setIsTicketsDropdownOpen(true);
+    }
+  };
+
+  const handleNavMouseLeave = () => {
+    setIsTicketsDropdownOpen(false);
+  };
+
+  const getFormattedDate = (addDays = 0) => {
+    const d = new Date();
+    d.setDate(d.getDate() + addDays);
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  const handleSingleTrip = () => {
+    const date = getFormattedDate(0);
+    const targetPath = `/trains?from=上海&to=北京&date=${date}`;
+    console.log('Navigating to:', targetPath);
+    navigate(targetPath);
+    setIsTicketsDropdownOpen(false);
+  };
+
+  const handleRoundTrip = () => {
+    const date = getFormattedDate(0);
+    const returnDate = getFormattedDate(1);
+    const targetPath = `/trains?from=上海&to=北京&date=${date}&returnDate=${returnDate}`;
+    console.log('Navigating to:', targetPath);
+    navigate(targetPath);
+    setIsTicketsDropdownOpen(false);
+  };
 
   const handleSearch = () => {
     // TODO: 实现搜索功能
@@ -206,8 +264,43 @@ export const TopNavigationBar: React.FC<TopNavigationBarProps> = ({
 
       {/* Blue Main Navigation Bar */}
       {!hideQuickAccess && (
-        <div className="nav-main">
+        <div className="nav-main" ref={navMainRef} onMouseOver={handleNavMouseOver} onMouseLeave={handleNavMouseLeave}>
           <QuickAccessMenu />
+          {isTicketsDropdownOpen && (
+            <div
+              className="tickets-dropdown-panel"
+              style={{ left: ticketsDropdownLeft === null ? '50%' : ticketsDropdownLeft }}
+              role="menu"
+              aria-label="车票菜单"
+            >
+              <div className="tickets-dropdown-columns">
+                <div className="tickets-dropdown-col">
+                  <div className="tickets-dropdown-title">购买</div>
+                  <div className="tickets-dropdown-item">
+                    <button type="button" className="tickets-dropdown-link" onClick={handleSingleTrip}>单程</button>
+                  </div>
+                  <div className="tickets-dropdown-item">
+                    <button type="button" className="tickets-dropdown-link" onClick={handleRoundTrip}>往返</button>
+                  </div>
+                  <div className="tickets-dropdown-item"><span className="tickets-dropdown-text">中转换乘</span></div>
+                  <div className="tickets-dropdown-item"><span className="tickets-dropdown-text">计次·定期票</span></div>
+                </div>
+
+                <div className="tickets-dropdown-col">
+                  <div className="tickets-dropdown-title">变更</div>
+                  <div className="tickets-dropdown-item"><span className="tickets-dropdown-text">退票</span></div>
+                  <div className="tickets-dropdown-item"><span className="tickets-dropdown-text">改签</span></div>
+                  <div className="tickets-dropdown-item"><span className="tickets-dropdown-text">变更到站</span></div>
+                </div>
+
+                <div className="tickets-dropdown-col">
+                  <div className="tickets-dropdown-title">更多</div>
+                  <div className="tickets-dropdown-item"><span className="tickets-dropdown-text">中铁银通卡</span></div>
+                  <div className="tickets-dropdown-item"><span className="tickets-dropdown-text">国际列车</span></div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>

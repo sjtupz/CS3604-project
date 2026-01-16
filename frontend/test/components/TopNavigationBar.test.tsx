@@ -108,4 +108,37 @@ describe('TopNavigationBar', () => {
     fireEvent.click(screen.getByText('退出'));
     expect(onLogout).toHaveBeenCalled();
   });
+
+  it('shows tickets dropdown on hover and navigates for one-way and round-trip', () => {
+    mockLocation = { pathname: '/' };
+    renderComponent({ isLoggedIn: false });
+
+    expect(screen.queryByText('购买')).not.toBeInTheDocument();
+    fireEvent.mouseOver(screen.getByText('车票'));
+
+    expect(screen.getByText('购买')).toBeInTheDocument();
+    expect(screen.getByText('变更')).toBeInTheDocument();
+    expect(screen.getByText('更多')).toBeInTheDocument();
+
+    expect(screen.getByText('单程')).toBeInTheDocument();
+    expect(screen.getByText('往返')).toBeInTheDocument();
+    expect(screen.getByText('中转换乘')).toBeInTheDocument();
+    expect(screen.getByText('计次·定期票')).toBeInTheDocument();
+    expect(screen.getByText('退票')).toBeInTheDocument();
+    expect(screen.getByText('改签')).toBeInTheDocument();
+    expect(screen.getByText('变更到站')).toBeInTheDocument();
+    expect(screen.getByText('中铁银通卡')).toBeInTheDocument();
+    expect(screen.getByText('国际列车')).toBeInTheDocument();
+
+    mockNavigate.mockClear();
+    fireEvent.click(screen.getByText('单程'));
+    expect(mockNavigate).toHaveBeenCalledWith(expect.stringMatching(/\/trains\?from=上海&to=北京&date=\d{4}-\d{2}-\d{2}/));
+
+    // Re-open menu
+    fireEvent.mouseOver(screen.getByText('车票'));
+
+    mockNavigate.mockClear();
+    fireEvent.click(screen.getByText('往返'));
+    expect(mockNavigate).toHaveBeenCalledWith(expect.stringMatching(/\/trains\?from=上海&to=北京&date=\d{4}-\d{2}-\d{2}&returnDate=\d{4}-\d{2}-\d{2}/));
+  });
 });

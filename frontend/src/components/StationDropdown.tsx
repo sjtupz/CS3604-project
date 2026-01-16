@@ -69,6 +69,11 @@ export const StationDropdown: React.FC<StationDropdownProps> = ({
   selectCityAsFinal
 }) => {
   const [inputValue, setInputValue] = useState(value);
+
+  useEffect(() => {
+    setInputValue(value);
+  }, [value]);
+
   const [isVisible, setIsVisible] = useState(import.meta.env.MODE === 'test');
   // legacy tab state removed; using filterKey exclusively
   const [loading, setLoading] = useState(false);
@@ -84,11 +89,6 @@ export const StationDropdown: React.FC<StationDropdownProps> = ({
 
   const containerRef = useRef<HTMLDivElement>(null);
   const selectingRef = useRef(false);
-
-  // Sync with external value
-  useEffect(() => {
-    setInputValue(value);
-  }, [value]);
 
   // Load data
   useEffect(() => {
@@ -219,12 +219,13 @@ export const StationDropdown: React.FC<StationDropdownProps> = ({
     
     
     if (!city.hasRail && city.nearestStation) {
+      selectingRef.current = false;
       handleSelectStation({ name: city.nearestStation.name, code: city.nearestStation.code });
       return;
     }
 
-    // Task 2 Fix: If 'hot' tab is active, force selection and close modal
-    const isHotTab = filterKey === 'hot';
+    // Task 2 Fix: If 'hot' tab is active and not searching, force selection and close modal
+    const isHotTab = filterKey === 'hot' && !hasTyped;
     
     if (city.stations.length === 1 || selectCityAsFinal || isHotTab) {
       setInputValue(city.name);
@@ -237,7 +238,7 @@ export const StationDropdown: React.FC<StationDropdownProps> = ({
       // Otherwise, if multiple stations and not hot tab/final mode, show stations
       setSelectedCity(city);
       setView('station');
-      
+      setHasTyped(false);
     }
     setTimeout(() => { selectingRef.current = false }, 0);
   };
@@ -416,7 +417,7 @@ export const StationDropdown: React.FC<StationDropdownProps> = ({
                   <div 
                     key={`${item.name}-${idx}`}
                     style={styles.searchItem}
-                    onMouseDown={() => handleSearchResultClick(item)}
+                    onMouseDown={(e) => { e.preventDefault(); handleSearchResultClick(item); }}
                     className="hover-bg-blue"
                   >
                     <span>
@@ -446,8 +447,7 @@ export const StationDropdown: React.FC<StationDropdownProps> = ({
                   <div 
                     key={station.code}
                     style={styles.stationItem}
-                    onMouseDown={() => handleSelectStation(station)}
-                    onClick={() => handleSelectStation(station)}
+                    onMouseDown={(e) => { e.preventDefault(); handleSelectStation(station); }}
                     className="hover-bg-blue"
                   >
                     <span>{station.name}{station.district ? `（${station.district}）` : ''}</span>
@@ -509,14 +509,14 @@ export const StationDropdown: React.FC<StationDropdownProps> = ({
               <div style={styles.sidebar}>
                 <div
                   style={{ ...styles.sideBtn, ...(region === 'domestic' ? styles.sideBtnActive : {}) }}
-                  onMouseDown={() => { selectingRef.current = true; setRegion('domestic'); setFilterKey('hot'); setView('city'); setSelectedCity(null); setTimeout(() => { selectingRef.current = false }, 0); }}
+                  onMouseDown={(e) => e.preventDefault()}
                   onClick={() => { selectingRef.current = true; setRegion('domestic'); setFilterKey('hot'); setView('city'); setSelectedCity(null); setTimeout(() => { selectingRef.current = false }, 0); }}
                 >
                   国内站点
                 </div>
                 <div
                   style={{ ...styles.sideBtn, ...(region === 'international' ? styles.sideBtnActive : {}) }}
-                  onMouseDown={() => { selectingRef.current = true; setRegion('international'); setFilterKey('LAOS'); setView('city'); setSelectedCity(null); setTimeout(() => { selectingRef.current = false }, 0); }}
+                  onMouseDown={(e) => e.preventDefault()}
                   onClick={() => { selectingRef.current = true; setRegion('international'); setFilterKey('LAOS'); setView('city'); setSelectedCity(null); setTimeout(() => { selectingRef.current = false }, 0); }}
                 >
                   国际站点
@@ -534,7 +534,7 @@ export const StationDropdown: React.FC<StationDropdownProps> = ({
                             ...styles.filterBtn,
                             ...(filterKey === (label === '热门' ? 'hot' : label) ? styles.filterBtnActive : {}),
                           }}
-                          onMouseDown={() => { selectingRef.current = true; setFilterKey(label === '热门' ? 'hot' : label); setTimeout(() => { selectingRef.current = false }, 0); }}
+                          onMouseDown={(e) => e.preventDefault()}
                           onClick={() => { selectingRef.current = true; setFilterKey(label === '热门' ? 'hot' : label); setTimeout(() => { selectingRef.current = false }, 0); }}
                         >
                           {label}
@@ -547,7 +547,7 @@ export const StationDropdown: React.FC<StationDropdownProps> = ({
                         ...styles.filterBtn,
                         ...(filterKey === 'LAOS' ? styles.filterBtnActive : {}),
                       }}
-                      onMouseDown={() => { selectingRef.current = true; setFilterKey('LAOS'); setTimeout(() => { selectingRef.current = false }, 0); }}
+                      onMouseDown={(e) => e.preventDefault()}
                       onClick={() => { selectingRef.current = true; setFilterKey('LAOS'); setTimeout(() => { selectingRef.current = false }, 0); }}
                     >
                       老挝
@@ -562,8 +562,7 @@ export const StationDropdown: React.FC<StationDropdownProps> = ({
                           <div
                             key={city.name}
                             style={styles.cityItem}
-                            onMouseDown={() => handleSelectCity(city)}
-                            onClick={() => handleSelectCity(city)}
+                            onMouseDown={(e) => { e.preventDefault(); handleSelectCity(city); }}
                             className="hover-text-blue"
                           >
                             {city.name}
@@ -596,8 +595,7 @@ export const StationDropdown: React.FC<StationDropdownProps> = ({
                                     <div
                                       key={`${L}-${station.name}`}
                                       style={styles.cityItem}
-                                      onMouseDown={() => handleSelectStation(station)}
-                                      onClick={() => handleSelectStation(station)}
+                                      onMouseDown={(e) => { e.preventDefault(); handleSelectStation(station); }}
                                       className="hover-text-blue"
                                     >
                                       {station.name}
@@ -622,8 +620,7 @@ export const StationDropdown: React.FC<StationDropdownProps> = ({
                                 <div
                                   key={st.name}
                                   style={styles.stationItem}
-                                  onMouseDown={() => handleSelectStation(st)}
-                                  onClick={() => handleSelectStation(st)}
+                                  onMouseDown={(e) => { e.preventDefault(); handleSelectStation(st); }}
                                 >
                                   <span style={{ color: '#666' }}>{st.name}</span>
                                   <span style={{ backgroundColor: '#e6f7ff', color: '#1890ff', padding: '2px 6px', borderRadius: '4px', fontSize: '12px' }}>{st.code}</span>

@@ -1,5 +1,6 @@
 let db;
 let BetterSqlite3;
+const path = require('path');
 try {
   BetterSqlite3 = require('better-sqlite3');
 } catch (e) {
@@ -11,7 +12,13 @@ function getDbPath() {
   if (env === 'test') {
     return ':memory:';
   }
-  return process.env.SQLITE_DB_PATH || './backend/data/tickets.db';
+  const configured = process.env.SQLITE_DB_PATH;
+  if (configured) {
+    return path.isAbsolute(configured)
+      ? configured
+      : path.resolve(path.join(__dirname, '../..'), configured);
+  }
+  return path.join(__dirname, '../../data/tickets.db');
 }
 
 function getDB() {

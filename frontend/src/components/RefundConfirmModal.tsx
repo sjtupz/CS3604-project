@@ -6,7 +6,7 @@ import './RefundConfirmModal.css';
 interface RefundConfirmModalProps {
   orderId: string;
   onClose: () => void;
-  orderInfo?: any;
+  orderInfo?: unknown;
 }
 
 export const RefundConfirmModal: React.FC<RefundConfirmModalProps> = ({ orderId, onClose, orderInfo }) => {
@@ -24,9 +24,10 @@ export const RefundConfirmModal: React.FC<RefundConfirmModalProps> = ({ orderId,
         const res = await getRefundPreview(orderId);
         console.log('Preview fetched:', res.data);
         setRefundSummary(res.data);
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error('Fetch preview error:', err);
-        setError(err.response?.data?.message || '获取退票信息失败');
+        const error = err as { response?: { data?: { message?: string } } };
+        setError(error.response?.data?.message || '获取退票信息失败');
       } finally {
         setIsLoading(false);
       }
@@ -49,9 +50,10 @@ export const RefundConfirmModal: React.FC<RefundConfirmModalProps> = ({ orderId,
               orderInfo 
           } 
       });
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Refund confirm error:', err);
-      alert(err.response?.data?.message || '退票失败，请稍后重试');
+      const error = err as { response?: { data?: { message?: string } } };
+      alert(error.response?.data?.message || '退票失败，请稍后重试');
     }
   };
 

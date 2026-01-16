@@ -6,7 +6,7 @@ const RefundSuccessPage: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { refundData, orderInfo: initialOrderInfo } = location.state || {};
-  const [orderInfo, setOrderInfo] = useState<any>(initialOrderInfo || {});
+  const [orderInfo, setOrderInfo] = useState<any>(initialOrderInfo || {}); // eslint-disable-line @typescript-eslint/no-explicit-any
 
   useEffect(() => {
     // If orderInfo is missing or incomplete, fetch it
@@ -17,7 +17,7 @@ const RefundSuccessPage: React.FC = () => {
           console.log('Fetched full order details:', res.data);
           setOrderInfo(res.data);
         }
-      }).catch(err => {
+      }).catch((err: unknown) => {
         console.error('Failed to fetch order details:', err);
       });
     }

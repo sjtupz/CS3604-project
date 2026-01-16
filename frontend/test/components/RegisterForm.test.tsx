@@ -26,7 +26,7 @@ describe('UI-RegisterForm Scenarios', () => {
     fireEvent.change(usernameInput, { target: { value: 'existinguser' } });
     fireEvent.blur(usernameInput);
 
-    const errorMessage = await screen.findByText('用户名已被占用');
+    const errorMessage = await screen.findByText('该用户名已经占用，请重新选择用户名');
     expect(errorMessage).toBeInTheDocument();
   });
 
@@ -96,7 +96,7 @@ describe('UI-RegisterForm Scenarios', () => {
     fireEvent.change(confirmPasswordInput, { target: { value: 'password456' } });
     fireEvent.blur(confirmPasswordInput);
 
-    const errorMessage = await screen.findByText('两次输入的密码不一致');
+    const errorMessage = await screen.findByText('确认密码与密码不同');
     expect(errorMessage).toBeInTheDocument();
   });
 
@@ -149,7 +149,7 @@ describe('UI-RegisterForm Scenarios', () => {
   });
 
   // 场景 3.3.11 - 手机号码未填写点击下一步
-  test('Given the phone number is empty When user clicks next Then it shows a required field error', async () => {
+  test('Given the phone number is empty When user clicks next Then it shows a required field error and modal', async () => {
     render(<RegisterForm onRegisterSuccess={() => {}} />);
     const termsCheckbox = screen.getByLabelText('我已同意《中国铁路客户服务中心网站服务条款》《隐私权政策》');
     const nextButton = screen.getByRole('button', { name: '下一步' });
@@ -158,7 +158,9 @@ describe('UI-RegisterForm Scenarios', () => {
     fireEvent.click(nextButton);
 
     await waitFor(() => {
-      expect(screen.getByText('请输入手机号，以完成用户校验')).toBeInTheDocument();
+      expect(screen.getByText('❌请输入手机号码！')).toBeInTheDocument();
+      expect(screen.getByRole('dialog')).toBeInTheDocument();
+      expect(screen.getByText('请输入手机号，以完成用户校验。')).toBeInTheDocument();
     });
   });
 
@@ -353,22 +355,38 @@ describe('UI-RegisterForm Scenarios', () => {
   });
 
   // 3.3.11 - 未填写手机号点击下一步弹窗提示（优先）
-  test('Given phone number is empty and terms checked When click next Then a modal shows phone required text', async () => {
+  test('Given phone number is empty When click next Then it shows inline error AND modal', async () => {
     render(<RegisterForm onRegisterSuccess={() => {}} />);
     const nextButton = screen.getByRole('button', { name: '下一步' });
     fireEvent.click(nextButton);
     await waitFor(() => {
+      // Inline error
+      expect(screen.getByText('❌请输入手机号码！')).toBeInTheDocument();
+      // Modal
       expect(screen.getByRole('dialog')).toBeInTheDocument();
-      expect(screen.getByText('请输入手机号，以完成用户校验')).toBeInTheDocument();
+      expect(screen.getByText('请输入手机号，以完成用户校验。')).toBeInTheDocument();
     });
   });
 
   // 3.3.10 - 条款未勾选点击下一步弹窗提示（手机号已填写时）
-  test('Given phone is filled and terms not checked When user clicks next Then a modal shows terms confirmation text', async () => {
+  test('Given all fields are valid and terms not checked When user clicks next Then a modal shows terms confirmation text', async () => {
+    vi.mocked(userApi.checkUsername).mockResolvedValue({ isAvailable: true });
+    vi.mocked(userApi.checkIdentityNumber).mockResolvedValue({ isAvailable: true });
+    vi.mocked(userApi.checkPhoneNumber).mockResolvedValue({ isAvailable: true });
+    
     render(<RegisterForm onRegisterSuccess={() => {}} />);
+    
+    // Fill all required fields
+    fireEvent.change(screen.getByLabelText('用户名'), { target: { value: 'valid_user' } });
+    fireEvent.change(screen.getByLabelText('登录密码'), { target: { value: 'Password123_' } });
+    fireEvent.change(screen.getByLabelText('确认密码'), { target: { value: 'Password123_' } });
+    fireEvent.change(screen.getByLabelText('姓名'), { target: { value: '张三' } });
+    fireEvent.change(screen.getByLabelText('证件号码'), { target: { value: '110101199003074477' } });
     fireEvent.change(screen.getByLabelText('手机号码'), { target: { value: '13800138000' } });
+    
     const nextButton = screen.getByRole('button', { name: '下一步' });
     fireEvent.click(nextButton);
+    
     await waitFor(() => {
       expect(screen.getByRole('dialog')).toBeInTheDocument();
       expect(screen.getByText('请确认服务条款！')).toBeInTheDocument();
@@ -460,9 +478,28 @@ describe('UI-RegisterForm Scenarios', () => {
     await waitFor(() => {
       expect(screen.getByText('用户名长度不能小于6位')).toBeInTheDocument();
       expect(screen.getByText('密码长度不能小于6位')).toBeInTheDocument();
-      expect(screen.getByText('两次输入的密码不一致')).toBeInTheDocument();
+      expect(screen.getByText('确认密码与密码不同')).toBeInTheDocument();
       expect(screen.getByText('姓名长度不能小于2位')).toBeInTheDocument();
       expect(screen.getByText('证件号码长度不能小于18位')).toBeInTheDocument();
+    });
+  });
+
+  // 3.3.11 - 关闭弹窗后聚焦手机号输入框
+  test('Given modal is shown for empty phone When user closes modal Then phone input receives focus', async () => {
+    render(<RegisterForm onRegisterSuccess={() => {}} />);
+    const nextButton = screen.getByRole('button', { name: '下一步' });
+    fireEvent.click(nextButton);
+    
+    // Wait for modal
+    const modalButton = await screen.findByRole('button', { name: '确定' });
+    
+    // Click OK
+    fireEvent.click(modalButton);
+    
+    // Check focus
+    const phoneInput = screen.getByLabelText('手机号码');
+    await waitFor(() => {
+        expect(phoneInput).toHaveFocus();
     });
   });
 });

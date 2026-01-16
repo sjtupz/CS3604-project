@@ -103,9 +103,10 @@ const PersonalCenter: React.FC<PersonalCenterProps> = () => {
         getOrders({ status: '已取消' })
       ]);
 
-      const extractList = (res: any) => {
+      const extractList = (res: unknown) => {
         // 兼容不同的返回结构
-        const items = res?.data?.items || res?.items || res?.data || res?.orders || [];
+        const data = res as { data?: { items?: unknown[] }, items?: unknown[], orders?: unknown[] };
+        const items = data?.data?.items || data?.items || (res as { data?: unknown[] })?.data || data?.orders || [];
         return Array.isArray(items) ? items : [];
       };
 
@@ -118,9 +119,10 @@ const PersonalCenter: React.FC<PersonalCenterProps> = () => {
       // 合并并去重 (以 orderId 为准)
       const allOrders = [...pendingList, ...paidList, ...refundedList, ...completedList, ...cancelledList];
       const uniqueMap = new Map();
-      allOrders.forEach((order: any) => {
-        if (order.orderId) {
-          uniqueMap.set(order.orderId, order);
+      allOrders.forEach((order: unknown) => {
+        const o = order as { orderId?: string };
+        if (o.orderId) {
+          uniqueMap.set(o.orderId, o);
         }
       });
       
@@ -206,7 +208,7 @@ const PersonalCenter: React.FC<PersonalCenterProps> = () => {
     };
 
     fetchData();
-  }, [isTestEnv, navigate]);
+  }, [isTestEnv, navigate]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     const st = location.state as { section?: string } | null;

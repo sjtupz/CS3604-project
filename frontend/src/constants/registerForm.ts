@@ -19,16 +19,16 @@ export const PASSENGER_TYPE_OPTIONS = [
 ];
 
 export const ERROR_MESSAGES = {
-  USERNAME_TAKEN: '用户名已被占用',
+  USERNAME_TAKEN: '该用户名已经占用，请重新选择用户名',
   USERNAME_VALIDATION_ERROR: '无法验证用户名',
   AGREE_TO_TERMS: '请勾选服务条款',
-  PHONE_NUMBER_REQUIRED: '请输入手机号码',
+  PHONE_NUMBER_REQUIRED: '❌请输入手机号码！',
   REGISTRATION_FAILED: '注册失败，请稍后重试',
   USERNAME_TOO_SHORT: '用户名长度不能小于6位',
   USERNAME_INVALID_START: '用户名必须以字母开头',
   PASSWORD_TOO_SHORT: '密码长度不能小于6位',
   PASSWORD_WEAK: '密码必须包含字母、数字或符号中的至少两种',
-  PASSWORDS_NO_MATCH: '两次输入的密码不一致',
+  PASSWORDS_NO_MATCH: '确认密码与密码不同',
   FULL_NAME_TOO_SHORT: '姓名长度不能小于2位',
   FULL_NAME_INVALID: '❌请输入您的姓名！',
   ID_NUMBER_TOO_SHORT: '证件号码长度不能小于18位',
@@ -80,7 +80,7 @@ export const PATTERNS = {
 
 export const MODAL_MESSAGES = {
   CONFIRM_TERMS: '请确认服务条款！',
-  PHONE_REQUIRED: '请输入手机号，以完成用户校验',
+  PHONE_REQUIRED: '请输入手机号，以完成用户校验。',
   IDENTITY_TAKEN_GUIDANCE:
     '该证件号码已被注册。请确认是否您本人注册，“是”请使用原账号登录，“不是”请通过铁路12306App办理抢注或持该证件原件到就近的办理客运业务的铁路车站办理被抢注处理，完成后即可继续注册，或致电12306客服咨询。',
   EMAIL_TAKEN_GUIDANCE:

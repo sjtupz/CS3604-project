@@ -7,7 +7,6 @@
   "pnpm": {
     "onlyBuiltDependencies": [
       "bcrypt",
-      "better-sqlite3",
       "sqlite3"
     ]
   },
@@ -24,9 +23,6 @@
     "jsonwebtoken": "^9.0.2",
     "sqlite3": "^5.1.7",
     "uuid": "^9.0.1"
-  },
-  "optionalDependencies": {
-    "better-sqlite3": "^9.4.0"
   },
   "devDependencies": {
     "jest": "^29.7.0",

@@ -7,7 +7,6 @@ import { StationDropdown } from '../components/StationDropdown'
 import { DatePicker } from '../components/DatePicker'
 import { getTrains } from '../api/trains'
 import './TrainListPage.css'
-import { TopNavigationBar } from '../components/TopNavigationBar'
 import { AlertModal } from '../components/AlertModal'
 import { getOrders } from '../api/personal_user'
 
@@ -34,7 +33,7 @@ export const TrainListPage: React.FC<TrainListPageProps> = ({ isLoading, error }
   const [date, setDate] = useState(todayStr)
   const [returnDate, setReturnDate] = useState(todayStr)
   const [timeRange, setTimeRange] = useState('')
-  const [trainTypes, setTrainTypes] = useState<string[]>([...ALL_TRAIN_TYPES])
+  const [trainTypes, setTrainTypes] = useState<string[]>([])
   const [isRoundTrip, setIsRoundTrip] = useState(false)
   const [passengerCategory, setPassengerCategory] = useState<'normal' | 'student'>('normal')
   const [currentPage, setCurrentPage] = useState(1)
@@ -43,7 +42,7 @@ export const TrainListPage: React.FC<TrainListPageProps> = ({ isLoading, error }
   const [sortOrder, setSortOrder] = useState<'asc'|'desc'>('asc')
   const [loading, setLoading] = useState(false)
   const [errMsg, setErrMsg] = useState<string | undefined>(undefined)
-  const [seatTypes, setSeatTypes] = useState<string[]>([...ALL_SEAT_TYPES])
+  const [seatTypes, setSeatTypes] = useState<string[]>([])
   const [selectedFromStations, setSelectedFromStations] = useState<string[] | undefined>(undefined)
   const [selectedToStations, setSelectedToStations] = useState<string[] | undefined>(undefined)
   const [showOrderBlock, setShowOrderBlock] = useState(false)
@@ -58,7 +57,9 @@ export const TrainListPage: React.FC<TrainListPageProps> = ({ isLoading, error }
   const [depStart, depEnd] = (timeRange || '').split('-')
 
   const handleQuery = useCallback(async (opts?: { force?: boolean; source?: 'button' | 'filter'; params?: Partial<import('../api/trains').GetTrainsParams> }) => {
-    if (!opts?.force && queryDisabled) return
+    if (!opts?.force && queryDisabled) {
+      return
+    }
     setLastTrigger(opts?.source ?? 'button')
     setLoading(true)
     setErrMsg(undefined)
@@ -85,7 +86,6 @@ export const TrainListPage: React.FC<TrainListPageProps> = ({ isLoading, error }
         page: currentPage,
         pageSize: 100,
       })
-      console.log('TrainListPage getTrains response:', res)
       setItems(res.data.items || [])
     } catch (e) {
       console.error('TrainListPage getTrains error:', e)
@@ -122,8 +122,12 @@ export const TrainListPage: React.FC<TrainListPageProps> = ({ isLoading, error }
            date: dateParam
          }
        });
+    } else if (!fromParam && !toParam && !dateParam) {
+       // Fallback: Query with default values if no params provided
+       void handleQuery({ force: true, source: 'filter' });
     }
-  }, [location.search]); // Remove handleQuery from dependency to prevent reset loop
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.search]);
 
   useEffect(() => {
     if (from) setSelectedFromStations(undefined)
@@ -213,28 +217,27 @@ export const TrainListPage: React.FC<TrainListPageProps> = ({ isLoading, error }
   const filteredTrainList = useMemo(() => {
     return items.filter(item => {
       // 1. Train Type Filter
-      const trainCode = item.trainNumber || ''
-      const firstChar = trainCode.charAt(0).toUpperCase()
-      
-      // [DEBUG] Log item being filtered
-      // console.log('[DEBUG] Checking item:', trainCode, 'Types:', trainTypes);
+      // If no types selected, show all (empty = all)
+      if (trainTypes.length > 0) {
+        const trainCode = item.trainNumber || ''
+        const firstChar = trainCode.charAt(0).toUpperCase()
+        
+        let typeMatch = false
 
-      let typeMatch = false
+        if (trainTypes.includes('GC') && (firstChar === 'G' || firstChar === 'C')) typeMatch = true
+        else if (trainTypes.includes('D') && firstChar === 'D') typeMatch = true
+        else if (trainTypes.includes('Z') && firstChar === 'Z') typeMatch = true
+        else if (trainTypes.includes('KT') && (firstChar === 'K' || firstChar === 'T')) typeMatch = true
+        else if (trainTypes.includes('Other') && !['G', 'C', 'D', 'Z', 'K', 'T'].includes(firstChar)) typeMatch = true
 
-      if (trainTypes.includes('GC') && (firstChar === 'G' || firstChar === 'C')) typeMatch = true
-      else if (trainTypes.includes('D') && firstChar === 'D') typeMatch = true
-      else if (trainTypes.includes('Z') && firstChar === 'Z') typeMatch = true
-      else if (trainTypes.includes('KT') && (firstChar === 'K' || firstChar === 'T')) typeMatch = true
-      else if (trainTypes.includes('Other') && !['G', 'C', 'D', 'Z', 'K', 'T'].includes(firstChar)) typeMatch = true
-
-      if (!typeMatch) {
-          // console.log('[DEBUG] Filtered out by type:', trainCode);
-          return false
+        if (!typeMatch) {
+            return false
+        }
       }
 
       // 2. Seat Type Filter
-      // If all seat types are selected, skip seat filter check
-      if (seatTypes.length !== ALL_SEAT_TYPES.length) {
+      // If no seat types selected, show all (empty = all)
+      if (seatTypes.length > 0) {
         const hasSelectedSeat = seatTypes.some(type => {
           if (type === '商务座') {
             // Check Business OR Special
@@ -289,9 +292,6 @@ export const TrainListPage: React.FC<TrainListPageProps> = ({ isLoading, error }
 
   return (
     <div data-testid="train-list-page" className="train-list-page responsive-container" data-external-error={error || ''}>
-      {location.pathname === '/trains' ? (
-        <TopNavigationBar />
-      ) : null}
       {isLoading ? <div data-testid="loading-spinner">Loading...</div> : null}
       <section className="query-section" aria-label="车次查询" data-testid="query-bar">
         <div className="query-header">
@@ -396,7 +396,7 @@ export const TrainListPage: React.FC<TrainListPageProps> = ({ isLoading, error }
 
       <section className="table-section">
         <div className="tips-bar" aria-live="polite">
-          {loading ? '正在为您查询车次...' : (items.length === 0 ? '列车已全部发售完毕！下次再来吧' : '以下为查询到的车次信息，具体余票以实际为准')}
+          列车已全部发售完毕！下次再来吧
         </div>
         <div className="table-wrap" role="region" aria-label="车次列表">
           {(error || errMsg) && (

@@ -82,7 +82,8 @@ function App() {
     <Routes>
       <Route path="/" element={<AppLayout />}>
         <Route index element={<HomePage />} />
-        <Route path="tickets" element={<TrainListPage />} />
+        <Route path="trains" element={<TrainListPage />} />
+        <Route path="tickets" element={<TrainListPage />} /> {/* Alias for compatibility */}
         <Route path="orders/new" element={<OrderFillPage />} />
         <Route path="payment" element={<PaymentPage />} />
         <Route path="payment/success" element={<PaymentSuccessPage />} />

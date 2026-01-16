@@ -1,8 +1,6 @@
 const express = require('express');
 require('dotenv').config();
 const { corsMiddleware } = require('./config/cors');
-const { initSchema, getDB } = require('./config/database');
-const { generateMockData } = require('./services/generator');
 const http = require('http');
 
 if (process.env.NODE_ENV === 'test') {
@@ -25,20 +23,6 @@ const app = express();
 // Middlewares
 app.use(corsMiddleware);
 app.use(express.json());
-
-// Initialize schema on app load
-initSchema();
-
-// Populate data if empty (useful for tests and dev)
-try {
-  const db = getDB();
-  const count = db.prepare('SELECT COUNT(1) as c FROM tickets').get().c;
-  if (count === 0) {
-    generateMockData(14);
-  }
-} catch (e) {
-  // ignore
-}
 
 // Routes
 app.use('/api/tickets', require('./routes/tickets'));
