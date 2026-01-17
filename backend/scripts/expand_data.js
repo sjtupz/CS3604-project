@@ -28,6 +28,13 @@ const exec = (sql) => new Promise((resolve, reject) => {
     });
 });
 
+const all = (sql, params = []) => new Promise((resolve, reject) => {
+  db.all(sql, params, (err, rows) => {
+    if (err) reject(err);
+    else resolve(rows);
+  });
+});
+
 async function initSchema() {
   console.log('Initializing RF schema...');
   await exec(`
@@ -109,8 +116,12 @@ async function initSchema() {
     );
 
     CREATE INDEX IF NOT EXISTS idx_rf_inventories_query ON rf_inventories(train_id, travel_date, from_station_id, to_station_id);
+    CREATE INDEX IF NOT EXISTS idx_rf_inventories_train_date ON rf_inventories(train_id, travel_date);
+    CREATE INDEX IF NOT EXISTS idx_rf_fares_train_seat ON rf_fares(train_id, seat_type);
     CREATE INDEX IF NOT EXISTS idx_rf_trains_stations ON rf_trains(origin_station_id, destination_station_id);
     CREATE INDEX IF NOT EXISTS idx_rf_stations_city ON rf_stations(city);
+    CREATE INDEX IF NOT EXISTS idx_rf_stations_name ON rf_stations(name);
+    CREATE INDEX IF NOT EXISTS idx_rf_stations_pinyin ON rf_stations(pinyin);
   `);
 }
 
@@ -160,7 +171,15 @@ async function generateGeoData() {
         await run('INSERT INTO rf_cities (city_code, name, province, level, pinyin) VALUES (?, ?, ?, ?, ?)', [cityCode, cityName, prov.name, '地级市', pinyin]);
 
         const isMajor = ['北京', '上海', '广州', '深圳', '成都', '杭州', '武汉', '西安'].includes(cityName);
-        const stationCount = isMajor ? rng.range(3, 6) : rng.range(1, 2);
+        const isShSzRequired = ['上海', '苏州'].includes(cityName);
+        const isTopTierRequired = ['北京', '上海', '广州', '深圳'].includes(cityName);
+        const stationCount = isTopTierRequired
+          ? 4
+          : isShSzRequired
+            ? 4
+            : isMajor
+              ? rng.range(3, 6)
+              : rng.range(1, 2);
         
         const suffixes = ['', '东', '西', '南', '北', '站'];
         const stationNames = new Set();
@@ -175,7 +194,8 @@ async function generateGeoData() {
             const lat = 35 + rng.range(-500, 500) / 100.0;
             const lng = 105 + rng.range(-500, 500) / 100.0;
             
-            const info = { name: sName, code, pinyin: 'TODO', city_code: cityCode, city: cityName, ad_code: cityCode + '01', lat, lng };
+            const pinyin = cityName === '北京' ? 'bj' : 'TODO';
+            const info = { name: sName, code, pinyin, city_code: cityCode, city: cityName, ad_code: cityCode + '01', lat, lng };
             const res = await run('INSERT INTO rf_stations (name, code, pinyin, city_code, city, ad_code, lat, lng) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', 
               [info.name, info.code, info.pinyin, info.city_code, info.city, info.ad_code, info.lat, info.lng]);
             allStations.push({ ...info, station_id: res.lastID });
@@ -190,6 +210,73 @@ async function generateGeoData() {
 
   console.log(`Generated ${allStations.length} stations across ${cityCodeCounter - 1000} cities.`);
   return allStations;
+}
+
+async function ensureShanghaiSuzhouCoverage(stations) {
+  const shStations = stations.filter((s) => s.city === '上海').slice(0, 4);
+  const szStations = stations.filter((s) => s.city === '苏州').slice(0, 4);
+
+  if (shStations.length < 1 || szStations.length < 1) {
+    throw new Error('Missing Shanghai or Suzhou stations in generated data');
+  }
+
+  const origin = shStations[0];
+  const dest = szStations[0];
+
+  const fixedTrains = [
+    { no: 'G3001', dep: '05:30', dur: 60 },
+    { no: 'G3003', dep: '08:10', dur: 45 },
+    { no: 'G3005', dep: '13:20', dur: 50 },
+    { no: 'G3007', dep: '19:10', dur: 55 }
+  ];
+
+  for (const t of fixedTrains) {
+    const res = await run(
+      'INSERT INTO rf_trains (train_number, train_type, origin_station_id, destination_station_id, distance_km, duration_minutes, stop_count) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      [t.no, 'G', origin.station_id, dest.station_id, 80, t.dur, 2]
+    );
+    const trainId = res.lastID;
+
+    const [dh, dm] = t.dep.split(':').map(Number);
+    const depMinutes = dh * 60 + dm;
+    const arrMinutes = depMinutes + t.dur;
+    const arrH = Math.floor(arrMinutes / 60) % 24;
+    const arrM = arrMinutes % 60;
+    const arr = `${String(arrH).padStart(2, '0')}:${String(arrM).padStart(2, '0')}`;
+
+    await run(
+      'INSERT INTO rf_timetables (train_id, station_id, arrival_time, departure_time, stop_minutes, stop_order) VALUES (?, ?, ?, ?, ?, ?)',
+      [trainId, origin.station_id, '-', t.dep, 0, 1]
+    );
+    await run(
+      'INSERT INTO rf_timetables (train_id, station_id, arrival_time, departure_time, stop_minutes, stop_order) VALUES (?, ?, ?, ?, ?, ?)',
+      [trainId, dest.station_id, arr, '-', 0, 2]
+    );
+
+    await run('INSERT INTO rf_fares (train_id, seat_type, base_price) VALUES (?, ?, ?)', [trainId, '二等座', 35]);
+    await run('INSERT INTO rf_fares (train_id, seat_type, base_price) VALUES (?, ?, ?)', [trainId, '一等座', 60]);
+    await run('INSERT INTO rf_fares (train_id, seat_type, base_price) VALUES (?, ?, ?)', [trainId, '商务座', 120]);
+  }
+
+  const trainRows = await all(
+    `SELECT train_id FROM rf_trains WHERE train_number IN ('G3001','G3003','G3005','G3007') ORDER BY train_id ASC`
+  );
+
+  for (let d = 0; d < DAYS_TO_GENERATE; d++) {
+    const date = new Date(START_DATE);
+    date.setDate(START_DATE.getDate() + d);
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const dateStr = `${y}-${m}-${day}`;
+
+    for (const row of trainRows) {
+      await run(
+        'INSERT INTO rf_inventories (train_id, travel_date, from_station_id, to_station_id, business_remaining, first_remaining, second_remaining, soft_sleeper_remaining, hard_sleeper_remaining, hard_seat_remaining, no_seat_remaining) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        [row.train_id, dateStr, origin.station_id, dest.station_id, 5, 20, 100, 0, 0, 0, 0]
+      );
+    }
+  }
 }
 
 async function generateRoutes(stations) {
@@ -319,6 +406,8 @@ async function generateRoutes(stations) {
     await initSchema();
     const stations = await generateGeoData();
     await generateRoutes(stations);
+    await ensureShanghaiSuzhouCoverage(stations);
+    await exec('ANALYZE; PRAGMA optimize; VACUUM;');
     console.log('Data expansion complete.');
   } catch (err) {
     console.error('Error:', err);

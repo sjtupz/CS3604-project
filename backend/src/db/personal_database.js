@@ -3,9 +3,11 @@ const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 
 // 数据库文件路径（测试环境使用内存数据库）
-const DB_PATH = process.env.NODE_ENV === 'test' 
-  ? ':memory:' 
-  : path.join(__dirname, '../../data/12306.db');
+const DB_PATH = process.env.SQLITE_DB_PATH
+  ? process.env.SQLITE_DB_PATH
+  : process.env.NODE_ENV === 'test'
+    ? ':memory:'
+    : path.join(__dirname, '../../data/12306.db');
 
 let db = null;
 let initPromise = null;
@@ -147,68 +149,147 @@ const initializeDatabase = () => {
             }
           });
           
-          // 检查并添加gender字段（如果不存在）
-          database.all("PRAGMA table_info(users)", (err, columns) => {
+          // 检查并补齐 users / passengers 表缺失字段（如果不存在）
+          database.all("PRAGMA table_info(users)", (err, userColumns) => {
             if (err) {
               console.error('Error checking table info:', err);
               resolve();
               return;
             }
-            
-            const hasGenderColumn = columns.some(col => col.name === 'gender');
-            if (!hasGenderColumn) {
-              database.run("ALTER TABLE users ADD COLUMN gender TEXT DEFAULT 'male'", (err) => {
-                if (err) {
-                  console.error('Error adding gender column:', err);
-                }
-              });
+
+            const userColNames = new Set((userColumns || []).map(col => col.name));
+            const ensureUserColumns = [];
+
+            if (!userColNames.has('gender')) {
+              ensureUserColumns.push("ALTER TABLE users ADD COLUMN gender TEXT DEFAULT 'male'");
+            }
+            if (!userColNames.has('password')) {
+              ensureUserColumns.push('ALTER TABLE users ADD COLUMN password TEXT');
+            }
+            if (!userColNames.has('student_qualification')) {
+              ensureUserColumns.push('ALTER TABLE users ADD COLUMN student_qualification TEXT');
             }
 
-            const hasPasswordColumn = columns.some(col => col.name === 'password');
-            if (!hasPasswordColumn) {
-              database.run("ALTER TABLE users ADD COLUMN password TEXT", (err) => {
-                if (err) {
-                  console.error('Error adding password column:', err);
-                }
-              });
-            }
+            const runNextUserAlter = () => {
+              const sql = ensureUserColumns.shift();
+              if (!sql) {
+                database.all("PRAGMA table_info(passengers)", (err, passengerColumns) => {
+                  if (err) {
+                    console.error('Error checking passengers table info:', err);
+                    resolve();
+                    return;
+                  }
 
-            // Login Codes Table
-            database.run(`
-              CREATE TABLE IF NOT EXISTS login_codes (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                phone TEXT,
-                identifier TEXT,
-                code TEXT,
-                createdAt INTEGER,
-                valid INTEGER DEFAULT 1
-              )
-            `, (err) => {
-               if (err) console.error('Error creating login_codes table:', err);
-               database.run(`
-                 CREATE TABLE IF NOT EXISTS stations (
-                   id INTEGER PRIMARY KEY,
-                   name TEXT,
-                   city TEXT,
-                   province TEXT
-                 )
-               `, (err) => {
-                 if (err) console.error('Error creating stations table:', err);
-                 database.run(`
-                   CREATE TABLE IF NOT EXISTS trains (
-                     id INTEGER PRIMARY KEY,
-                     trainNumber TEXT,
-                     fromStation TEXT,
-                     toStation TEXT,
-                     date TEXT,
-                     isHighSpeed INTEGER
-                   )
-                 `, (err) => {
-                   if (err) console.error('Error creating trains table:', err);
-                   insertTestUser(database, reject, resolve);
-                 });
-               });
-            });
+                  const passengerColNames = new Set((passengerColumns || []).map(col => col.name));
+                  const ensurePassengerColumns = [];
+
+                  if (!passengerColNames.has('expiry_date')) {
+                    ensurePassengerColumns.push('ALTER TABLE passengers ADD COLUMN expiry_date DATE');
+                  }
+                  if (!passengerColNames.has('birth_date')) {
+                    ensurePassengerColumns.push('ALTER TABLE passengers ADD COLUMN birth_date DATE');
+                  }
+
+                  const runNextPassengerAlter = () => {
+                    const psql = ensurePassengerColumns.shift();
+                    if (!psql) {
+                      database.all("PRAGMA table_info(orders)", (err, orderColumns) => {
+                        if (err) {
+                          console.error('Error checking orders table info:', err);
+                        }
+
+                        const orderColNames = new Set((orderColumns || []).map(col => col.name));
+                        const ensureOrderColumns = [];
+
+                        if (!orderColNames.has('refund_fee')) {
+                          ensureOrderColumns.push('ALTER TABLE orders ADD COLUMN refund_fee REAL');
+                        }
+                        if (!orderColNames.has('refund_amount')) {
+                          ensureOrderColumns.push('ALTER TABLE orders ADD COLUMN refund_amount REAL');
+                        }
+                        if (!orderColNames.has('refund_rate')) {
+                          ensureOrderColumns.push('ALTER TABLE orders ADD COLUMN refund_rate REAL');
+                        }
+                        if (!orderColNames.has('refund_date')) {
+                          ensureOrderColumns.push('ALTER TABLE orders ADD COLUMN refund_date DATE');
+                        }
+
+                        const runNextOrderAlter = () => {
+                          const osql = ensureOrderColumns.shift();
+                          if (!osql) {
+                            database.run(`
+                              CREATE TABLE IF NOT EXISTS login_codes (
+                                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                                phone TEXT,
+                                identifier TEXT,
+                                code TEXT,
+                                createdAt INTEGER,
+                                valid INTEGER DEFAULT 1
+                              )
+                            `, (err) => {
+                              if (err) console.error('Error creating login_codes table:', err);
+                              database.run(`
+                                CREATE TABLE IF NOT EXISTS stations (
+                                  id INTEGER PRIMARY KEY,
+                                  name TEXT,
+                                  city TEXT,
+                                  province TEXT
+                                )
+                              `, (err) => {
+                                if (err) console.error('Error creating stations table:', err);
+                                database.run(`
+                                  CREATE TABLE IF NOT EXISTS trains (
+                                    id INTEGER PRIMARY KEY,
+                                    trainNumber TEXT,
+                                    fromStation TEXT,
+                                    toStation TEXT,
+                                    date TEXT,
+                                    isHighSpeed INTEGER
+                                  )
+                                `, (err) => {
+                                  if (err) console.error('Error creating trains table:', err);
+                                  insertTestUser(database, reject, resolve);
+                                });
+                              });
+                            });
+                            return;
+                          }
+
+                          database.run(osql, (err) => {
+                            if (err) {
+                              console.error('Error altering orders table:', err);
+                            }
+                            runNextOrderAlter();
+                          });
+                        };
+
+                        runNextOrderAlter();
+                      });
+                      return;
+                    }
+
+                    database.run(psql, (err) => {
+                      if (err) {
+                        console.error('Error altering passengers table:', err);
+                      }
+                      runNextPassengerAlter();
+                    });
+                  };
+
+                  runNextPassengerAlter();
+                });
+                return;
+              }
+
+              database.run(sql, (err) => {
+                if (err) {
+                  console.error('Error altering users table:', err);
+                }
+                runNextUserAlter();
+              });
+            };
+
+            runNextUserAlter();
           });
         });
       });

@@ -13,6 +13,7 @@
   "scripts": {
     "start": "node server.js",
     "dev": "node server.js",
+    "pretest": "node scripts/expand_data.js",
     "test": "jest --runInBand"
   },
   "dependencies": {

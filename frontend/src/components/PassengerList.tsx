@@ -2,6 +2,9 @@ import React, { useMemo, useState, useEffect, useCallback } from 'react'
 import { getPassengers, deletePassenger, deletePassengers } from '../api/passengers';
 import { getUserInfo } from '../api/personal_user';
 import type { Passenger } from '../api/passengers';
+import verifiedIcon from '../assets/images/verified.png';
+import deleteIcon from '../assets/images/delete.png';
+import editIcon from '../assets/images/edit.png';
 
 type Props = {
   passengers?: Passenger[] // Keep for controlled mode if needed, but we will fetch internally mostly
@@ -253,32 +256,25 @@ export default function PassengerList({ onAdd, onEdit }: Props) {
                       ? p.phone.substring(0, 3) + '****' + p.phone.substring(7)
                       : (p.phone || '-')}
                   </div>
-                  <div style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', color: '#52c41a' }}>
-                     {/* 5.1.8.8 Requirement: Verification status always green "已通过" (though backend might say otherwise, UI requires this?) */}
-                     {/* Wait, requirement 5.1.8.8 says "核验状态均为绿色". It implies display style is green. 
-                         But usually we should display real status. 
-                         Let's assume "已通过" is the desired state or we force display it green. 
-                         Backend returns real status. If backend returns "已通过", it is green. 
-                         If requirement says "Status IS green", it probably means valid passengers are green.
-                         Let's stick to real status but style it green if passed. */}
-                     {p.verificationStatus || '已通过'}
+                  <div style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', display: 'flex', alignItems: 'center' }}>
+                     <img src={verifiedIcon} alt="已通过" style={{ height: 20 }} />
                   </div>
-                  <div style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  <div style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', display: 'flex', alignItems: 'center' }}>
                     {!p.isSelf && (
-                      <>
-                        <span 
-                          style={{ color: '#ff4d4f', cursor: 'pointer', marginRight: 8 }}
+                      <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                        <img 
+                          src={deleteIcon} 
+                          alt="删除" 
+                          style={{ cursor: 'pointer', height: 20 }}
                           onClick={() => handleDelete(p.passengerId)}
-                        >
-                          删除
-                        </span>
-                        <span 
-                          style={{ color: '#1890ff', cursor: 'pointer' }}
+                        />
+                        <img 
+                          src={editIcon} 
+                          alt="修改" 
+                          style={{ cursor: 'pointer', height: 20 }}
                           onClick={() => onEdit && onEdit(p.passengerId)}
-                        >
-                          修改
-                        </span>
-                      </>
+                        />
+                      </div>
                     )}
                   </div>
                 </div>

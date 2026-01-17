@@ -1,5 +1,4 @@
 import '@testing-library/jest-dom'
-import { expect } from 'vitest'
 import { toHaveValue as originalToHaveValue } from '@testing-library/jest-dom/matchers'
 
 expect.extend({
@@ -40,3 +39,5 @@ expect.extend({
 })
 
 // 保持前端测试默认未登录状态，避免影响导航用例
+
+(globalThis as any).jest = (globalThis as any).vi

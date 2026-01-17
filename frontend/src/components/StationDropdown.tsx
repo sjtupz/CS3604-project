@@ -563,6 +563,7 @@ export const StationDropdown: React.FC<StationDropdownProps> = ({
                             key={city.name}
                             style={styles.cityItem}
                             onMouseDown={(e) => { e.preventDefault(); handleSelectCity(city); }}
+                            onClick={() => { handleSelectCity(city); }}
                             className="hover-text-blue"
                           >
                             {city.name}
@@ -596,6 +597,7 @@ export const StationDropdown: React.FC<StationDropdownProps> = ({
                                       key={`${L}-${station.name}`}
                                       style={styles.cityItem}
                                       onMouseDown={(e) => { e.preventDefault(); handleSelectStation(station); }}
+                                      onClick={() => { handleSelectStation(station); }}
                                       className="hover-text-blue"
                                     >
                                       {station.name}
@@ -621,6 +623,7 @@ export const StationDropdown: React.FC<StationDropdownProps> = ({
                                   key={st.name}
                                   style={styles.stationItem}
                                   onMouseDown={(e) => { e.preventDefault(); handleSelectStation(st); }}
+                                  onClick={() => { handleSelectStation(st); }}
                                 >
                                   <span style={{ color: '#666' }}>{st.name}</span>
                                   <span style={{ backgroundColor: '#e6f7ff', color: '#1890ff', padding: '2px 6px', borderRadius: '4px', fontSize: '12px' }}>{st.code}</span>

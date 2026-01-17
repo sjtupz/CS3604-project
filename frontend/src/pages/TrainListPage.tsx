@@ -15,9 +15,6 @@ interface TrainListPageProps {
   error?: string
 }
 
-const ALL_TRAIN_TYPES = ['GC', 'D', 'Z', 'KT', 'Other'] as const
-const ALL_SEAT_TYPES = ['商务座', '一等座', '二等座', '软卧', '硬卧', '硬座', '无座', '其他'] as const
-
 export const TrainListPage: React.FC<TrainListPageProps> = ({ isLoading, error }) => {
   const location = useLocation()
   const navigate = useNavigate()
@@ -47,6 +44,7 @@ export const TrainListPage: React.FC<TrainListPageProps> = ({ isLoading, error }
   const [selectedToStations, setSelectedToStations] = useState<string[] | undefined>(undefined)
   const [showOrderBlock, setShowOrderBlock] = useState(false)
   const [showCancelLimitBlock, setShowCancelLimitBlock] = useState(false)
+  const [sameStationError, setSameStationError] = useState<string | undefined>(undefined)
 
   const [isSwapping, setIsSwapping] = useState(false)
   const [hasInteracted, setHasInteracted] = useState(false)
@@ -63,13 +61,16 @@ export const TrainListPage: React.FC<TrainListPageProps> = ({ isLoading, error }
     setLastTrigger(opts?.source ?? 'button')
     setLoading(true)
     setErrMsg(undefined)
+    setSameStationError(undefined)
     try {
       const qFrom = opts?.params?.from ?? from
       const qTo = opts?.params?.to ?? to
       const qDate = opts?.params?.date ?? date
 
       if (qFrom === qTo) {
-        setErrMsg('出发地与目的地不能相同')
+        setItems([])
+        setSameStationError(`很抱歉，按您的查询条件，当前未找到从${qFrom} 到${qTo} 的列车。您可以使用中转换乘 功能，查询途中换乘一次的部分列车余票情况。`)
+        setLoading(false)
         return
       }
 
@@ -215,237 +216,237 @@ export const TrainListPage: React.FC<TrainListPageProps> = ({ isLoading, error }
   }, [date, navigate, todayStr])
 
   const filteredTrainList = useMemo(() => {
-    return items.filter(item => {
-      // 1. Train Type Filter
-      // If no types selected, show all (empty = all)
+    const base = Array.isArray(items) ? items : []
+    return base.filter((item) => {
       if (trainTypes.length > 0) {
         const trainCode = item.trainNumber || ''
         const firstChar = trainCode.charAt(0).toUpperCase()
-        
-        let typeMatch = false
 
+        let typeMatch = false
         if (trainTypes.includes('GC') && (firstChar === 'G' || firstChar === 'C')) typeMatch = true
         else if (trainTypes.includes('D') && firstChar === 'D') typeMatch = true
         else if (trainTypes.includes('Z') && firstChar === 'Z') typeMatch = true
         else if (trainTypes.includes('KT') && (firstChar === 'K' || firstChar === 'T')) typeMatch = true
         else if (trainTypes.includes('Other') && !['G', 'C', 'D', 'Z', 'K', 'T'].includes(firstChar)) typeMatch = true
 
-        if (!typeMatch) {
-            return false
-        }
+        if (!typeMatch) return false
       }
 
-      // 2. Seat Type Filter
-      // If no seat types selected, show all (empty = all)
       if (seatTypes.length > 0) {
-        const hasSelectedSeat = seatTypes.some(type => {
+        const availability = item.seatAvailability || {}
+        const hasSelectedSeat = seatTypes.some((type) => {
           if (type === '商务座') {
-            // Check Business OR Special
-            const swz = item.seatAvailability?.['商务座']
-            const tz = item.seatAvailability?.['特等座']
-            const hasSwz = swz && swz.hasSeatType !== false && swz.remaining !== null && (swz.remaining > 0 || swz.backupOnly)
-            const hasTz = tz && tz.hasSeatType !== false && tz.remaining !== null && (tz.remaining > 0 || tz.backupOnly)
-            return hasSwz || hasTz
+            const swz = availability['商务座']
+            const tz = availability['特等座']
+            const hasSwz = swz && swz.hasSeatType !== false && (swz.remaining === null || swz.remaining > 0 || swz.backupOnly)
+            const hasTz = tz && tz.hasSeatType !== false && (tz.remaining === null || tz.remaining > 0 || tz.backupOnly)
+            return !!(hasSwz || hasTz)
           }
-          
-          const info = item.seatAvailability?.[type]
-          // Check if valid AND not displayed as "-"
-          return info && info.hasSeatType !== false && info.remaining !== null && (info.remaining > 0 || info.backupOnly)
+
+          if (type === '其他') {
+            return Object.entries(availability).some(([k, info]) => {
+              if (['商务座', '特等座', '一等座', '二等座', '软卧', '硬卧', '硬座', '无座'].includes(k)) return false
+              if (!info || info.hasSeatType === false) return false
+              return info.remaining === null || info.remaining > 0 || info.backupOnly
+            })
+          }
+
+          const info = availability[type]
+          if (!info || info.hasSeatType === false) return false
+          return info.remaining === null || info.remaining > 0 || info.backupOnly
         })
 
         if (!hasSelectedSeat) return false
       }
 
-      // 3. Station Filter
       if (selectedFromStations !== undefined) {
         if (!selectedFromStations.includes(item.departureStation)) return false
       }
-      
+
       if (selectedToStations !== undefined) {
         if (!selectedToStations.includes(item.arrivalStation)) return false
       }
 
       return true
     })
-  }, [items, trainTypes, seatTypes, selectedFromStations, selectedToStations])
+  }, [items, seatTypes, selectedFromStations, selectedToStations, trainTypes])
 
-  const handleSwap = () => {
+  const handleSwap = useCallback(() => {
     if (isSwapping) return
     setIsSwapping(true)
+    setHasInteracted(true)
     const temp = from
     setFrom(to)
     setTo(temp)
-    setHasInteracted(true)
-    
-    // Trigger query with swapped values
-    void handleQuery({ 
-      force: true, 
-      source: 'button',
-      params: {
-        from: to, // Use 'to' as new from
-        to: temp  // Use old 'from' as new to
-      }
-    })
-    
     setTimeout(() => setIsSwapping(false), 300)
-  }
+  }, [from, isSwapping, to])
 
   return (
-    <div data-testid="train-list-page" className="train-list-page responsive-container" data-external-error={error || ''}>
-      {isLoading ? <div data-testid="loading-spinner">Loading...</div> : null}
-      <section className="query-section" aria-label="车次查询" data-testid="query-bar">
-        <div className="query-header">
-          <div className="radio-group" role="radiogroup" aria-label="行程类型">
-            <label className="radio-item">
-              <input type="radio" name="tripMode" aria-label="单程" checked={!isRoundTrip} onChange={() => setIsRoundTrip(false)} />
-              单程
-            </label>
-            <label className="radio-item">
-              <input type="radio" name="tripMode" aria-label="往返" checked={isRoundTrip} onChange={() => setIsRoundTrip(true)} />
-              往返
-            </label>
+    <div>
+      <div data-testid="train-list-page" className="train-list-page responsive-container" data-external-error={error || ''}>
+        {isLoading ? <div data-testid="loading-spinner">Loading...</div> : null}
+        <section className="query-section" aria-label="车次查询" data-testid="query-bar">
+          <div className="query-header">
+            <div className="radio-group" role="radiogroup" aria-label="行程类型">
+              <label className="radio-item">
+                <input type="radio" name="tripMode" aria-label="单程" checked={!isRoundTrip} onChange={() => setIsRoundTrip(false)} />
+                单程
+              </label>
+              <label className="radio-item">
+                <input type="radio" name="tripMode" aria-label="往返" checked={isRoundTrip} onChange={() => setIsRoundTrip(true)} />
+                往返
+              </label>
+            </div>
+            <div className="radio-group" role="radiogroup" aria-label="乘客类型">
+              <label className="radio-item">
+                <input type="radio" name="passengerCategory" aria-label="普通" checked={passengerCategory === 'normal'} onChange={() => setPassengerCategory('normal')} />
+                普通
+              </label>
+              <label className="radio-item">
+                <input type="radio" name="passengerCategory" aria-label="学生" checked={passengerCategory === 'student'} onChange={() => setPassengerCategory('student')} />
+                学生
+              </label>
+            </div>
           </div>
-          <div className="radio-group" role="radiogroup" aria-label="乘客类型">
-            <label className="radio-item">
-              <input type="radio" name="passengerCategory" aria-label="普通" checked={passengerCategory === 'normal'} onChange={() => setPassengerCategory('normal')} />
-              普通
-            </label>
-            <label className="radio-item">
-              <input type="radio" name="passengerCategory" aria-label="学生" checked={passengerCategory === 'student'} onChange={() => setPassengerCategory('student')} />
-              学生
-            </label>
-          </div>
-        </div>
-        <div className="query-grid">
-          <div className="field">
-            <label htmlFor="fromStation">出发地</label>
-            <StationDropdown id="fromStation" value={from} onSelectStation={(v) => { setFrom(v); setHasInteracted(true) }} onInputChange={(v) => { setFrom(v); setHasInteracted(true) }} isInvalid={!!from && from === to} inputWidth={140} />
-          </div>
-          <button 
-            className={`swap-btn ${isSwapping ? 'swapping' : ''}`} 
-            onClick={handleSwap} 
-            disabled={isSwapping}
-            aria-label="交换出发地和目的地"
-            title="交换出发地和目的地"
-          >
-            ↔
-          </button>
-          <div className="field">
-            <label htmlFor="toStation">目的地</label>
-            <StationDropdown id="toStation" value={to} onSelectStation={(v) => { setTo(v); setHasInteracted(true) }} onInputChange={(v) => { setTo(v); setHasInteracted(true) }} isInvalid={!!to && from === to} inputWidth={140} />
-          </div>
-          <div className="field">
-            <label htmlFor="departDate">出发日</label>
-            <DatePicker 
-              id="departDate" 
-              value={date} 
-              onDateSelect={(d) => {
-                setDate(d);
-                setHasInteracted(true)
-                if (d > returnDate) {
-                  setReturnDate(d);
-                }
-              }} 
-              width={130} 
-              minDate={todayStr}
-              maxDate={( () => { const t = new Date(); const d = new Date(t); d.setDate(t.getDate() + 15); const y=d.getFullYear(); const m=String(d.getMonth()+1).padStart(2,'0'); const dd=String(d.getDate()).padStart(2,'0'); return `${y}-${m}-${dd}`; })()}
-            />
-          </div>
-          {isRoundTrip && (
+          <div className="query-grid">
             <div className="field">
-              <label htmlFor="returnDate">返程日</label>
+              <label htmlFor="fromStation">出发地</label>
+              <StationDropdown id="fromStation" value={from} onSelectStation={(v) => { setFrom(v); setHasInteracted(true) }} onInputChange={(v) => { setFrom(v); setHasInteracted(true) }} isInvalid={!!from && from === to} inputWidth={140} />
+            </div>
+            <button 
+              className={`swap-btn ${isSwapping ? 'swapping' : ''}`} 
+              onClick={handleSwap} 
+              disabled={isSwapping}
+              aria-label="交换出发地和目的地"
+              title="交换出发地和目的地"
+            >
+              ↔
+            </button>
+            <div className="field">
+              <label htmlFor="toStation">目的地</label>
+              <StationDropdown id="toStation" value={to} onSelectStation={(v) => { setTo(v); setHasInteracted(true) }} onInputChange={(v) => { setTo(v); setHasInteracted(true) }} isInvalid={!!to && from === to} inputWidth={140} />
+            </div>
+            <div className="field">
+              <label htmlFor="departDate">出发日</label>
               <DatePicker 
-                id="returnDate" 
-                value={returnDate} 
-                onDateSelect={(d) => { setReturnDate(d); setHasInteracted(true) }} 
+                id="departDate" 
+                value={date} 
+                onDateSelect={(d) => {
+                  setDate(d);
+                  setHasInteracted(true)
+                  if (d > returnDate) {
+                    setReturnDate(d);
+                  }
+                }} 
                 width={130} 
-                minDate={date}
+                minDate={todayStr}
                 maxDate={( () => { const t = new Date(); const d = new Date(t); d.setDate(t.getDate() + 15); const y=d.getFullYear(); const m=String(d.getMonth()+1).padStart(2,'0'); const dd=String(d.getDate()).padStart(2,'0'); return `${y}-${m}-${dd}`; })()}
               />
             </div>
-          )}
-          <div className="field align-right">
-            <button className="query-button" disabled={queryDisabled} onClick={() => { void handleQuery({ source: 'button' }) }} aria-disabled={queryDisabled} aria-label="查询">查询</button>
+            {isRoundTrip && (
+              <div className="field">
+                <label htmlFor="returnDate">返程日</label>
+                <DatePicker 
+                  id="returnDate" 
+                  value={returnDate} 
+                  onDateSelect={(d) => { setReturnDate(d); setHasInteracted(true) }} 
+                  width={130} 
+                  minDate={date}
+                  maxDate={( () => { const t = new Date(); const d = new Date(t); d.setDate(t.getDate() + 15); const y=d.getFullYear(); const m=String(d.getMonth()+1).padStart(2,'0'); const dd=String(d.getDate()).padStart(2,'0'); return `${y}-${m}-${dd}`; })()}
+                />
+              </div>
+            )}
+            <div className="field align-right">
+              <button className="query-button" disabled={queryDisabled} onClick={() => { void handleQuery({ source: 'button' }) }} aria-disabled={queryDisabled} aria-label="查询">查询</button>
+            </div>
           </div>
-        </div>
-        <div className="filters-bar" data-testid="filters">
-          <TrainFilterBar
-            selectedDate={date}
-            timeRange={timeRange}
-            onDateChange={(d) => { setDate(d); setHasInteracted(true); setCurrentPage(1); void handleQuery({ force: true, source: 'filter', params: { date: d } }) }}
-            onTimeRangeChange={(r) => {
-              setTimeRange(r)
-              setHasInteracted(true)
-              setCurrentPage(1)
-              const [s, e] = (r || '').split('-')
-              void handleQuery({ force: true, source: 'filter', params: { departureTimeStart: s, departureTimeEnd: e } })
-            }}
-            selectedTrainTypes={trainTypes}
-            onTrainTypesChange={(v) => { setTrainTypes(v) }}
-            selectedSeatTypes={seatTypes}
-            onSeatTypesChange={(v) => { setSeatTypes(v) }}
-            fromStation={from}
-            toStation={to}
-            selectedFromStations={selectedFromStations}
-            selectedToStations={selectedToStations}
-            onFromStationsChange={setSelectedFromStations}
-            onToStationsChange={setSelectedToStations}
-          />
-        </div>
-      </section>
+          <div className="filters-bar" data-testid="filters">
+            <TrainFilterBar
+              selectedDate={date}
+              timeRange={timeRange}
+              onDateChange={(d) => { setDate(d); setHasInteracted(true); setCurrentPage(1); void handleQuery({ force: true, source: 'filter', params: { date: d } }) }}
+              onTimeRangeChange={(r) => {
+                setTimeRange(r)
+                setHasInteracted(true)
+                setCurrentPage(1)
+                const [s, e] = (r || '').split('-')
+                void handleQuery({ force: true, source: 'filter', params: { departureTimeStart: s, departureTimeEnd: e } })
+              }}
+              selectedTrainTypes={trainTypes}
+              onTrainTypesChange={(v) => { setTrainTypes(v) }}
+              selectedSeatTypes={seatTypes}
+              onSeatTypesChange={(v) => { setSeatTypes(v) }}
+              fromStation={from}
+              toStation={to}
+              selectedFromStations={selectedFromStations}
+              selectedToStations={selectedToStations}
+              onFromStationsChange={setSelectedFromStations}
+              onToStationsChange={setSelectedToStations}
+            />
+          </div>
+        </section>
 
-      <section className="table-section">
-        <div className="tips-bar" aria-live="polite">
-          列车已全部发售完毕！下次再来吧
-        </div>
-        <div className="table-wrap" role="region" aria-label="车次列表">
-          {(error || errMsg) && (
-            <div style={{ padding: 16, color: '#c00' }}>加载失败: {error || errMsg} <button onClick={() => { setErrMsg(undefined); void handleQuery() }}>重试</button></div>
-          )}
-          {((!loading && items.length === 0 && !errMsg && !error && (lastTrigger === undefined || (lastTrigger === 'button' && !hasInteracted))) || (loading && lastTrigger === 'button' && !hasInteracted)) ? (
-            <div style={{ padding: 24, textAlign: 'center', color: '#666' }}>暂无车票</div>
-          ) : (
-            <>
-              <TrainList items={filteredTrainList} sortBy={sortBy} sortOrder={sortOrder} onReserve={handleReserve} onSortChange={(key) => {
-            const newOrder = sortBy === key && sortOrder === 'asc' ? 'desc' : 'asc'
-            setSortBy(key)
-            setSortOrder(newOrder)
-            void handleQuery({ force: true, source: 'filter', params: { sortBy: key, sortOrder: newOrder } })
-          }} />
-            </>
-          )}
-        </div>
-      </section>
-      <AlertModal visible={showOrderBlock} onClose={() => setShowOrderBlock(false)}>
-        <span>
-          您还有未处理的订单，请您到
-          <a style={{ color: '#1890ff', cursor: 'pointer', textDecoration: 'underline' }} onClick={() => { setShowOrderBlock(false); navigate('/profile', { state: { section: '火车票订单' } }) }}>未处理订单</a>
-          进行处理！
-        </span>
-      </AlertModal>
-      <AlertModal visible={showCancelLimitBlock} onClose={() => setShowCancelLimitBlock(false)}>
-        <span>
-          <span>订票失败！原因:对不起，由于您取消次数过多，今日将不能继续受理您的订票请求。明日您可继续使用订票功能。请点击</span>
-          <a
-            style={{ color: '#1890ff', cursor: 'pointer', textDecoration: 'underline' }}
-            onClick={() => {
-              navigate('/profile', { state: { section: '火车票订单' } })
-            }}
-          >
-            [我的12306]
-          </a>
-          <span>办理其他业务。您也可以点击</span>
-          <a
-            style={{ color: '#1890ff', cursor: 'pointer', textDecoration: 'underline' }}
-            onClick={() => {
-              navigate('/tickets')
-            }}
-          >
-            [预订车票]
-          </a>
-          <span>，重新规划您的旅程。</span>
-        </span>
-      </AlertModal>
+        <section className="table-section">
+          <div className="tips-bar" aria-live="polite">
+            列车已全部发售完毕！下次再来吧
+          </div>
+          <div className="table-wrap" role="region" aria-label="车次列表">
+            {sameStationError ? (
+              <div style={{ padding: '40px 0', textAlign: 'center', color: '#999', fontSize: '14px' }}>
+                {sameStationError}
+              </div>
+            ) : (
+              <>
+                {(error || errMsg) && (
+                  <div style={{ padding: 16, color: '#c00' }}>加载失败: {error || errMsg} <button onClick={() => { setErrMsg(undefined); void handleQuery() }}>重试</button></div>
+                )}
+                {((!loading && items.length === 0 && !errMsg && !error && (lastTrigger === undefined || (lastTrigger === 'button' && !hasInteracted))) || (loading && lastTrigger === 'button' && !hasInteracted)) ? (
+                  <div style={{ padding: 24, textAlign: 'center', color: '#666' }}>暂无车票</div>
+                ) : (
+                  <>
+                    <TrainList items={filteredTrainList} sortBy={sortBy} sortOrder={sortOrder} onReserve={handleReserve} onSortChange={(key) => {
+                      const newOrder = sortBy === key && sortOrder === 'asc' ? 'desc' : 'asc'
+                      setSortBy(key)
+                      setSortOrder(newOrder)
+                      void handleQuery({ force: true, source: 'filter', params: { sortBy: key, sortOrder: newOrder } })
+                    }} />
+                  </>
+                )}
+              </>
+            )}
+          </div>
+        </section>
+        <AlertModal visible={showOrderBlock} onClose={() => setShowOrderBlock(false)}>
+          <span>
+            您还有未处理的订单，请您到
+            <a style={{ color: '#1890ff', cursor: 'pointer', textDecoration: 'underline' }} onClick={() => { setShowOrderBlock(false); navigate('/profile', { state: { section: '火车票订单' } }) }}>未处理订单</a>
+            进行处理！
+          </span>
+        </AlertModal>
+        <AlertModal visible={showCancelLimitBlock} onClose={() => setShowCancelLimitBlock(false)}>
+          <span>
+            <span>订票失败！原因:对不起，由于您取消次数过多，今日将不能继续受理您的订票请求。明日您可继续使用订票功能。请点击</span>
+            <a
+              style={{ color: '#1890ff', cursor: 'pointer', textDecoration: 'underline' }}
+              onClick={() => {
+                navigate('/profile', { state: { section: '火车票订单' } })
+              }}
+            >
+              [我的12306]
+            </a>
+            <span>办理其他业务。您也可以点击</span>
+            <a
+              style={{ color: '#1890ff', cursor: 'pointer', textDecoration: 'underline' }}
+              onClick={() => {
+                navigate('/tickets')
+              }}
+            >
+              [预订车票]
+            </a>
+            <span>，重新规划您的旅程。</span>
+          </span>
+        </AlertModal>
+      </div>
     </div>
   )
 }
